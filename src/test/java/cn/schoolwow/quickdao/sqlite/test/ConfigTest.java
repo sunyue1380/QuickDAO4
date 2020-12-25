@@ -4,6 +4,7 @@ import cn.schoolwow.quickdao.QuickDAO;
 import cn.schoolwow.quickdao.annotation.IdStrategy;
 import cn.schoolwow.quickdao.dao.DAO;
 import cn.schoolwow.quickdao.domain.Entity;
+import cn.schoolwow.quickdao.domain.Property;
 import cn.schoolwow.quickdao.domain.QuickDAOConfig;
 import cn.schoolwow.quickdao.sqlite.SQLiteTest;
 import cn.schoolwow.quickdao.sqlite.entity.DownloadTask;
@@ -52,6 +53,12 @@ public class ConfigTest extends SQLiteTest {
                     .execute()
                     .getOne();
             Assert.assertNotNull(person);
+        }
+        {
+            Property property = dao.getProperty("person","last_name");
+            Assert.assertEquals("last_name",property.column);
+            Assert.assertEquals("varchar(64)",property.columnType);
+            Assert.assertEquals("姓",property.comment);
         }
     }
 

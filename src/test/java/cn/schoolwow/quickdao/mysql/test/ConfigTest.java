@@ -47,6 +47,12 @@ public class ConfigTest extends MySQLTest {
             Property dbProperty = dbEntity.properties.stream().filter(property1 -> property1.column.equals("phone_number")).findFirst().orElse(null);
             Assert.assertNull("同步删除实体字段信息失败!",dbProperty);
         }
+        {
+            Property property = dao.getProperty("person","last_name");
+            Assert.assertEquals("last_name",property.column);
+            Assert.assertEquals("varchar(64)",property.columnType);
+            Assert.assertEquals("姓",property.comment);
+        }
     }
 
     /**

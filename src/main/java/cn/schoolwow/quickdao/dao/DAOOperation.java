@@ -49,7 +49,15 @@ public interface DAOOperation {
     List<Entity> getDbEntityList();
 
     /**
+     * 获取表字段
+     * @param tableName 表名
+     * @param column 字段名称
+     */
+    Property getProperty(String tableName, String column);
+
+    /**
      * 获取表字段列表
+     * @param tableName 表名
      */
     List<Property> getPropertyList(String tableName);
 

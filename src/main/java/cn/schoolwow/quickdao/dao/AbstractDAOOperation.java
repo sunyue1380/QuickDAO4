@@ -76,6 +76,19 @@ public class AbstractDAOOperation implements DAOOperation{
     }
 
     @Override
+    public Property getProperty(String tableName, String column) {
+        Entity entity = quickDAOConfig.dbEntityList.stream().filter(entity1 -> entity1.tableName.equals(tableName)).findFirst().orElse(null);
+        if(null==entity){
+            throw new IllegalArgumentException("表不存在!表名:"+tableName);
+        }
+        Property property = entity.properties.stream().filter(property1 -> property1.column.equals(column)).findFirst().orElse(null);
+        if(null==property){
+            throw new IllegalArgumentException("列不存在!表名:"+tableName+",字段名:"+column);
+        }
+        return property;
+    }
+
+    @Override
     public List<Property> getPropertyList(String tableName) {
         Entity entity = quickDAOConfig.dbEntityList.stream().filter(entity1 -> entity1.tableName.equals(tableName)).findFirst().orElse(null);
         if(null==entity){
