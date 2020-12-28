@@ -7,26 +7,31 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
 
+import java.io.InputStream;
+import java.io.Reader;
 import java.lang.reflect.Field;
+import java.math.BigDecimal;
+import java.net.URL;
 import java.sql.*;
 import java.text.SimpleDateFormat;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 
 public class AbstractSQLBuilder implements SQLBuilder{
     protected final static Logger logger = LoggerFactory.getLogger(AbstractSQLBuilder.class);
-    /*格式化旧版本的Date类型**/
-    private final static SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd");
-    /*格式化旧版本的Timestamp类型**/
-    private final static SimpleDateFormat simpleDateTimeFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss:SSS");
-    /**格式化日期参数*/
-    private final static DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss:SSS");
-    /**格式化日期参数*/
-    private final static DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
     /**SQL参数占位符*/
     protected final static String PLACEHOLDER = "** NOT SPECIFIED **";
+    /**格式化旧版本的java.sql.Date类型*/
+    private final static SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd");
+    /**格式化旧版本的java.sql.Time类型*/
+    private final static SimpleDateFormat simpleTimeFormat = new SimpleDateFormat("HH:mm:ss");
+    /**格式化旧版本的Timestampt类型*/
+    private final static SimpleDateFormat simpleDateTimeFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss:SSS");
+    /**格式化日期参数*/
+    private final static DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+    /**格式化日期参数*/
+    private final static DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
     /**数据库信息对象*/
     public QuickDAOConfig quickDAOConfig;
     /**数据库连接对象*/
@@ -88,97 +93,33 @@ public class AbstractSQLBuilder implements SQLBuilder{
      * @param parameter 参数
      * @param ps SQL语句对象
      * @param parameterIndex 参数索引
-     * @param sqlBuilder 用于记录sql日志
+     * @param sqlBuilder 记录SQL日志
      */
-    protected static void setParameter(Object parameter, PreparedStatement ps, int parameterIndex, StringBuilder sqlBuilder) throws SQLException {
-        if(null==parameter){
-            ps.setObject(parameterIndex,null);
-            replaceFirst(sqlBuilder,"null");
-            return;
-        }
-        String simpleTypeName = parameter.getClass().getSimpleName().toLowerCase();
-        if(parameter.getClass().isPrimitive()){
-            switch (simpleTypeName) {
-                case "boolean": {
-                    ps.setBoolean(parameterIndex, (boolean) parameter);
-                }break;
-                case "int": {
-                    ps.setInt(parameterIndex, (int) parameter);
-                }break;
-                case "float": {
-                    ps.setFloat(parameterIndex, (float) parameter);
-                }break;
-                case "long": {
-                    ps.setLong(parameterIndex, (long) parameter);
-                }break;
-                case "double": {
-                    ps.setDouble(parameterIndex, (double) parameter);
-                }break;
-            }
-        }else{
-            switch (simpleTypeName) {
-                case "string": {
-                    ps.setString(parameterIndex, (String) parameter);
-                }break;
-                case "date": {
-                    if(parameter instanceof Date){
-                        ps.setDate(parameterIndex, (Date) parameter);
-                    }else{
-                        java.util.Date d = (java.util.Date) parameter;
-                        ps.setDate(parameterIndex, new Date(d.getTime()));
-                    }
-                };break;
-                case "timestamp": {
-                    ps.setTimestamp(parameterIndex, (Timestamp) parameter);
-                }break;
-                default:{
-                    ps.setObject(parameterIndex,parameter);
-                }
-            }
-        }
-        switch (parameter.getClass().getSimpleName().toLowerCase()) {
-            case "boolean": {
-                Boolean bool = Boolean.parseBoolean(parameter.toString());
-                replaceFirst(sqlBuilder,bool?"1":"0");
-            }break;
-            case "int": {}
-            case "integer":{}
-            case "float":{}
-            case "long": {}
-            case "double": {
-                replaceFirst(sqlBuilder,parameter.toString());
-            }break;
-            case "string": {
-                replaceFirst(sqlBuilder,"'"+parameter.toString()+"'");
-            }break;
-            case "date": {
-                java.util.Date date = (java.util.Date) parameter;
-                LocalDate localDate = LocalDate.of(date.getYear()+1900,date.getMonth(),date.getDay());
-                replaceFirst(sqlBuilder,"'"+dateFormatter.format(localDate)+"'");
-            }break;
-            case "timestamp": {
-                java.util.Date date = (java.util.Date) parameter;
-                LocalDateTime localDateTime = LocalDateTime.ofInstant(date.toInstant(), ZoneId.systemDefault());
-                replaceFirst(sqlBuilder,"'"+dateTimeFormatter.format(localDateTime)+"'");
-            }break;
-            case "localdate": {
-                LocalDate localDate = (LocalDate) parameter;
-                replaceFirst(sqlBuilder,"'"+dateFormatter.format(localDate)+"'");
-            }break;
-            case "localdatetime": {
-                LocalDateTime localDateTime = (LocalDateTime) parameter;
-                replaceFirst(sqlBuilder,"'"+dateTimeFormatter.format(localDateTime)+"'");
-            }break;
-            default: {
-                replaceFirst(sqlBuilder,parameter.toString());
-            }
-        }
+    protected void setParameter(Object parameter, PreparedStatement ps, int parameterIndex, StringBuilder sqlBuilder) throws SQLException {
+        String parameterSQL = setPrepareStatementParameter(parameter,null,ps,parameterIndex);
+        replaceFirst(sqlBuilder,parameterSQL);
     }
 
     /**
      * DML操作设置参数
+     * @param instance 实例
+     * @param property 字段属性信息
+     * @param ps PrepareStatement对象
+     * @param parameterIndex 参数索引
+     * @param sqlBuilder 记录SQL日志
      */
-    protected static void setParameter(Object instance, Property property, PreparedStatement ps, int parameterIndex, StringBuilder sqlBuilder) throws Exception{
+    protected void setParameter(Object instance, Property property, PreparedStatement ps, int parameterIndex, StringBuilder sqlBuilder) throws Exception {
+        Field field = getFieldFromInstance(instance,property);
+        String parameterSQL = setPrepareStatementParameter(field.get(instance),property,ps,parameterIndex);
+        replaceFirst(sqlBuilder,parameterSQL);
+    }
+
+    /**
+     * 从实例从获取参数
+     * @param instance 实例
+     * @param property 字段信息
+     * */
+    protected Field getFieldFromInstance(Object instance, Property property) throws IllegalAccessException {
         Class tempClass = instance.getClass();
         Field field = null;
         while(null==field&&null!=tempClass){
@@ -195,105 +136,152 @@ public class AbstractSQLBuilder implements SQLBuilder{
             throw new IllegalArgumentException("字段不存在!字段名:"+property.name+",类名:"+instance.getClass().getName());
         }
         field.setAccessible(true);
-        String parameter = null;
-        switch (property.simpleTypeName) {
-            case "boolean": {
-                if (field.getType().isPrimitive()) {
-                    ps.setBoolean(parameterIndex, field.getBoolean(instance));
-                    parameter = "" + field.getBoolean(instance);
-                } else {
-                    ps.setObject(parameterIndex, field.get(instance));
-                    parameter = "" + field.get(instance);
-                }
+        return field;
+    }
+
+    /**
+     * 设置参数
+     * @param parameter 参数
+     * @param property 字段信息
+     * @param ps PrepareStatement对象
+     * @param parameterIndex 参数索引
+     * @return SQL字段信息
+     * */
+    protected String setPrepareStatementParameter(Object parameter, Property property, PreparedStatement ps, int parameterIndex) throws SQLException{
+        if(null==parameter){
+            if(null==property){
+                ps.setObject(parameterIndex,null);
+            }else{
+                ps.setNull(parameterIndex,property.singleTypeFieldMapping.types);
+            }
+            return "null";
+        }
+        String parameterSQL = parameter.toString();
+        switch(parameter.getClass().getName()){
+            case "byte":{
+                ps.setByte(parameterIndex, (byte) parameter);
+            }break;
+            case "[B":{
+                ps.setBytes(parameterIndex, (byte[]) parameter);
+            }break;
+            case "boolean":{
+                boolean value = (boolean) parameter;
+                ps.setBoolean(parameterIndex, value);
+                parameterSQL = value?"1":"0";
+            }break;
+            case "short": {
+                ps.setShort(parameterIndex, (short) parameter);
             }break;
             case "int": {
-                ps.setInt(parameterIndex, field.getInt(instance));
-                parameter = "" + field.getInt(instance);
-            }break;
-            case "integer": {
-                ps.setObject(parameterIndex, field.get(instance));
-                parameter = "" + field.get(instance);
+                ps.setInt(parameterIndex, (int) parameter);
             }break;
             case "float": {
-                if (field.getType().isPrimitive()) {
-                    ps.setFloat(parameterIndex, field.getFloat(instance));
-                    parameter = "" + field.getFloat(instance);
-                } else {
-                    ps.setObject(parameterIndex, field.get(instance));
-                    parameter = "" + field.get(instance);
-                }
+                ps.setFloat(parameterIndex, (float) parameter);
             }break;
             case "long": {
-                if (field.getType().isPrimitive()) {
-                    ps.setLong(parameterIndex, field.getLong(instance));
-                    parameter = "" + field.getLong(instance);
-                } else {
-                    ps.setObject(parameterIndex, field.get(instance));
-                    parameter = "" + field.get(instance);
-                }
+                ps.setLong(parameterIndex, (long) parameter);
             }break;
             case "double": {
-                if (field.getType().isPrimitive()) {
-                    ps.setDouble(parameterIndex, field.getDouble(instance));
-                    parameter = "" + field.getDouble(instance);
-                } else {
-                    ps.setObject(parameterIndex, field.get(instance));
-                    parameter = "" + field.get(instance);
-                }
+                ps.setDouble(parameterIndex, (double) parameter);
             }break;
-            case "string": {
-                ps.setString(parameterIndex, field.get(instance) == null ? null : field.get(instance).toString());
-                parameter = "'" + (field.get(instance) == null ? "" : field.get(instance).toString()) + "'";
-            }break;
-            case "date": {};
-            case "timestamp": {
-                Object o = field.get(instance);
-                if (null==o) {
-                    ps.setObject(parameterIndex, null);
-                    parameter = "null";
-                } else{
-                    java.util.Date date = (java.util.Date) o;
-                    ps.setTimestamp(parameterIndex, new Timestamp(date.getTime()));
-                    if("date".equals(property.simpleTypeName)){
-                        synchronized (simpleDateFormat){
-                            parameter = "'"+simpleDateFormat.format(date)+"'";
-                        }
-                    }
-                    if("timestamp".equals(property.simpleTypeName)){
-                        synchronized (simpleDateTimeFormat){
-                            parameter = "'"+simpleDateTimeFormat.format(date)+"'";
-                        }
-                    }
-                }
-            }break;
-            case "localdate": {
-                Object o = field.get(instance);
-                if(null==o){
-                    ps.setObject(parameterIndex, null);
-                    parameter = "null";
+            case "java.lang.String": {
+                if(null!=property&&Types.NCHAR==property.singleTypeFieldMapping.types){
+                    ps.setNString(parameterIndex, (String) parameter);
                 }else{
-                    ps.setObject(parameterIndex, o);
-                    LocalDate localDate = (LocalDate) o;
-                    parameter = "'"+dateFormatter.format(localDate)+"'";
+                    ps.setString(parameterIndex, (String) parameter);
                 }
+                parameterSQL = "'"+parameter.toString()+"'";
             }break;
-            case "localdatetime": {
-                Object o = field.get(instance);
-                if(null==o){
-                    ps.setObject(parameterIndex, null);
-                    parameter = "null";
+            case "java.util.Date": {
+                java.util.Date date = (java.util.Date) parameter;
+                ps.setDate(parameterIndex,new Date(date.getTime()));
+                parameterSQL = "'"+simpleDateFormat.format(date)+"'";
+            }break;
+            case "java.sql.Date": {
+                Date date = (Date) parameter;
+                ps.setDate(parameterIndex, (Date) parameter);
+                parameterSQL = "'"+simpleDateFormat.format(date)+"'";
+            }break;
+            case "java.sql.Time": {
+                Time time = (Time) parameter;
+                ps.setTime(parameterIndex, time);
+                parameterSQL = "'"+simpleTimeFormat.format(time)+"'";
+            }break;
+            case "java.sql.Timestamp": {
+                Timestamp timestamp = (Timestamp) parameter;
+                ps.setTimestamp(parameterIndex, timestamp);
+                parameterSQL = "'"+simpleDateTimeFormat.format(timestamp)+"'";
+            }break;
+            case "java.time.LocalDate": {
+                LocalDate localDate = (LocalDate) parameter;
+                ps.setObject(parameterIndex,localDate);
+                parameterSQL = "'"+localDate.format(dateFormatter)+"'";
+            }break;
+            case "java.time.LocalDateTime": {
+                LocalDateTime localDateTime = (LocalDateTime) parameter;
+                ps.setObject(parameterIndex,localDateTime);
+                parameterSQL = "'"+localDateTime.format(dateTimeFormatter)+"'";
+            }break;
+            case "java.sql.Array": {
+                ps.setArray(parameterIndex, (Array) parameter);
+            }break;
+            case "java.math.BigDecimal": {
+                ps.setBigDecimal(parameterIndex, (BigDecimal) parameter);
+            }break;
+            case "java.sql.Blob": {
+                ps.setBlob(parameterIndex,(Blob) parameter);
+            }break;
+            case "java.sql.Clob": {
+                ps.setClob(parameterIndex,(Clob) parameter);
+            }break;
+            case "java.sql.NClob": {
+                ps.setNClob(parameterIndex,(NClob) parameter);
+            }break;
+            case "java.sql.Ref": {
+                ps.setRef(parameterIndex,(Ref) parameter);
+            }break;
+            case "java.net.URL": {
+                ps.setURL(parameterIndex,(URL) parameter);
+            }break;
+            case "java.sql.RowId": {
+                ps.setRowId(parameterIndex,(RowId) parameter);
+            }break;
+            case "java.sql.SQLXML": {
+                ps.setSQLXML(parameterIndex,(SQLXML) parameter);
+            }break;
+            case "java.io.InputStream": {
+                if(null==property){
+                    ps.setBinaryStream(parameterIndex, (InputStream) parameter);
                 }else{
-                    ps.setObject(parameterIndex, o);
-                    LocalDateTime localDate = (LocalDateTime) o;
-                    parameter = "'"+dateTimeFormatter.format(localDate)+"'";
+                    switch(property.singleTypeFieldMapping.types){
+                        case Types.BLOB:{
+                            ps.setBinaryStream(parameterIndex, (InputStream) parameter);
+                        }break;
+                        case Types.CLOB:{
+                            ps.setAsciiStream(parameterIndex, (InputStream) parameter);
+                        }break;
+                    }
                 }
             }break;
-            default: {
-                ps.setObject(parameterIndex, field.get(instance));
-                parameter = "'" + field.get(instance) + "'";
+            case "java.io.Reader": {
+                if(null==property){
+                    ps.setCharacterStream(parameterIndex, (Reader) parameter);
+                }else{
+                    switch(property.singleTypeFieldMapping.types){
+                        case Types.CLOB:{
+                            ps.setCharacterStream(parameterIndex, (Reader) parameter);
+                        }break;
+                        case Types.NCLOB:{
+                            ps.setNCharacterStream(parameterIndex, (Reader) parameter);
+                        }break;
+                    }
+                }
+            }break;
+            default:{
+                ps.setObject(parameterIndex,parameter);
             }
         }
-        replaceFirst(sqlBuilder,parameter);
+        return parameterSQL;
     }
 
     /**替换SQL语句的第一个占位符*/

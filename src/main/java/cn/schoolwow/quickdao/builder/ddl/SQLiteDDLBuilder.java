@@ -15,7 +15,6 @@ import java.util.List;
 public class SQLiteDDLBuilder extends AbstractDDLBuilder {
     public SQLiteDDLBuilder(QuickDAOConfig quickDAOConfig) {
         super(quickDAOConfig);
-        fieldMapping.put("long", "INTEGER");
     }
 
     @Override

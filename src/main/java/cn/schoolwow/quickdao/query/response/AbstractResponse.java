@@ -1,7 +1,10 @@
 package cn.schoolwow.quickdao.query.response;
 
-import cn.schoolwow.quickdao.domain.*;
+import cn.schoolwow.quickdao.domain.PageVo;
+import cn.schoolwow.quickdao.domain.Query;
+import cn.schoolwow.quickdao.domain.SubQuery;
 import cn.schoolwow.quickdao.exception.SQLRuntimeException;
+import cn.schoolwow.quickdao.util.QuickDAOUtil;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import org.slf4j.Logger;
@@ -12,12 +15,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
-import java.time.Instant;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.ZoneId;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 
 public class AbstractResponse<T> implements Response<T>{
@@ -208,7 +206,7 @@ public class AbstractResponse<T> implements Response<T>{
                 }
             }else{
                 while (resultSet.next()) {
-                    JSONObject o = getObject(query.entity, query.tableAliasName, resultSet);
+                    JSONObject o = QuickDAOUtil.getObject(query.entity, query.tableAliasName, resultSet);
                     if(query.compositField){
                         getCompositObject(resultSet,o);
                     }
@@ -235,73 +233,16 @@ public class AbstractResponse<T> implements Response<T>{
     }
 
     /**
-     * 获取子对象属性值
-     */
-    public static JSONObject getObject(Entity entity, String tableAliasName, ResultSet resultSet) throws SQLException {
-        JSONObject subObject = new JSONObject(true);
-        for (Property property : entity.properties) {
-            String columnName = tableAliasName + "_" + property.column;
-            String key = property.name==null?property.column:property.name;
-            if(null==property.simpleTypeName){
-                subObject.put(key, resultSet.getString(columnName));
-                continue;
-            }
-            switch (property.simpleTypeName) {
-                case "boolean": {
-                    subObject.put(key, resultSet.getBoolean(columnName));
-                }
-                break;
-                case "int":
-                case "integer": {
-                    subObject.put(key, resultSet.getInt(columnName));
-                }
-                break;
-                case "float": {
-                    subObject.put(key, resultSet.getFloat(columnName));
-                }
-                break;
-                case "long": {
-                    subObject.put(key, resultSet.getLong(columnName));
-                }
-                break;
-                case "double": {
-                    subObject.put(key, resultSet.getDouble(columnName));
-                }
-                break;
-                case "string": {
-                    subObject.put(key, resultSet.getString(columnName));
-                }
-                break;
-                case "localdate": {
-                    Date date = resultSet.getTimestamp(columnName);
-                    if(null!=date){
-                        LocalDate localDate = Instant.ofEpochMilli(date.getTime()).atZone(ZoneId.systemDefault()).toLocalDate();
-                        subObject.put(key, localDate);
-                    }
-                }
-                break;
-                case "localdatetime": {
-                    Date date = resultSet.getTimestamp(columnName);
-                    if(null!=date){
-                        LocalDateTime localDateTime = Instant.ofEpochMilli(date.getTime()).atZone(ZoneId.systemDefault()).toLocalDateTime();
-                        subObject.put(key, localDateTime);
-                    }
-                }
-                break;
-                default: {
-                    subObject.put(key, resultSet.getObject(columnName));
-                }
-            }
-        }
-        return subObject;
-    }
-
+     * 获取复杂对象
+     * @param resultSet 结果集
+     * @param o 复杂对象
+     * */
     private void getCompositObject(ResultSet resultSet, JSONObject o) throws SQLException {
         for (SubQuery subQuery : query.subQueryList) {
             if(null==subQuery.compositField||subQuery.compositField.isEmpty()) {
                 continue;
             }
-            JSONObject subObject = getObject(subQuery.entity, subQuery.tableAliasName, resultSet);
+            JSONObject subObject = QuickDAOUtil.getObject(subQuery.entity, subQuery.tableAliasName, resultSet);
             SubQuery parentSubQuery = subQuery.parentSubQuery;
             if (parentSubQuery == null) {
                 o.put(subQuery.compositField, subObject);

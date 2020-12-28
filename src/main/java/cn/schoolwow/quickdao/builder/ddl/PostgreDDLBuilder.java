@@ -16,42 +16,67 @@ import java.util.List;
 public class PostgreDDLBuilder extends AbstractDDLBuilder {
     public PostgreDDLBuilder(QuickDAOConfig quickDAOConfig){
         super(quickDAOConfig);
-        fieldMapping.put("byte", "smallint");
-        fieldMapping.put("date", "timestamp");
-        fieldMapping.put("calendar", "timestamp");
-        fieldMapping.put("localdate", "timestamp");
-        fieldMapping.put("localdatetime", "timestamp");
-        fieldMapping.put("float", "real");
-        fieldMapping.put("double", "double precision");
     }
 
     @Override
     public List<Entity> getDatabaseEntity() throws SQLException {
+        List<Entity> entityList = new ArrayList<>();
         PreparedStatement tablePs = connection.prepareStatement("select tablename from pg_tables where schemaname='public';");
         ResultSet tableRs = tablePs.executeQuery();
-        List<Entity> entityList = new ArrayList<>();
         while (tableRs.next()) {
             Entity entity = new Entity();
-            entity.tableName = tableRs.getString(1);
-
+            entity.tableName = tableRs.getString("tablename");
             List<Property> propertyList = new ArrayList<>();
             //获取列
             {
-                ResultSet propertiesRs = connection.prepareStatement("select column_name,column_default,is_nullable,udt_name from information_schema.columns where table_name = '" + entity.tableName + "'").executeQuery();
+                ResultSet propertiesRs = connection.prepareStatement("select ordinal_position,column_name,column_default,is_nullable,udt_name,character_maximum_length from information_schema.columns where table_name = '" + entity.tableName + "'").executeQuery();
                 while (propertiesRs.next()) {
                     Property property = new Property();
                     property.column = propertiesRs.getString("column_name");
                     property.columnType = propertiesRs.getString("udt_name");
+                    if(null!=propertiesRs.getString("character_maximum_length")){
+                        property.columnType += "("+propertiesRs.getString("character_maximum_length")+")";
+                    }
                     property.notNull = "NO".equals(propertiesRs.getString("is_nullable"));
                     if (null != propertiesRs.getString("column_default")) {
                         property.defaultValue = propertiesRs.getString("column_default");
-                        if(property.defaultValue.contains("nextval")){
+                    }
+                    property.position = propertiesRs.getInt("ordinal_position");
+                    propertyList.add(property);
+                }
+                propertiesRs.close();
+            }
+            //获取主键约束
+            {
+                ResultSet primaryKeyRs = connection.prepareStatement("select conkey from pg_constraint join pg_class on pg_class.oid = pg_constraint.conrelid where contype = 'p' and relname = '" + entity.tableName + "'").executeQuery();
+                while (primaryKeyRs.next()) {
+                    String conkey = primaryKeyRs.getString("conkey");
+                    for(Property property:propertyList){
+                        if(conkey.contains(property.position+"")){
                             property.id = true;
                             property.strategy = IdStrategy.AutoIncrement;
                         }
                     }
-                    propertyList.add(property);
                 }
+                primaryKeyRs.close();
+            }
+            //获取注释
+            {
+                ResultSet commentRs = connection.prepareStatement("select objsubid,description from pg_description join pg_class on pg_description.objoid = pg_class.oid where relname = '" + entity.tableName + "'").executeQuery();
+                while (commentRs.next()) {
+                    int position = commentRs.getInt("objsubid");
+                    if(position==0){
+                        entity.comment = commentRs.getString("description");
+                    }else{
+                        for(Property property:propertyList){
+                            if(property.position==position){
+                                property.comment = commentRs.getString("description");
+                                break;
+                            }
+                        }
+                    }
+                }
+                commentRs.close();
             }
             //获取索引信息
             updateTableIndex("select indexdef from pg_indexes where tablename='"+entity.tableName+"';",propertyList);
@@ -59,13 +84,12 @@ public class PostgreDDLBuilder extends AbstractDDLBuilder {
             entityList.add(entity);
         }
         tableRs.close();
-        tablePs.close();
         return entityList;
     }
 
     @Override
     public String getAutoIncrementSQL(Property property) {
-        return property.column + " SERIAL unique";
+        return property.column + " SERIAL UNIQUE PRIMARY KEY";
     }
 
     @Override

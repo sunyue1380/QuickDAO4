@@ -16,9 +16,6 @@ public class H2DDLBuilder extends MySQLDDLBuilder {
 
     public H2DDLBuilder(QuickDAOConfig quickDAOConfig) {
         super(quickDAOConfig);
-        fieldMapping.put("long", "BIGINT");
-        fieldMapping.put("float", "REAL");
-        fieldMapping.put("double", "DOUBLE");
     }
 
     @Override

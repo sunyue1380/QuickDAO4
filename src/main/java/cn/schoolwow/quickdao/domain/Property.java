@@ -20,21 +20,25 @@ public class Property {
      */
     public String column;
     /**
-     * 自定义类型
+     * 数据库类型
      */
     public String columnType;
-    /**
-     * 类型名
-     */
-    public String simpleTypeName;
     /**
      * 类名
      */
     public String className;
     /**
+     * 类型字段映射
+     */
+    public SingleTypeFieldMapping singleTypeFieldMapping;
+    /**
      * 属性名
      */
     public String name;
+    /**
+     * 属性所在位置
+     */
+    public int position;
     /**
      * 是否建立索引
      */

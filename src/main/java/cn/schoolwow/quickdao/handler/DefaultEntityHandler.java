@@ -95,9 +95,12 @@ public class DefaultEntityHandler implements EntityHandler{
                 }
                 if(null!=field.getAnnotation(ColumnType.class)){
                     property.columnType = field.getAnnotation(ColumnType.class).value();
+                    property.singleTypeFieldMapping = quickDAOConfig.database.typeFieldMapping.getSingleTypeFieldMapping(property.columnType);
+                }else{
+                    property.singleTypeFieldMapping = quickDAOConfig.database.typeFieldMapping.getSingleTypeFieldMapping(field.getType());
+                    property.columnType = property.singleTypeFieldMapping.columnTypeDetail;
                 }
                 property.name = field.getName();
-                property.simpleTypeName = field.getType().getSimpleName().toLowerCase();
                 property.className = field.getType().getName();
                 Constraint constraint = field.getDeclaredAnnotation(Constraint.class);
                 if(null!=constraint){
@@ -195,29 +198,6 @@ public class DefaultEntityHandler implements EntityHandler{
         }
         quickDAOConfig.autoCreateTable = false;
         quickDAOConfig.autoCreateProperty = false;
-        //数据库类型对应表
-        Map<String,String> mapping = new HashMap<>();
-        mapping.put("varchar","String");
-        mapping.put("longvarchar","String");
-        mapping.put("text","String");
-        mapping.put("mediumtext","String");
-        mapping.put("longtext","String");
-        mapping.put("boolean","boolean");
-        mapping.put("tinyint","byte");
-        mapping.put("blob","byte[]");
-        mapping.put("char","String");
-        mapping.put("smallint","short");
-        mapping.put("int","int");
-        mapping.put("integer","int");
-        mapping.put("bigint","long");
-        mapping.put("float","float");
-        mapping.put("double","double");
-        mapping.put("decimal","double");
-        mapping.put("date","java.util.Date");
-        mapping.put("time","java.util.Time");
-        mapping.put("datetime","java.util.Date");
-        mapping.put("timestamp","java.sql.Timestamp");
-
         List<Entity> dbEntityList;
         if(null==tableNames||tableNames.length==0){
             dbEntityList = quickDAOConfig.dbEntityList;
@@ -239,6 +219,12 @@ public class DefaultEntityHandler implements EntityHandler{
             dbEntity.className = dbEntity.className.toUpperCase().charAt(0)+dbEntity.className.substring(1);
 
             Path target = Paths.get(sourcePath+"/"+ packageName.replace(".","/") + "/" + dbEntity.className+".java");
+            try {
+                Files.createDirectories(target.getParent());
+            } catch (IOException e) {
+                logger.warn("[创建文件夹失败]原因:{},文件夹路径:{}",e.getMessage(), target.getParent());
+                continue;
+            }
             if(Files.exists(target)){
                 logger.warn("[实体类文件已经存在]{}",target);
                 continue;
@@ -271,7 +257,7 @@ public class DefaultEntityHandler implements EntityHandler{
                 if(property.columnType.contains("(")){
                     property.columnType = property.columnType.substring(0,property.columnType.indexOf("("));
                 }
-                property.className = mapping.get(property.columnType.toLowerCase());
+                property.className = property.singleTypeFieldMapping.clazzList[0].getName();
                 property.name = underline2Camel(property.column);
                 builder.append("\tprivate "+property.className+" "+property.name+";\n\n");
             }

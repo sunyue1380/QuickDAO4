@@ -16,10 +16,6 @@ public class SQLServerDDLBuilder extends AbstractDDLBuilder {
 
     public SQLServerDDLBuilder(QuickDAOConfig quickDAOConfig) {
         super(quickDAOConfig);
-        fieldMapping.put("boolean","bit");
-        fieldMapping.put("float", "float(24)");
-        fieldMapping.put("double", "float(53)");
-        fieldMapping.put("date", "datetime");
     }
 
     @Override

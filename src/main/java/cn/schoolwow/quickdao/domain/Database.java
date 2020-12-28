@@ -4,6 +4,7 @@ import cn.schoolwow.quickdao.builder.ddl.*;
 import cn.schoolwow.quickdao.builder.dql.AbstractDQLBuilder;
 import cn.schoolwow.quickdao.builder.dql.PostgreDQLBuilder;
 import cn.schoolwow.quickdao.builder.dql.SQLiteDQLBuilder;
+import cn.schoolwow.quickdao.builder.typeFieldMapping.*;
 import cn.schoolwow.quickdao.query.condition.AbstractCondition;
 import cn.schoolwow.quickdao.query.condition.Condition;
 import cn.schoolwow.quickdao.query.condition.PostgreCondition;
@@ -14,11 +15,17 @@ import cn.schoolwow.quickdao.query.subCondition.SubCondition;
 
 /**数据库类型*/
 public enum Database {
-    Mysql,
-    H2,
-    SQLite,
-    Postgre,
-    SQLServer;
+    Mysql(new MySQLTypeFieldMapping()),
+    H2(new H2TypeFieldMapping()),
+    SQLite(new SQLiteTypeFieldMapping()),
+    Postgre(new PostgreTypeFieldMapping()),
+    SQLServer(new SQLServerTypeFieldMapping());
+
+    public TypeFieldMapping typeFieldMapping;
+
+    Database(TypeFieldMapping typeFieldMapping) {
+        this.typeFieldMapping = typeFieldMapping;
+    }
 
     /**返回注释语句*/
     public String comment(String comment){

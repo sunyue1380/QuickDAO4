@@ -17,11 +17,6 @@ import java.util.List;
 public class MySQLDDLBuilder extends AbstractDDLBuilder {
     public MySQLDDLBuilder(QuickDAOConfig quickDAOConfig) {
         super(quickDAOConfig);
-        fieldMapping.put("char", "char(4)");
-        fieldMapping.put("integer", "integer(11)");
-        fieldMapping.put("long", "bigint");
-        fieldMapping.put("float", "float(4,2)");
-        fieldMapping.put("double", "double(5,2)");
     }
 
     public String getDatabaseName() throws SQLException{

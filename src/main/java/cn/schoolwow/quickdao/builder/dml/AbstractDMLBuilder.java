@@ -14,6 +14,7 @@ import java.sql.Timestamp;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Calendar;
+import java.util.Date;
 
 public class  AbstractDMLBuilder extends AbstractSQLBuilder implements DMLBuilder {
 
@@ -289,12 +290,12 @@ public class  AbstractDMLBuilder extends AbstractSQLBuilder implements DMLBuilde
             if(property.updateAt){
                 setCurrentDateTime(property,instance);
             }
-            setParameter(instance, property, preparedStatement, parameterIndex,sqlBuilder);
+            setParameter(instance, property, preparedStatement, parameterIndex, sqlBuilder);
             parameterIndex++;
         }
         for (Property property : entity.properties) {
             if (property.unique&&!property.id) {
-                setParameter(instance, property, preparedStatement, parameterIndex,sqlBuilder);
+                setParameter(instance, property, preparedStatement, parameterIndex, sqlBuilder);
                 parameterIndex++;
             }
         }
@@ -358,17 +359,25 @@ public class  AbstractDMLBuilder extends AbstractSQLBuilder implements DMLBuilde
      * @param instance 实例
      * */
     private void setCurrentDateTime(Property property, Object instance) throws Exception {
-        Field field = property.entity.clazz.getDeclaredField(property.name);
-        field.setAccessible(true);
-        switch(property.simpleTypeName){
-            case "date":{field.set(instance,field.getType().getConstructor(long.class).newInstance(System.currentTimeMillis()));}break;
-            case "timestamp":{field.set(instance,new Timestamp(System.currentTimeMillis()));}break;
-            case "calendar":{field.set(instance, Calendar.getInstance());}break;
-            case "localdate":{field.set(instance, LocalDate.now());}break;
-            case "localdatetime":{field.set(instance, LocalDateTime.now());}break;
+        Field field = getFieldFromInstance(instance,property);
+        switch(property.className){
+            case "java.util.Date":{
+                field.set(instance,new Date(System.currentTimeMillis()));
+            }break;
+            case "java.sql.Date":{
+                field.set(instance,new java.sql.Date(System.currentTimeMillis()));
+            }break;
+            case "java.sql.Timestamp":{
+                field.set(instance,new Timestamp(System.currentTimeMillis()));
+            }break;
+            case "java.util.Calendar":{
+                field.set(instance, Calendar.getInstance());
+            }break;
+            case "java.time.LocalDate":{field.set(instance, LocalDate.now());}break;
+            case "java.time.LocalDateTime":{field.set(instance, LocalDateTime.now());}break;
             default:{
-                logger.warn("[不支持的日期类型]{},目前支持的类型为Date,Calendar,LocalDate,LocalDateTime!",property.simpleTypeName);
-            };break;
+                throw new IllegalArgumentException("不支持该日期类型,目前支持的类型为Date,Calendar,LocalDate,LocalDateTime!当前类型:"+property.className);
+            }
         }
     }
 }

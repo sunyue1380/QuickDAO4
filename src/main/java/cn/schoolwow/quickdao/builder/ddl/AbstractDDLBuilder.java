@@ -13,32 +13,15 @@ import org.slf4j.MDC;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 
 public abstract class AbstractDDLBuilder extends AbstractSQLBuilder implements DDLBuilder {
     protected Logger logger = LoggerFactory.getLogger(DDLBuilder.class);
-    /**字段类型映射*/
-    protected final Map<String, String> fieldMapping = new HashMap<String, String>();
 
     public AbstractDDLBuilder(QuickDAOConfig quickDAOConfig) {
         super(quickDAOConfig);
-        quickDAOConfig.fieldMapping = fieldMapping;
-        fieldMapping.put("string", "varchar(255)");
-        fieldMapping.put("boolean", "boolean");
-        fieldMapping.put("byte", "tinyint");
-        fieldMapping.put("char", "char");
-        fieldMapping.put("short", "smallint");
-        fieldMapping.put("int", "integer");
-        fieldMapping.put("integer", "integer");
-        fieldMapping.put("long", "bigint");
-        fieldMapping.put("float", "float");
-        fieldMapping.put("double", "double");
-        fieldMapping.put("date", "datetime");
-        fieldMapping.put("time", "time");
-        fieldMapping.put("calendar", "datetime");
-        fieldMapping.put("localdate", "date");
-        fieldMapping.put("localdatetime", "datetime");
-        fieldMapping.put("timestamp", "timestamp");
     }
 
     public String getDatabaseName() throws SQLException{
@@ -189,16 +172,12 @@ public abstract class AbstractDDLBuilder extends AbstractSQLBuilder implements D
 
     @Override
     public void automaticCreateTableAndField() throws SQLException {
-//        quickDAOConfig.databaseName = getDatabaseName();
         //确定需要新增的表和更新的表
         Collection<Entity> entityList = quickDAOConfig.entityMap.values();
         List<Entity> newEntityList = new ArrayList<>();
         List<Entity> updateEntityList = new ArrayList<>();
         for (Entity entity : entityList) {
             for(Property property:entity.properties){
-                if(null==property.columnType||property.columnType.isEmpty()){
-                    property.columnType = fieldMapping.get(property.simpleTypeName);
-                }
                 if(null!=property.check&&!property.check.isEmpty()){
                     property.check = property.check.replace("#{"+property.name+"}",quickDAOConfig.database.escape(property.column));
                     if(!property.check.contains("(")){
@@ -255,6 +234,7 @@ public abstract class AbstractDDLBuilder extends AbstractSQLBuilder implements D
             dbEntity.clazz = JSONObject.class;
             for (Property property : dbEntity.properties) {
                 property.entity = dbEntity;
+                property.singleTypeFieldMapping = quickDAOConfig.database.typeFieldMapping.getSingleTypeFieldMapping(property.columnType);
             }
         }
         quickDAOConfig.dbEntityList = dbEntityList;

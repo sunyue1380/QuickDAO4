@@ -108,6 +108,11 @@ public class AbstractDAOOperation implements DAOOperation{
     }
 
     @Override
+    public void generateEntityFile(String sourcePath) {
+        quickDAOConfig.entityHandler.generateEntityFile(sourcePath,null);
+    }
+
+    @Override
     public void generateEntityFile(String sourcePath, String[] tableNames) {
         quickDAOConfig.entityHandler.generateEntityFile(sourcePath,tableNames);
     }
