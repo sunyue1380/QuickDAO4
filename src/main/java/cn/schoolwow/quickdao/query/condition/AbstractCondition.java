@@ -123,6 +123,16 @@ public class AbstractCondition<T> implements Condition<T>, Serializable,Cloneabl
     }
 
     @Override
+    public Condition<T> addNotLikeQuery(String field, Object value) {
+        if (value == null || value.toString().equals("")) {
+            return this;
+        }
+        query.whereBuilder.append("(" + getQueryColumnNameByFieldName(field) + " not like ?) and ");
+        query.parameterList.add(value);
+        return this;
+    }
+
+    @Override
     public Condition<T> addQuery(String field, Object value) {
         addQuery(field, "=", value);
         return this;

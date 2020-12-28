@@ -153,6 +153,13 @@ public interface Condition<T> extends Serializable {
     Condition<T> addLikeQuery(String field, Object value);
 
     /**
+     * 添加Not Like查询
+     * @param field 字段名
+     * @param value 字段值
+     */
+    Condition<T> addNotLikeQuery(String field, Object value);
+
+    /**
      * 添加字段查询
      * @param field 字段名
      * @param value 字段值

@@ -53,6 +53,7 @@ public class DQLTest extends H2Test {
                     .addNotInQuery("lastName","3","4")
                     .addBetweenQuery("id",1,2)
                     .addLikeQuery("lastName","%a%")
+                    .addNotLikeQuery("lastName","b%")
                     .addQuery("lastName","=","a")
                     .addQuery("updatedAt","<=",new Date())
                     .execute();
