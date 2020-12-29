@@ -11,10 +11,10 @@ import cn.schoolwow.quickdao.h2.entity.DownloadTask;
 import cn.schoolwow.quickdao.h2.entity.Order;
 import cn.schoolwow.quickdao.h2.entity.Person;
 import cn.schoolwow.quickdao.h2.entity.TypeEntity;
+import com.alibaba.fastjson.JSONArray;
 import org.junit.Assert;
 import org.junit.Test;
 
-import java.io.File;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.nio.file.*;
@@ -218,5 +218,10 @@ public class ConfigTest extends H2Test {
         typeEntity.setReaderType(null);
         int effect = dao.insert(typeEntity);
         Assert.assertEquals(1,effect);
+
+        JSONArray array = dao.query("TYPE_ENTITY")
+                .execute()
+                .getArray();
+        Assert.assertEquals(1,array.size());
     }
 }

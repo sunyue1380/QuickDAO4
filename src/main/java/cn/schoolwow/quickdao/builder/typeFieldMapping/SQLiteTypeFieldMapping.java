@@ -49,7 +49,7 @@ public class SQLiteTypeFieldMapping extends AbstractTypeFieldMapping {
                 new SingleTypeFieldMapping(Types.DECIMAL, "DECIMAL", true, BigDecimal.class),
                 new SingleTypeFieldMapping(Types.BOOLEAN, "BOOLEAN", boolean.class, Boolean.class),
                 new SingleTypeFieldMapping(Types.DATE, "DATE", java.sql.Date.class, LocalDate.class),
-                new SingleTypeFieldMapping(Types.DATE, "DATETIME", "DECIMAL(10,5)", Date.class, Timestamp.class, LocalDateTime.class)
+                new SingleTypeFieldMapping(Types.DATE, "DATETIME", Date.class, Timestamp.class, LocalDateTime.class)
         );
     }
 }

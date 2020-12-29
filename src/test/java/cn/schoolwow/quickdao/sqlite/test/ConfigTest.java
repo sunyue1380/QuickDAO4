@@ -11,6 +11,7 @@ import cn.schoolwow.quickdao.sqlite.entity.DownloadTask;
 import cn.schoolwow.quickdao.sqlite.entity.Order;
 import cn.schoolwow.quickdao.sqlite.entity.Person;
 import cn.schoolwow.quickdao.sqlite.entity.TypeEntity;
+import com.alibaba.fastjson.JSONArray;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -179,5 +180,10 @@ public class ConfigTest extends SQLiteTest {
         typeEntity.setReaderType(null);
         int effect = dao.insert(typeEntity);
         Assert.assertEquals(1,effect);
+
+        JSONArray array = dao.query("type_entity")
+                .execute()
+                .getArray();
+        Assert.assertEquals(1,array.size());
     }
 }

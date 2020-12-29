@@ -5,7 +5,6 @@ import cn.schoolwow.quickdao.dao.sql.AbstractSQLDAO;
 import cn.schoolwow.quickdao.domain.Entity;
 import cn.schoolwow.quickdao.domain.QuickDAOConfig;
 import cn.schoolwow.quickdao.exception.SQLRuntimeException;
-import cn.schoolwow.quickdao.util.QuickDAOUtil;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import org.slf4j.MDC;
@@ -51,7 +50,7 @@ public class AbstractDQLDAO extends AbstractSQLDAO implements DQLDAO {
             ResultSet resultSet = ps.executeQuery();
             JSONArray array = new JSONArray();
             while(resultSet.next()){
-                array.add(QuickDAOUtil.getObject(entity, "t",resultSet));
+                array.add(quickDAOConfig.database.getObject(entity, "t",resultSet));
             }
             resultSet.close();
             ps.close();
@@ -84,7 +83,7 @@ public class AbstractDQLDAO extends AbstractSQLDAO implements DQLDAO {
             ResultSet resultSet = ps.executeQuery();
             JSONArray array = new JSONArray();
             while(resultSet.next()){
-                array.add(QuickDAOUtil.getObject(dbEntity, "t",resultSet));
+                array.add(quickDAOConfig.database.getObject(dbEntity, "t",resultSet));
             }
             resultSet.close();
             ps.close();

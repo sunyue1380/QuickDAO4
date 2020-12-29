@@ -235,6 +235,7 @@ public abstract class AbstractDDLBuilder extends AbstractSQLBuilder implements D
             for (Property property : dbEntity.properties) {
                 property.entity = dbEntity;
                 property.singleTypeFieldMapping = quickDAOConfig.database.typeFieldMapping.getSingleTypeFieldMapping(property.columnType);
+                property.className = property.singleTypeFieldMapping.clazzList[0].getName();
             }
         }
         quickDAOConfig.dbEntityList = dbEntityList;

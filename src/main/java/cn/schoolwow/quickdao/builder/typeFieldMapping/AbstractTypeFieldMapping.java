@@ -38,9 +38,12 @@ public class AbstractTypeFieldMapping implements TypeFieldMapping {
 
     @Override
     public SingleTypeFieldMapping getSingleTypeFieldMapping(String columnType) {
+        if(columnType.contains("(")){
+            columnType = columnType.substring(0,columnType.indexOf("("));
+        }
         columnType = columnType.toUpperCase();
         for (SingleTypeFieldMapping singleTypeFieldMapping : typeFieldMappingList) {
-            if (columnType.contains(singleTypeFieldMapping.columnType)) {
+            if (columnType.equals(singleTypeFieldMapping.columnType)) {
                 return singleTypeFieldMapping;
             }
         }

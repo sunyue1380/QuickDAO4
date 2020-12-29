@@ -11,6 +11,7 @@ import cn.schoolwow.quickdao.mysql.entity.DownloadTask;
 import cn.schoolwow.quickdao.mysql.entity.Order;
 import cn.schoolwow.quickdao.mysql.entity.Person;
 import cn.schoolwow.quickdao.mysql.entity.TypeEntity;
+import com.alibaba.fastjson.JSONArray;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -217,5 +218,10 @@ public class ConfigTest extends MySQLTest {
         typeEntity.setReaderType(null);
         int effect = dao.insert(typeEntity);
         Assert.assertEquals(1,effect);
+
+        JSONArray array = dao.query("type_entity")
+                .execute()
+                .getArray();
+        Assert.assertEquals(1,array.size());
     }
 }

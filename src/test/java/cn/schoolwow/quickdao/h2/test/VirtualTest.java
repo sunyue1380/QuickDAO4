@@ -19,7 +19,7 @@ public class VirtualTest extends H2Test {
     public void testDML(){
         {
             int effect = dao.query("PRODUCT")
-                    .addInsert("id",System.currentTimeMillis())
+                    .addInsert("id",System.nanoTime())
                     .addInsert("name","洗衣机")
                     .addInsert("type","家电")
                     .addInsert("price",1600)
@@ -30,7 +30,7 @@ public class VirtualTest extends H2Test {
         }
         {
             JSONObject product = new JSONObject();
-            product.put("ID",System.currentTimeMillis());
+            product.put("ID",System.nanoTime());
             product.put("NAME","双肩背包");
             product.put("TYPE","箱包");
             product.put("PRICE",100);

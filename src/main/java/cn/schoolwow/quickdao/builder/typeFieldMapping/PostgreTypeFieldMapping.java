@@ -30,8 +30,8 @@ public class PostgreTypeFieldMapping extends AbstractTypeFieldMapping {
                 new SingleTypeFieldMapping(Types.INTEGER, "INTEGER", true, int.class, Integer.class),
                 new SingleTypeFieldMapping(Types.BIGINT, "BIGINT", true, long.class, Long.class),
                 new SingleTypeFieldMapping(Types.BIGINT, "INT8",  long.class, Long.class),
-                new SingleTypeFieldMapping(Types.DECIMAL, "DECIMAL", true, float.class, Float.class),
-                new SingleTypeFieldMapping(Types.NUMERIC, "NUMERIC", float.class, Float.class),
+                new SingleTypeFieldMapping(Types.DECIMAL, "DECIMAL", true, float.class, Float.class, BigDecimal.class),
+                new SingleTypeFieldMapping(Types.NUMERIC, "NUMERIC", float.class, Float.class, BigDecimal.class),
                 new SingleTypeFieldMapping(Types.REAL, "REAL", float.class, Float.class),
                 new SingleTypeFieldMapping(Types.REAL, "FLOAT4", float.class, Float.class),
                 new SingleTypeFieldMapping(Types.DOUBLE, "DOUBLE PRECISION", true, double.class, Double.class),
@@ -42,8 +42,8 @@ public class PostgreTypeFieldMapping extends AbstractTypeFieldMapping {
                 new SingleTypeFieldMapping(Types.INTEGER, "SERIAL4", int.class, Integer.class),
                 new SingleTypeFieldMapping(Types.INTEGER, "BIGSERIAL", int.class, Integer.class),
                 new SingleTypeFieldMapping(Types.INTEGER, "SERIAL8", int.class, Integer.class),
-                //货币类型
-                new SingleTypeFieldMapping(Types.DECIMAL, "MONEY", BigDecimal.class),
+                //货币类型已经废弃掉
+                //new SingleTypeFieldMapping(Types.DECIMAL, "MONEY", String.class),
                 //字符串类型
                 new SingleTypeFieldMapping(Types.CHAR, "CHARACTER VARYING", String.class, Clob.class, InputStream.class, Reader.class),
                 new SingleTypeFieldMapping(Types.VARCHAR, "VARCHAR", "varchar(255)", true, String.class),

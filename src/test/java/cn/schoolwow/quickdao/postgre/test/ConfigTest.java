@@ -11,6 +11,7 @@ import cn.schoolwow.quickdao.postgre.entity.DownloadTask;
 import cn.schoolwow.quickdao.postgre.entity.Order;
 import cn.schoolwow.quickdao.postgre.entity.Person;
 import cn.schoolwow.quickdao.postgre.entity.TypeEntity;
+import com.alibaba.fastjson.JSONArray;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -213,5 +214,10 @@ public class ConfigTest extends PostgreLTest {
         typeEntity.setReaderType(null);
         int effect = dao.insert(typeEntity);
         Assert.assertEquals(1,effect);
+
+        JSONArray array = dao.query("type_entity")
+                .execute()
+                .getArray();
+        Assert.assertEquals(1,array.size());
     }
 }

@@ -4,7 +4,6 @@ import cn.schoolwow.quickdao.domain.PageVo;
 import cn.schoolwow.quickdao.domain.Query;
 import cn.schoolwow.quickdao.domain.SubQuery;
 import cn.schoolwow.quickdao.exception.SQLRuntimeException;
-import cn.schoolwow.quickdao.util.QuickDAOUtil;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import org.slf4j.Logger;
@@ -206,7 +205,7 @@ public class AbstractResponse<T> implements Response<T>{
                 }
             }else{
                 while (resultSet.next()) {
-                    JSONObject o = QuickDAOUtil.getObject(query.entity, query.tableAliasName, resultSet);
+                    JSONObject o = query.quickDAOConfig.database.getObject(query.entity, query.tableAliasName, resultSet);
                     if(query.compositField){
                         getCompositObject(resultSet,o);
                     }
@@ -242,7 +241,7 @@ public class AbstractResponse<T> implements Response<T>{
             if(null==subQuery.compositField||subQuery.compositField.isEmpty()) {
                 continue;
             }
-            JSONObject subObject = QuickDAOUtil.getObject(subQuery.entity, subQuery.tableAliasName, resultSet);
+            JSONObject subObject = query.quickDAOConfig.database.getObject(subQuery.entity, subQuery.tableAliasName, resultSet);
             SubQuery parentSubQuery = subQuery.parentSubQuery;
             if (parentSubQuery == null) {
                 o.put(subQuery.compositField, subObject);
