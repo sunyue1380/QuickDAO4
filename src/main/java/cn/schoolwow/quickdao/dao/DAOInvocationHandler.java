@@ -5,6 +5,7 @@ import cn.schoolwow.quickdao.dao.sql.ddl.AbstractDDLDAO;
 import cn.schoolwow.quickdao.dao.sql.ddl.DDLDAO;
 import cn.schoolwow.quickdao.dao.sql.dml.AbstractDMLDAO;
 import cn.schoolwow.quickdao.dao.sql.dql.AbstractDQLDAO;
+import cn.schoolwow.quickdao.domain.Database;
 import cn.schoolwow.quickdao.domain.Interceptor;
 import cn.schoolwow.quickdao.domain.QuickDAOConfig;
 import cn.schoolwow.quickdao.query.AbstractCompositQuery;
@@ -59,6 +60,9 @@ public class DAOInvocationHandler implements InvocationHandler {
         }else{
             Object result = null;
             try {
+                if(quickDAOConfig.database.equals(Database.SQLite)){
+                    quickDAOConfig.sqliteLock.lock();
+                }
                 instance.sqlBuilder.connection = quickDAOConfig.dataSource.getConnection();
                 long startTime = System.currentTimeMillis();
                 result = method.invoke(instance, args);
@@ -66,6 +70,9 @@ public class DAOInvocationHandler implements InvocationHandler {
                 if("DDLDAO".equals(interfaceName)){
                     DDLDAO ddldao = (DDLDAO) instance;
                     ddldao.refreshDbEntityList();
+                }
+                if(quickDAOConfig.database.equals(Database.SQLite)){
+                    quickDAOConfig.sqliteLock.unlock();
                 }
                 if (null != MDC.get("name")) {
                     if (null == MDC.get("count")) {

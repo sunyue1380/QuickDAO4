@@ -12,6 +12,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Predicate;
 
 /**数据源访问配置选项*/
@@ -109,6 +110,9 @@ public class QuickDAOConfig {
      * 拦截器
      * */
     public List<Interceptor> interceptorList = new ArrayList<>();
+
+    /**SQLite数据库写锁*/
+    public ReentrantLock sqliteLock = new ReentrantLock();
 
     /**根据类名获取实体类信息*/
     public Entity getEntityByClassName(String className){

@@ -129,6 +129,36 @@ public class AbstractDMLDAO extends AbstractSQLDAO implements DMLDAO{
     }
 
     @Override
+    public int insertIgnore(Object instance) {
+        if(null==instance){
+            return 0;
+        }
+        if(!exist(instance)){
+            return insert(instance);
+        }
+        return 0;
+    }
+
+    @Override
+    public int insertIgnore(Object[] instances) {
+        if(null==instances||instances.length==0){
+            return 0;
+        }
+        List insertList = new ArrayList();
+        for(Object instance:instances){
+            if(!exist(instance)){
+                insertList.add(instance);
+            }
+        }
+        return insert(insertList);
+    }
+
+    @Override
+    public int insertIgnore(Collection instanceCollection) {
+        return insertIgnore(instanceCollection.toArray(new Object[0]));
+    }
+
+    @Override
     public int insertBatch(Object[] instances) {
         if(null==instances||instances.length==0){
             return 0;

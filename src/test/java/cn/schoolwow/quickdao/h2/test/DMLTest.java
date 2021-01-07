@@ -40,6 +40,8 @@ public class DMLTest extends H2Test {
             person.setCity("Beijing");
             int effect = dao.insert(person);
             Assert.assertEquals(1, effect);
+            effect = dao.insertIgnore(person);
+            Assert.assertEquals(0, effect);
         }
         //批量插入
         {

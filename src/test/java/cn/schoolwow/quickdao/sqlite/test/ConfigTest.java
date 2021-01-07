@@ -23,6 +23,7 @@ import java.sql.Timestamp;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Date;
+import java.util.List;
 
 /**配置项测试*/
 public class ConfigTest extends SQLiteTest {
@@ -170,8 +171,6 @@ public class ConfigTest extends SQLiteTest {
         typeEntity.setDateType(new Date());
         typeEntity.setDateSQLType(new java.sql.Date(System.currentTimeMillis()));
         typeEntity.setTimestampType(new Timestamp(System.currentTimeMillis()));
-        typeEntity.setLocalDate(LocalDate.now());
-        typeEntity.setLocalDateTime(LocalDateTime.now());
         typeEntity.setBigDecimalType(new BigDecimal(0));
         typeEntity.setBlobType(null);
         typeEntity.setClobType(null);

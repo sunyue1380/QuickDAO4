@@ -19,10 +19,28 @@ public interface DMLDAO {
     int insert(Object[] instances);
 
     /**
-     * 插入对象集合
-     * @param instanceCollection 待保存对象集合
+     * 插入对象
+     * @param instanceCollection 插入对象集合
      */
     int insert(Collection instanceCollection);
+
+    /**
+     * 不存在则插入,存在则忽略
+     * @param instance 插入对象
+     */
+    int insertIgnore(Object instance);
+
+    /**
+     * 不存在则插入,存在则忽略
+     * @param instances 插入对象数组
+     */
+    int insertIgnore(Object[] instances);
+
+    /**
+     * 不存在则插入,存在则忽略
+     * @param instanceCollection 待保存对象集合
+     */
+    int insertIgnore(Collection instanceCollection);
 
     /**
      * 批量插入对象数组(不返回自增id)

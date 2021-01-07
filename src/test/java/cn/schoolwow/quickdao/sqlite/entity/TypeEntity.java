@@ -44,10 +44,6 @@ public class TypeEntity {
 
     private Timestamp timestampType;
 
-    private LocalDate localDate;
-
-    private LocalDateTime localDateTime;
-
     private BigDecimal bigDecimalType;
 
     private Blob blobType;
@@ -162,22 +158,6 @@ public class TypeEntity {
 
     public void setTimestampType(Timestamp timestampType) {
         this.timestampType = timestampType;
-    }
-
-    public LocalDate getLocalDate() {
-        return localDate;
-    }
-
-    public void setLocalDate(LocalDate localDate) {
-        this.localDate = localDate;
-    }
-
-    public LocalDateTime getLocalDateTime() {
-        return localDateTime;
-    }
-
-    public void setLocalDateTime(LocalDateTime localDateTime) {
-        this.localDateTime = localDateTime;
     }
 
     public BigDecimal getBigDecimalType() {
