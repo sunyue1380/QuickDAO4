@@ -47,7 +47,7 @@ public class ResponseInvocationHandler implements InvocationHandler {
             throw e.getTargetException();
         }finally {
             abstractResponse.query.parameterIndex = 1;
-            if(!abstractResponse.query.transaction){
+            if(!abstractResponse.query.transaction&&null!=abstractResponse.query.dqlBuilder.connection){
                 abstractResponse.query.dqlBuilder.connection.close();
             }
             MDC.clear();

@@ -147,7 +147,7 @@ public class AbstractResponse<T> implements Response<T>{
             JSONArray array = new JSONArray(query.dqlBuilder.getResultSetRowCount(query));
             ResultSet resultSet = ps.executeQuery();
             while (resultSet.next()) {
-                array.add(resultSet.getString(1));
+                array.add(resultSet.getObject(1));
             }
             resultSet.close();
             ps.close();

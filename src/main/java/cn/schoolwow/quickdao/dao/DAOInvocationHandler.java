@@ -94,7 +94,9 @@ public class DAOInvocationHandler implements InvocationHandler {
                 }
                 throw e.getTargetException();
             }finally {
-                instance.sqlBuilder.connection.close();
+                if(null!=instance.sqlBuilder.connection){
+                    instance.sqlBuilder.connection.close();
+                }
                 MDC.clear();
             }
         }
