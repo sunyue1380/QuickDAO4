@@ -200,12 +200,21 @@ public interface Condition<T> extends Serializable {
      * @param subQuery 子查询语句
      */
     Condition<T> addNotExistSubQuery(Condition subQuery);
+
     /**
      * 添加自定义字段,具体映射规则请看Condition类的JavaDoc注释
-     * @param fields 自定义查询列\
+     * @param fields 自定义查询列
      * @see Condition
      */
     Condition<T> addColumn(String... fields);
+
+    /**
+     * 添加自定义字段,返回指定类型
+     * @param field 自定义查询列
+     * @param type 返回列类型
+     * @see Condition
+     */
+    Condition<T> addColumnType(String field, Class type);
 
     /**
      * 添加select子查询

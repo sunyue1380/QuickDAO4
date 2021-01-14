@@ -199,7 +199,12 @@ public class AbstractResponse<T> implements Response<T>{
                 while (resultSet.next()) {
                     JSONObject o = new JSONObject(true);
                     for (int i = 1; i <= columnNames.length; i++) {
-                        o.put(columnNames[i - 1], resultSet.getString(i));
+                        o.put(columnNames[i - 1], resultSet.getObject(i));
+                        Class type = query.columnTypeMap.get(columnNames[i-1].toLowerCase());
+                        if(null!=type){
+                            Object value = o.getObject(columnNames[i-1],type);
+                            o.put(columnNames[i-1],value);
+                        }
                     }
                     array.add(o);
                 }

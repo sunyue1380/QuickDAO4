@@ -7,7 +7,9 @@ import com.alibaba.fastjson.JSONObject;
 
 import java.io.*;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * 查询
@@ -41,6 +43,10 @@ public class Query implements Serializable,Cloneable {
      * 列名
      */
     public StringBuilder columnBuilder = new StringBuilder();
+    /**
+     * 列名类型转换<返回列名,类型>
+     */
+    public Map<String,Class> columnTypeMap = new HashMap<>();
     /**
      * 字段插入
      */

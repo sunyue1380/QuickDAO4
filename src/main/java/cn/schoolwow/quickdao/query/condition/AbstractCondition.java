@@ -193,6 +193,20 @@ public class AbstractCondition<T> implements Condition<T>, Serializable,Cloneabl
     }
 
     @Override
+    public Condition<T> addColumnType(String field, Class type) {
+        query.columnBuilder.append(query.entity.getColumnNameByFieldName(field)+ ",");
+        String columnLabel = field;
+        if(columnLabel.contains(".")){
+            columnLabel = columnLabel.substring(columnLabel.lastIndexOf(".")+1);
+        }
+        if(columnLabel.contains(" ")){
+            columnLabel = columnLabel.substring(columnLabel.lastIndexOf(" ")+1);
+        }
+        query.columnTypeMap.put(columnLabel.toLowerCase(),type);
+        return this;
+    }
+
+    @Override
     public Condition<T> addColumn(Condition subQuery) {
         subQuery.execute();
         Query selectQuery = ((AbstractCondition)subQuery).query;
