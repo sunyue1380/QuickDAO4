@@ -76,10 +76,12 @@ public class QuickDAO {
 
     /**
      * 待扫描实体类包名,支持嵌套扫描
-     * @param entityClass 实体类
+     * @param entityClasses 实体类
      * */
-    public QuickDAO entity(Class entityClass) {
-        quickDAOConfig.entityClassMap.put(entityClass,"");
+    public QuickDAO entity(Class... entityClasses) {
+        for(Class entityClass:entityClasses){
+            quickDAOConfig.entityClassMap.put(entityClass,"");
+        }
         return this;
     }
 
