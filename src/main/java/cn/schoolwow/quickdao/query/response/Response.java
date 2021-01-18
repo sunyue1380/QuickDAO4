@@ -75,6 +75,14 @@ public interface Response<T> {
     PageVo<T> getPagingList();
 
     /**
+     * 返回符合条件的分页数据库记录.
+     * <p>此方法会返回<b>addColumn()方法</b>所指定的字段</p>
+     * <p><b>注意:</b>调用此方法时必须调用分页方法</p>
+     * @see cn.schoolwow.quickdao.query.condition.Condition#page(int, int)
+     */
+    <E> PageVo<E> getPagingList(Class<E> clazz);
+
+    /**
      * 返回符合条件的第一条数据库记录
      */
     JSONObject getObject();
