@@ -14,6 +14,7 @@ import java.util.List;
  *     <li>doneSubCondition返回父表</li>
  * </ol>
  * </p>
+ *
  * @see cn.schoolwow.quickdao.query.condition.Condition
  */
 public interface SubCondition<T> extends Serializable {
@@ -21,64 +22,85 @@ public interface SubCondition<T> extends Serializable {
      * 设置子表别名
      */
     SubCondition<T> tableAliasName(String tableAliasName);
+
     /**
      * 左外连接
      */
     SubCondition<T> leftJoin();
+
     /**
      * 右外连接
      */
     SubCondition<T> rightJoin();
+
     /**
      * 全外连接
      */
     SubCondition<T> fullJoin();
+
     /**
      * 添加空查询
+     *
      * @param field 指明哪个字段为Null
      */
     SubCondition<T> addNullQuery(String field);
+
     /**
      * 添加非空查询
+     *
      * @param field 指明哪个字段不为Null
      */
     SubCondition<T> addNotNullQuery(String field);
+
     /**
      * 添加空查询
+     *
      * @param field 指明哪个字段不为空字符串
      */
     SubCondition<T> addEmptyQuery(String field);
+
     /**
      * 添加非空查询
+     *
      * @param field 指明哪个字段不为空字符串
      */
     SubCondition<T> addNotEmptyQuery(String field);
+
     /**
      * 添加范围查询语句
+     *
      * @param field  字段名
      * @param values 指明在该范围内的值
      */
     SubCondition<T> addInQuery(String field, Object... values);
+
     /**
      * 添加范围查询语句
+     *
      * @param field  字段名
      * @param values 指明在该范围内的值
      */
     SubCondition<T> addInQuery(String field, List values);
+
     /**
      * 添加范围查询语句
+     *
      * @param field  字段名
      * @param values 指明在不该范围内的值
      */
     SubCondition<T> addNotInQuery(String field, Object... values);
+
     /**
      * 添加范围查询语句
+     *
      * @param field  字段名
      * @param values 指明在不该范围内的值
      */
     SubCondition<T> addNotInQuery(String field, List values);
+
     /**
      * 添加between语句
+     *
      * @param field 字段名
      * @param start 范围开始值
      * @param end   范围结束值
@@ -87,6 +109,7 @@ public interface SubCondition<T> extends Serializable {
 
     /**
      * 添加Like查询
+     *
      * @param field 字段名
      * @param value 字段值
      */
@@ -94,12 +117,15 @@ public interface SubCondition<T> extends Serializable {
 
     /**
      * 添加字段查询
+     *
      * @param field 字段名
      * @param value 字段值
      */
     SubCondition<T> addQuery(String field, Object value);
+
     /**
      * 添加字段查询
+     *
      * @param field    字段名
      * @param operator 操作符,可为<b>></b>,<b>>=</b>,<b>=</b>,<b><</b><b><=</b>
      * @param value    字段值
@@ -109,7 +135,8 @@ public interface SubCondition<T> extends Serializable {
     /**
      * 添加自定义查询条件
      * <p>调用本方法时请先查看Condition类JavaDoc注释和SubCondition类的JavaDoc注释</p>
-     * @param query 子查询条件
+     *
+     * @param query         子查询条件
      * @param parameterList 查询参数
      * @see cn.schoolwow.quickdao.query.condition.Condition
      * @see SubCondition
@@ -118,6 +145,7 @@ public interface SubCondition<T> extends Serializable {
 
     /**
      * 添加自定义字段,具体映射规则请看Condition类的JavaDoc注释
+     *
      * @param fields 自定义查询列\
      * @see cn.schoolwow.quickdao.query.condition.Condition
      */
@@ -126,28 +154,33 @@ public interface SubCondition<T> extends Serializable {
     /**
      * 关联表查询,子表可再次关联子表
      * <p>调用本方法时请先查看Condition类JavaDoc注释和SubCondition类的JavaDoc注释</p>
-     * @param clazz 待关联的子表
+     *
+     * @param clazz          待关联的子表
      * @param primaryField   <b>主表</b>关联字段
      * @param joinTableField <b>子表</b>关联字段
      * @see cn.schoolwow.quickdao.query.condition.Condition
      * @see SubCondition
      */
     <E> SubCondition<E> joinTable(Class<E> clazz, String primaryField, String joinTableField);
+
     /**
      * 关联表查询,子表可再次关联子表
      * <p>调用本方法时请先查看Condition类JavaDoc注释和SubCondition类的JavaDoc注释</p>
-     * @param clazz 待关联的子表
+     *
+     * @param clazz          待关联的子表
      * @param primaryField   <b>主表</b>关联字段
      * @param joinTableField <b>子表</b>关联字段
-     * @param compositField <b>子表</b>实体类成员变量名
+     * @param compositField  <b>子表</b>实体类成员变量名
      * @see cn.schoolwow.quickdao.query.condition.Condition
      * @see SubCondition
      */
     <E> SubCondition<E> joinTable(Class<E> clazz, String primaryField, String joinTableField, String compositField);
+
     /**
      * 关联表查询,子表可再次关联子表
      * <p>调用本方法时请先查看Condition类JavaDoc注释和SubCondition类的JavaDoc注释</p>
-     * @param tableName 待关联的子表
+     *
+     * @param tableName      待关联的子表
      * @param primaryField   <b>主表</b>关联字段
      * @param joinTableField <b>子表</b>关联字段
      * @see cn.schoolwow.quickdao.query.condition.Condition
@@ -157,6 +190,7 @@ public interface SubCondition<T> extends Serializable {
 
     /**
      * 添加分组查询
+     *
      * @param fields 分组字段
      */
     SubCondition<T> groupBy(String... fields);
@@ -177,11 +211,14 @@ public interface SubCondition<T> extends Serializable {
 
     /**
      * 返回<b>父表</b>
+     *
      * @see {@link SubCondition#joinTable(Class, String, String)}
      */
     SubCondition<T> doneSubCondition();
+
     /**
      * 返回<b>主表</b>
+     *
      * @see {@link cn.schoolwow.quickdao.query.condition.Condition#joinTable(Class, String, String)}
      */
     Condition<T> done();

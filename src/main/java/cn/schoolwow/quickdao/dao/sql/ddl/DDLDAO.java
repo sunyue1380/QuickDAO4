@@ -5,7 +5,7 @@ import cn.schoolwow.quickdao.domain.Property;
 
 /**
  * 负责数据表和字段修改
- * */
+ */
 public interface DDLDAO {
     /**
      * 建表
@@ -39,15 +39,17 @@ public interface DDLDAO {
 
     /**
      * 新增列
+     *
      * @param tableName 表名
-     * @param property 字段属性
+     * @param property  字段属性
      */
     void createColumn(String tableName, Property property);
 
     /**
      * 删除列
+     *
      * @param tableName 表名
-     * @param column 列名
+     * @param column    列名
      */
     Property dropColumn(String tableName, String column);
 
@@ -58,7 +60,7 @@ public interface DDLDAO {
 
     /**
      * 自动建表和新增字段
-     * */
+     */
     void automaticCreateTableAndField();
 
     /**

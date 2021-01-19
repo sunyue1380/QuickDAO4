@@ -15,6 +15,7 @@ public interface DAOOperation {
      * 添加过滤器
      */
     void interceptor(Interceptor interceptor);
+
     /**
      * 开启事务
      */
@@ -22,14 +23,16 @@ public interface DAOOperation {
 
     /**
      * 表是否存在
+     *
      * @param tableName 表名
      */
     boolean hasTable(String tableName);
 
     /**
      * 字段是否存在
+     *
      * @param tableName 表名
-     * @param column 字段名称
+     * @param column    字段名称
      */
     boolean hasColumn(String tableName, String column);
 
@@ -50,13 +53,15 @@ public interface DAOOperation {
 
     /**
      * 获取表字段
+     *
      * @param tableName 表名
-     * @param column 字段名称
+     * @param column    字段名称
      */
     Property getProperty(String tableName, String column);
 
     /**
      * 获取表字段列表
+     *
      * @param tableName 表名
      */
     List<Property> getPropertyList(String tableName);
@@ -64,7 +69,7 @@ public interface DAOOperation {
     /**
      * 获取字段类型映射信息
      */
-    Map<String,String> getFieldMapping();
+    Map<String, String> getFieldMapping();
 
     /**
      * 获取配置信息
@@ -73,12 +78,14 @@ public interface DAOOperation {
 
     /**
      * 生成entity的java文件
+     *
      * @param sourcePath 生成文件夹路径
      */
     void generateEntityFile(String sourcePath);
 
     /**
      * 生成entity的java文件
+     *
      * @param sourcePath 生成文件夹路径
      * @param tableNames 指定需要生成实体类的对应的表名
      */

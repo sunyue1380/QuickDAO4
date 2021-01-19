@@ -63,9 +63,11 @@ import java.util.Collection;
 public interface Condition<T> extends Serializable {
     /**
      * 设置主表别名
+     *
      * @param tableAliasName 主表别名
      */
     Condition<T> tableAliasName(String tableAliasName);
+
     /**
      * 添加distinct关键字
      */
@@ -73,37 +75,43 @@ public interface Condition<T> extends Serializable {
 
     /**
      * 添加空查询
+     *
      * @param field 指明哪个字段为Null
      */
     Condition<T> addNullQuery(String field);
 
     /**
      * 添加非空查询
+     *
      * @param field 指明哪个字段不为Null
      */
     Condition<T> addNotNullQuery(String field);
 
     /**
      * 添加空查询
+     *
      * @param field 指明哪个字段不为空字符串
      */
     Condition<T> addEmptyQuery(String field);
 
     /**
      * 添加非空查询
+     *
      * @param field 指明哪个字段不为空字符串
      */
     Condition<T> addNotEmptyQuery(String field);
 
     /**
      * 添加范围查询语句
-     * @param field  字段名
+     *
+     * @param field   字段名
      * @param inQuery 英文逗号隔开的字段值
      */
     Condition<T> addInQuery(String field, String inQuery);
 
     /**
      * 添加范围查询语句
+     *
      * @param field  字段名
      * @param values 指明在该范围内的值
      */
@@ -111,6 +119,7 @@ public interface Condition<T> extends Serializable {
 
     /**
      * 添加范围查询语句
+     *
      * @param field  字段名
      * @param values 指明在该范围内的值
      */
@@ -118,13 +127,15 @@ public interface Condition<T> extends Serializable {
 
     /**
      * 添加范围查询语句
-     * @param field  字段名
+     *
+     * @param field   字段名
      * @param inQuery 英文逗号隔开的字段值
      */
     Condition<T> addNotInQuery(String field, String inQuery);
 
     /**
      * 添加范围查询语句
+     *
      * @param field  字段名
      * @param values 指明在不该范围内的值
      */
@@ -132,6 +143,7 @@ public interface Condition<T> extends Serializable {
 
     /**
      * 添加范围查询语句
+     *
      * @param field  字段名
      * @param values 指明在不该范围内的值
      */
@@ -139,6 +151,7 @@ public interface Condition<T> extends Serializable {
 
     /**
      * 添加between语句
+     *
      * @param field 字段名
      * @param start 范围开始值
      * @param end   范围结束值
@@ -147,6 +160,7 @@ public interface Condition<T> extends Serializable {
 
     /**
      * 添加Like查询
+     *
      * @param field 字段名
      * @param value 字段值
      */
@@ -154,6 +168,7 @@ public interface Condition<T> extends Serializable {
 
     /**
      * 添加Not Like查询
+     *
      * @param field 字段名
      * @param value 字段值
      */
@@ -161,6 +176,7 @@ public interface Condition<T> extends Serializable {
 
     /**
      * 添加字段查询
+     *
      * @param field 字段名
      * @param value 字段值
      */
@@ -168,6 +184,7 @@ public interface Condition<T> extends Serializable {
 
     /**
      * 添加字段查询
+     *
      * @param field    字段名
      * @param operator 操作符,可为<b>></b>,<b>>=</b>,<b>=</b>,<b><</b><b><=</b>
      * @param value    字段值
@@ -176,13 +193,15 @@ public interface Condition<T> extends Serializable {
 
     /**
      * 自定义查询语句,具体映射规则请看此{@link cn.schoolwow.quickdao.query.condition.Condition}
-     * @param query 子查询条件,可使用?占位符
+     *
+     * @param query         子查询条件,可使用?占位符
      * @param parameterList 占位符参数列表,可为null
      */
     Condition<T> addRawQuery(String query, Object... parameterList);
 
     /**
      * 添加where子查询
+     *
      * @param field    字段名
      * @param operator 操作符,可为<b>></b>,<b>>=</b>,<b>=</b>,<b><</b><b><=</b>
      * @param subQuery 子查询语句
@@ -191,18 +210,21 @@ public interface Condition<T> extends Serializable {
 
     /**
      * 添加exist子查询
+     *
      * @param subQuery 子查询语句
      */
     Condition<T> addExistSubQuery(Condition subQuery);
 
     /**
      * 添加not exist子查询
+     *
      * @param subQuery 子查询语句
      */
     Condition<T> addNotExistSubQuery(Condition subQuery);
 
     /**
      * 添加自定义字段,具体映射规则请看Condition类的JavaDoc注释
+     *
      * @param fields 自定义查询列
      * @see Condition
      */
@@ -210,21 +232,24 @@ public interface Condition<T> extends Serializable {
 
     /**
      * 添加自定义字段,返回指定类型
+     *
      * @param field 自定义查询列
-     * @param type 返回列类型
+     * @param type  返回列类型
      * @see Condition
      */
     Condition<T> addColumnType(String field, Class type);
 
     /**
      * 添加select子查询
+     *
      * @param subQuery 子查询
      */
     Condition<T> addColumn(Condition subQuery);
 
     /**
      * 添加select子查询
-     * @param subQuery 子查询
+     *
+     * @param subQuery        子查询
      * @param columnNameAlias 指定子查询返回列名的别名
      */
     Condition<T> addColumn(Condition subQuery, String columnNameAlias);
@@ -240,6 +265,7 @@ public interface Condition<T> extends Serializable {
     /**
      * <p>插入记录,参数value的key值为数据库表对应的字段名称</p>
      * <p>返回结果时value的键generatedKeys会设置自增id的值</p>
+     *
      * @param value 待插入记录
      */
     Condition<T> addInsert(JSONObject value);
@@ -247,6 +273,7 @@ public interface Condition<T> extends Serializable {
     /**
      * <p>批量插入记录,参数value的key值为数据库表对应的字段名称</p>
      * <p>返回结果时每个arrayl里面的JSONObject的键generatedKeys会设置自增id的值</p>
+     *
      * @param array 待插入记录
      */
     Condition<T> addInsert(JSONArray array);
@@ -262,12 +289,14 @@ public interface Condition<T> extends Serializable {
     /**
      * 添加联合查询,需确保返回字段个数和含义一致
      * 默认union类型为 union
+     *
      * @param condition 联合查询条件
      */
     Condition<T> union(Condition<T> condition);
 
     /**
      * 添加联合查询,需确保返回字段个数和含义一致
+     *
      * @param condition 联合查询条件
      * @param unionType 指定union查询类型
      * @see UnionType
@@ -291,13 +320,15 @@ public interface Condition<T> extends Serializable {
 
     /**
      * 添加or查询,具体映射规则请看此{@link cn.schoolwow.quickdao.query.condition.Condition}
-     * @param or or查询语句,可使用?占位符
-     * @param parameterList  占位符参数值,无参数时可为null
+     *
+     * @param or            or查询语句,可使用?占位符
+     * @param parameterList 占位符参数值,无参数时可为null
      */
     Condition<T> or(String or, Object... parameterList);
 
     /**
      * 添加分组查询
+     *
      * @param fields 分组字段
      */
     Condition<T> groupBy(String... fields);
@@ -306,8 +337,8 @@ public interface Condition<T> extends Serializable {
      * 添加having查询
      * <p>调用本方法时请先查看Condition类JavaDoc注释</p>
      *
-     * @param having having查询子句,可使用?占位符
-     * @param parameterList  占位符参数值
+     * @param having        having查询子句,可使用?占位符
+     * @param parameterList 占位符参数值
      * @see Condition
      */
     Condition<T> having(String having, Object... parameterList);
@@ -315,6 +346,7 @@ public interface Condition<T> extends Serializable {
     /**
      * 添加having子查询
      * <p>调用本方法时请先查看Condition类JavaDoc注释</p>
+     *
      * @param field    字段名
      * @param operator 操作符,可为<b>></b>,<b>>=</b>,<b>=</b>,<b><</b><b><=</b>
      * @param subQuery 子查询语句
@@ -324,6 +356,7 @@ public interface Condition<T> extends Serializable {
     /**
      * cross join 关联表,获取笛卡尔积
      * <p>调用本方法时请先查看Condition类JavaDoc注释</p>
+     *
      * @param clazz 待关联的子表
      */
     <E> SubCondition<E> crossJoinTable(Class<E> clazz);
@@ -331,6 +364,7 @@ public interface Condition<T> extends Serializable {
     /**
      * cross join 关联表,获取笛卡尔积
      * <p>调用本方法时请先查看Condition类JavaDoc注释</p>
+     *
      * @param tableName 待关联的子表
      */
     <E> SubCondition<E> crossJoinTable(String tableName);
@@ -338,7 +372,8 @@ public interface Condition<T> extends Serializable {
     /**
      * 关联表查询
      * <p>调用本方法时请先查看Condition类JavaDoc注释</p>
-     * @param clazz 待关联的子表
+     *
+     * @param clazz          待关联的子表
      * @param primaryField   <b>主表</b>关联字段
      * @param joinTableField <b>子表</b>关联字段
      */
@@ -347,10 +382,11 @@ public interface Condition<T> extends Serializable {
     /**
      * 关联表查询
      * <p>调用本方法时请先查看Condition类JavaDoc注释</p>
-     * @param clazz 待关联的子表
+     *
+     * @param clazz          待关联的子表
      * @param primaryField   <b>主表</b>关联字段
      * @param joinTableField <b>子表</b>关联字段
-     * @param compositField <b>子表</b>实体类成员变量名
+     * @param compositField  <b>子表</b>实体类成员变量名
      */
     <E> SubCondition<E> joinTable(Class<E> clazz, String primaryField, String joinTableField, String compositField);
 
@@ -361,8 +397,8 @@ public interface Condition<T> extends Serializable {
      * <p><b>join #{condition子表} as t1 on t.primaryField = t1.joinTableField</b>
      * </p>
      *
-     * @param joinCondition 关联Condition
-     * @param primaryField   <b>主表</b>关联字段
+     * @param joinCondition      关联Condition
+     * @param primaryField       <b>主表</b>关联字段
      * @param joinConditionField <b>子查询</b>关联字段
      */
     <E> SubCondition<E> joinTable(Condition<E> joinCondition, String primaryField, String joinConditionField);
@@ -373,7 +409,8 @@ public interface Condition<T> extends Serializable {
      * <p>调用本方法将在sql语句中拼接如下字符串</p>
      * <p><b>join #{clazz} as t1 on t.primaryField = t1.joinTableField</b>
      * </p>
-     * @param tableName 待关联的子表
+     *
+     * @param tableName      待关联的子表
      * @param primaryField   <b>主表</b>关联字段
      * @param joinTableField <b>子表</b>关联字段
      */
@@ -390,6 +427,7 @@ public interface Condition<T> extends Serializable {
     /**
      * 根据指定字段降序排列
      * <b>注意</b>若调用了addColumn方法,请将调用本方法放在addColumn方法之后
+     *
      * @param field 降序排列字段名
      */
     Condition<T> orderByDesc(String... field);
@@ -412,8 +450,9 @@ public interface Condition<T> extends Serializable {
 
     /**
      * 返回子表实体类字段信息
+     *
      * @see {@link cn.schoolwow.quickdao.query.condition.Condition#joinTable(Class, String, String)} ()}
-     * @see {@link cn.schoolwow.quickdao.query.condition.Condition#joinTable(Class, String, String,String)} ()}
+     * @see {@link cn.schoolwow.quickdao.query.condition.Condition#joinTable(Class, String, String, String)} ()}
      */
     Condition<T> compositField();
 
@@ -427,6 +466,8 @@ public interface Condition<T> extends Serializable {
      */
     Condition<T> clone();
 
-    /**获取Condition信息*/
+    /**
+     * 获取Condition信息
+     */
     Query getQuery();
 }
