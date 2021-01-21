@@ -28,10 +28,6 @@ public class Property {
      */
     public String className;
     /**
-     * 类型字段映射
-     */
-    public SingleTypeFieldMapping singleTypeFieldMapping;
-    /**
      * 属性名
      */
     public String name;

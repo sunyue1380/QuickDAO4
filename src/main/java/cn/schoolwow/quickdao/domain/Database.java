@@ -4,7 +4,6 @@ import cn.schoolwow.quickdao.builder.ddl.*;
 import cn.schoolwow.quickdao.builder.dql.AbstractDQLBuilder;
 import cn.schoolwow.quickdao.builder.dql.PostgreDQLBuilder;
 import cn.schoolwow.quickdao.builder.dql.SQLiteDQLBuilder;
-import cn.schoolwow.quickdao.builder.typeFieldMapping.*;
 import cn.schoolwow.quickdao.query.condition.AbstractCondition;
 import cn.schoolwow.quickdao.query.condition.Condition;
 import cn.schoolwow.quickdao.query.condition.PostgreCondition;
@@ -16,24 +15,17 @@ import com.alibaba.fastjson.JSONObject;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.Types;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.util.Date;
 
 /**数据库类型*/
 public enum Database {
-    Mysql(new MySQLTypeFieldMapping()),
-    H2(new H2TypeFieldMapping()),
-    SQLite(new SQLiteTypeFieldMapping()),
-    Postgre(new PostgreTypeFieldMapping()),
-    SQLServer(new SQLServerTypeFieldMapping());
-
-    public TypeFieldMapping typeFieldMapping;
-
-    Database(TypeFieldMapping typeFieldMapping) {
-        this.typeFieldMapping = typeFieldMapping;
-    }
+    Mysql,
+    H2,
+    SQLite,
+    Postgre,
+    SQLServer;
 
     /**返回注释语句*/
     public String comment(String comment){
@@ -138,7 +130,7 @@ public enum Database {
             String columnName = tableAliasName + "_" + property.column;
             String columnLabel = property.name == null ? property.column : property.name;
             if (null == property.className) {
-                subObject.put(columnLabel, resultSet.getString(columnName));
+                subObject.put(columnLabel, resultSet.getObject(columnName));
                 continue;
             }
             Object value = null;
@@ -294,33 +286,15 @@ public enum Database {
                 }
                 break;
                 case "java.io.InputStream": {
-                    switch (property.singleTypeFieldMapping.types) {
-                        case Types.BLOB: {
-                            value = resultSet.getBinaryStream(columnName);
-                        }
-                        break;
-                        case Types.CLOB: {
-                            value = resultSet.getAsciiStream(columnName);
-                        }
-                        break;
-                    }
+                    value = resultSet.getBinaryStream(columnName);
                 }
                 break;
                 case "java.io.Reader": {
-                    switch (property.singleTypeFieldMapping.types) {
-                        case Types.CLOB: {
-                            value = resultSet.getCharacterStream(columnName);
-                        }
-                        break;
-                        case Types.NCLOB: {
-                            value = resultSet.getNCharacterStream(columnName);
-                        }
-                        break;
-                    }
+                    value = resultSet.getCharacterStream(columnName);
                 }
                 break;
                 default: {
-                    value = resultSet.getString(columnName);
+                    value = resultSet.getObject(columnName);
                 }
             }
             subObject.put(columnLabel,value);

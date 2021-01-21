@@ -6,6 +6,7 @@ import cn.schoolwow.quickdao.domain.Property;
 
 import java.sql.SQLException;
 import java.util.List;
+import java.util.Map;
 
 /**
  * 负责数据库表和字段管理
@@ -80,4 +81,9 @@ public interface DDLBuilder {
      * 刷新数据库字段信息
      */
     void refreshDbEntityList() throws SQLException;
+
+    /**
+     * 获取默认Java类型与数据库类型映射关系表
+     */
+    Map<String,String> getTypeFieldMapping();
 }

@@ -6,7 +6,6 @@ import cn.schoolwow.quickdao.dao.DAOInvocationHandler;
 import cn.schoolwow.quickdao.domain.Database;
 import cn.schoolwow.quickdao.domain.Entity;
 import cn.schoolwow.quickdao.domain.QuickDAOConfig;
-import cn.schoolwow.quickdao.domain.SingleTypeFieldMapping;
 import cn.schoolwow.quickdao.domain.generator.IDGenerator;
 import cn.schoolwow.quickdao.exception.SQLRuntimeException;
 import cn.schoolwow.quickdao.handler.DefaultEntityHandler;
@@ -19,8 +18,6 @@ import javax.sql.DataSource;
 import java.lang.reflect.Proxy;
 import java.sql.Connection;
 import java.util.ArrayList;
-import java.util.List;
-import java.util.function.Consumer;
 import java.util.function.Predicate;
 
 public class QuickDAO {
@@ -189,12 +186,6 @@ public class QuickDAO {
      * */
     public QuickDAO charset(String charset) {
         quickDAOConfig.charset = charset;
-        return this;
-    }
-
-    /**过滤类型字段映射列表*/
-    public QuickDAO filterTypeFieldMapping(Consumer<List<SingleTypeFieldMapping>> typeFieldMappingConsumer) {
-        typeFieldMappingConsumer.accept(quickDAOConfig.database.typeFieldMapping.getSingleTypeFieldMappingList());
         return this;
     }
 

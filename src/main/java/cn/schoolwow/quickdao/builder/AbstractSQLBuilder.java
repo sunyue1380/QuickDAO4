@@ -149,11 +149,7 @@ public class AbstractSQLBuilder implements SQLBuilder{
      * */
     protected String setPrepareStatementParameter(Object parameter, Property property, PreparedStatement ps, int parameterIndex) throws SQLException{
         if(null==parameter){
-            if(null==property){
-                ps.setObject(parameterIndex,null);
-            }else{
-                ps.setNull(parameterIndex,property.singleTypeFieldMapping.types);
-            }
+            ps.setObject(parameterIndex,null);
             return "null";
         }
         String parameterSQL = parameter.toString();
@@ -185,11 +181,7 @@ public class AbstractSQLBuilder implements SQLBuilder{
                 ps.setDouble(parameterIndex, (double) parameter);
             }break;
             case "java.lang.String": {
-                if(null!=property&&Types.NCHAR==property.singleTypeFieldMapping.types){
-                    ps.setNString(parameterIndex, (String) parameter);
-                }else{
-                    ps.setString(parameterIndex, (String) parameter);
-                }
+                ps.setString(parameterIndex, (String) parameter);
                 parameterSQL = "'"+parameter.toString()+"'";
             }break;
             case "java.util.Date": {
@@ -250,32 +242,10 @@ public class AbstractSQLBuilder implements SQLBuilder{
                 ps.setSQLXML(parameterIndex,(SQLXML) parameter);
             }break;
             case "java.io.InputStream": {
-                if(null==property){
-                    ps.setBinaryStream(parameterIndex, (InputStream) parameter);
-                }else{
-                    switch(property.singleTypeFieldMapping.types){
-                        case Types.BLOB:{
-                            ps.setBinaryStream(parameterIndex, (InputStream) parameter);
-                        }break;
-                        case Types.CLOB:{
-                            ps.setAsciiStream(parameterIndex, (InputStream) parameter);
-                        }break;
-                    }
-                }
+                ps.setBinaryStream(parameterIndex, (InputStream) parameter);
             }break;
             case "java.io.Reader": {
-                if(null==property){
-                    ps.setCharacterStream(parameterIndex, (Reader) parameter);
-                }else{
-                    switch(property.singleTypeFieldMapping.types){
-                        case Types.CLOB:{
-                            ps.setCharacterStream(parameterIndex, (Reader) parameter);
-                        }break;
-                        case Types.NCLOB:{
-                            ps.setNCharacterStream(parameterIndex, (Reader) parameter);
-                        }break;
-                    }
-                }
+                ps.setCharacterStream(parameterIndex, (Reader) parameter);
             }break;
             default:{
                 ps.setObject(parameterIndex,parameter);

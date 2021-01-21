@@ -1,8 +1,8 @@
 package cn.schoolwow.quickdao.sqlite.test;
 
+import cn.schoolwow.quickdao.sqlite.SQLiteTest;
 import cn.schoolwow.quickdao.sqlite.entity.Order;
 import cn.schoolwow.quickdao.sqlite.entity.Person;
-import cn.schoolwow.quickdao.sqlite.SQLiteTest;
 import cn.schoolwow.quickdao.transaction.Transaction;
 import org.junit.Assert;
 import org.junit.Test;

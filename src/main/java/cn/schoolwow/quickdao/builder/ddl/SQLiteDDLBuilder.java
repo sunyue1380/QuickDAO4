@@ -10,7 +10,9 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class SQLiteDDLBuilder extends AbstractDDLBuilder {
     public SQLiteDDLBuilder(QuickDAOConfig quickDAOConfig) {
@@ -61,13 +63,54 @@ public class SQLiteDDLBuilder extends AbstractDDLBuilder {
     }
 
     @Override
-    public String getAutoIncrementSQL(Property property){
+    protected String getAutoIncrementSQL(Property property){
         return property.column + " " + property.columnType + " primary key autoincrement";
     }
 
     @Override
     public void dropColumn(Property property) throws SQLException{
         throw new UnsupportedOperationException("SQLite不支持删除列");
+    }
+
+    @Override
+    public Map<String, String> getTypeFieldMapping() {
+        Map<String,String> fieldTypeMapping = new HashMap<>();
+        fieldTypeMapping.put("byte","TINYINT");
+        fieldTypeMapping.put("java.lang.Byte","TINYINT");
+        fieldTypeMapping.put("[B","BLOB");
+        fieldTypeMapping.put("boolean","BOOLEAN");
+        fieldTypeMapping.put("java.lang.Boolean","BOOLEAN");
+        fieldTypeMapping.put("char","TINYINT");
+        fieldTypeMapping.put("java.lang.Character","TINYINT");
+        fieldTypeMapping.put("short","SMALLINT");
+        fieldTypeMapping.put("java.lang.Short","SMALLINT");
+        fieldTypeMapping.put("int","INT");
+        fieldTypeMapping.put("java.lang.Integer","INTEGER");
+        fieldTypeMapping.put("float","FLOAT");
+        fieldTypeMapping.put("java.lang.Float","FLOAT");
+        fieldTypeMapping.put("long","INTEGER");
+        fieldTypeMapping.put("java.lang.Long","INTEGER");
+        fieldTypeMapping.put("double","DOUBLE");
+        fieldTypeMapping.put("java.lang.Double","DOUBLE");
+        fieldTypeMapping.put("java.lang.String","VARCHAR(255)");
+        fieldTypeMapping.put("java.util.Date","DATETIME");
+        fieldTypeMapping.put("java.sql.Date","DATE");
+        fieldTypeMapping.put("java.sql.Time","");
+        fieldTypeMapping.put("java.sql.Timestamp","DATETIME");
+        fieldTypeMapping.put("java.time.LocalDate","DATE");
+        fieldTypeMapping.put("java.time.LocalDateTime","DATETIME");
+        fieldTypeMapping.put("java.sql.Array","");
+        fieldTypeMapping.put("java.math.BigDecimal","DECIMAL");
+        fieldTypeMapping.put("java.sql.Blob","BLOB");
+        fieldTypeMapping.put("java.sql.Clob","TEXT");
+        fieldTypeMapping.put("java.sql.NClob","TEXT");
+        fieldTypeMapping.put("java.sql.Ref","");
+        fieldTypeMapping.put("java.net.URL","");
+        fieldTypeMapping.put("java.sql.RowId","");
+        fieldTypeMapping.put("java.sql.SQLXML","");
+        fieldTypeMapping.put("java.io.InputStream","TEXT");
+        fieldTypeMapping.put("java.io.Reader","TEXT");
+        return fieldTypeMapping;
     }
 
     @Override
@@ -82,7 +125,7 @@ public class SQLiteDDLBuilder extends AbstractDDLBuilder {
     }
 
     @Override
-    public boolean hasIndexExists(Entity entity, IndexType indexType) throws SQLException {
+    protected boolean hasIndexExists(Entity entity, IndexType indexType) throws SQLException {
         String indexName = entity.tableName+"_"+indexType.name();
         String sql = "select count(1) from sqlite_master where type = 'index' and name = '"+indexName+"'";
         MDC.put("name","查看索引是否存在");

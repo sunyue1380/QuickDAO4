@@ -68,10 +68,10 @@ public class DefaultEntityHandler implements EntityHandler{
             quickDAOConfig.entityMap.put(c.getName(), entity);
             classList.add(c);
         }
+        Map<String,String> typeFieldMapping = quickDAOConfig.database.getDDLBuilderInstance(quickDAOConfig).getTypeFieldMapping();
         for (Class c : classList) {
             Entity entity = quickDAOConfig.getEntityByClassName(c.getName());
             entity.escapeTableName = quickDAOConfig.database.escape(entity.tableName);
-            entity.className = c.getSimpleName();
             if (c.getDeclaredAnnotation(Comment.class) != null) {
                 Comment comment = (Comment) c.getDeclaredAnnotation(Comment.class);
                 entity.comment = comment.value();
@@ -93,15 +93,15 @@ public class DefaultEntityHandler implements EntityHandler{
                 }else{
                     property.column = camel2Underline(field.getName());
                 }
-                if(null!=field.getAnnotation(ColumnType.class)){
-                    property.columnType = field.getAnnotation(ColumnType.class).value();
-                    property.singleTypeFieldMapping = quickDAOConfig.database.typeFieldMapping.getSingleTypeFieldMapping(property.columnType);
-                }else{
-                    property.singleTypeFieldMapping = quickDAOConfig.database.typeFieldMapping.getSingleTypeFieldMapping(field.getType());
-                    property.columnType = property.singleTypeFieldMapping.columnTypeDetail;
-                }
                 property.name = field.getName();
                 property.className = field.getType().getName();
+                if(null!=field.getAnnotation(ColumnType.class)){
+                    property.columnType = field.getAnnotation(ColumnType.class).value();
+                }else if(typeFieldMapping.containsKey(property.className)&&!typeFieldMapping.get(property.className).isEmpty()){
+                    property.columnType = typeFieldMapping.get(property.className);
+                }else{
+                    throw new IllegalArgumentException("Java类型"+property.className+"无法自动匹配数据库类型,请使用@ColumnType注解手动指定数据库类型!");
+                }
                 Constraint constraint = field.getDeclaredAnnotation(Constraint.class);
                 if(null!=constraint){
                     property.notNull = constraint.notNull();
@@ -214,11 +214,12 @@ public class DefaultEntityHandler implements EntityHandler{
         }
         StringBuilder builder = new StringBuilder();
         String packageName = quickDAOConfig.packageNameMap.keySet().iterator().next();
+        final Set<Map.Entry<String,String>> typeFieldMappingEntrySet = quickDAOConfig.database.getDDLBuilderInstance(quickDAOConfig).getTypeFieldMapping().entrySet();
         for(Entity dbEntity:dbEntityList){
-            dbEntity.className = underline2Camel(dbEntity.tableName);
-            dbEntity.className = dbEntity.className.toUpperCase().charAt(0)+dbEntity.className.substring(1);
+            String entityClassName = underline2Camel(dbEntity.tableName);
+            entityClassName = entityClassName.toUpperCase().charAt(0)+entityClassName.substring(1);
 
-            Path target = Paths.get(sourcePath+"/"+ packageName.replace(".","/") + "/" + dbEntity.className+".java");
+            Path target = Paths.get(sourcePath+"/"+ packageName.replace(".","/") + "/" + entityClassName+".java");
             try {
                 Files.createDirectories(target.getParent());
             } catch (IOException e) {
@@ -240,7 +241,7 @@ public class DefaultEntityHandler implements EntityHandler{
             if(null!=dbEntity.tableName){
                 builder.append("@TableName(\""+dbEntity.tableName+"\")\n");
             }
-            builder.append("public class "+dbEntity.className+"{\n\n");
+            builder.append("public class "+entityClassName+"{\n\n");
             for(Property property:dbEntity.properties){
                 if(null!=property.comment&&!property.comment.isEmpty()){
                     builder.append("\t@Comment(\""+property.comment.replaceAll("\r\n","")+"\")\n");
@@ -257,7 +258,15 @@ public class DefaultEntityHandler implements EntityHandler{
                 if(property.columnType.contains("(")){
                     property.columnType = property.columnType.substring(0,property.columnType.indexOf("("));
                 }
-                property.className = property.singleTypeFieldMapping.clazzList[0].getName();
+                for(Map.Entry<String,String> entry:typeFieldMappingEntrySet){
+                    if(entry.getValue().contains(property.columnType.toUpperCase())){
+                        property.className = entry.getKey().replace("java.lang.","");
+                        break;
+                    }
+                }
+                if(null==property.className){
+                    logger.warn("[字段类型匹配失败]表名:{}字段名称:{},类型:{}",dbEntity.tableName,property.column,property.columnType);
+                }
                 property.name = underline2Camel(property.column);
                 builder.append("\tprivate "+property.className+" "+property.name+";\n\n");
             }

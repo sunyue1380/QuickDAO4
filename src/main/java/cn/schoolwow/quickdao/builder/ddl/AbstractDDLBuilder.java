@@ -16,6 +16,7 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 
 public abstract class AbstractDDLBuilder extends AbstractSQLBuilder implements DDLBuilder {
     protected Logger logger = LoggerFactory.getLogger(DDLBuilder.class);
@@ -28,8 +29,10 @@ public abstract class AbstractDDLBuilder extends AbstractSQLBuilder implements D
         return null;
     }
 
+    @Override
     public abstract List<Entity> getDatabaseEntity() throws SQLException;
 
+    @Override
     public abstract boolean hasTableExists(Entity entity) throws SQLException;
 
     @Override
@@ -234,12 +237,13 @@ public abstract class AbstractDDLBuilder extends AbstractSQLBuilder implements D
             dbEntity.clazz = JSONObject.class;
             for (Property property : dbEntity.properties) {
                 property.entity = dbEntity;
-                property.singleTypeFieldMapping = quickDAOConfig.database.typeFieldMapping.getSingleTypeFieldMapping(property.columnType);
-                property.className = property.singleTypeFieldMapping.clazzList[0].getName();
             }
         }
         quickDAOConfig.dbEntityList = dbEntityList;
     }
+
+    @Override
+    public abstract Map<String,String> getTypeFieldMapping();
 
     /**获取虚拟表信息*/
     protected List<Entity> getVirtualEntity(){

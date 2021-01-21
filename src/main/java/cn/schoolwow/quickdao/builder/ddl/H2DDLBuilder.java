@@ -10,7 +10,9 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class H2DDLBuilder extends MySQLDDLBuilder {
 
@@ -65,7 +67,48 @@ public class H2DDLBuilder extends MySQLDDLBuilder {
     }
 
     @Override
-    public boolean hasIndexExists(Entity entity, IndexType indexType) throws SQLException {
+    public Map<String, String> getTypeFieldMapping() {
+        Map<String,String> fieldTypeMapping = new HashMap<>();
+        fieldTypeMapping.put("byte","TINYINT");
+        fieldTypeMapping.put("java.lang.Byte","TINYINT");
+        fieldTypeMapping.put("[B","BINARY");
+        fieldTypeMapping.put("boolean","BOOLEAN");
+        fieldTypeMapping.put("java.lang.Boolean","BOOLEAN");
+        fieldTypeMapping.put("char","CHAR");
+        fieldTypeMapping.put("java.lang.Character","CHARACTER");
+        fieldTypeMapping.put("short","SMALLINT");
+        fieldTypeMapping.put("java.lang.Short","SMALLINT");
+        fieldTypeMapping.put("int","INT");
+        fieldTypeMapping.put("java.lang.Integer","INTEGER");
+        fieldTypeMapping.put("float","REAL");
+        fieldTypeMapping.put("java.lang.Float","REAL");
+        fieldTypeMapping.put("long","BIGINT");
+        fieldTypeMapping.put("java.lang.Long","BIGINT");
+        fieldTypeMapping.put("double","DOUBLE");
+        fieldTypeMapping.put("java.lang.Double","DOUBLE");
+        fieldTypeMapping.put("java.lang.String","VARCHAR(255)");
+        fieldTypeMapping.put("java.util.Date","DATETIME");
+        fieldTypeMapping.put("java.sql.Date","DATE");
+        fieldTypeMapping.put("java.sql.Time","TIME");
+        fieldTypeMapping.put("java.sql.Timestamp","TIMESTAMP");
+        fieldTypeMapping.put("java.time.LocalDate","DATE");
+        fieldTypeMapping.put("java.time.LocalDateTime","DATETIME");
+        fieldTypeMapping.put("java.sql.Array","ARRAY");
+        fieldTypeMapping.put("java.math.BigDecimal","DECIMAL");
+        fieldTypeMapping.put("java.sql.Blob","BLOB");
+        fieldTypeMapping.put("java.sql.Clob","CLOB");
+        fieldTypeMapping.put("java.sql.NClob","NCLOB");
+        fieldTypeMapping.put("java.sql.Ref","");
+        fieldTypeMapping.put("java.net.URL","");
+        fieldTypeMapping.put("java.sql.RowId","");
+        fieldTypeMapping.put("java.sql.SQLXML","");
+        fieldTypeMapping.put("java.io.InputStream","LONGTEXT");
+        fieldTypeMapping.put("java.io.Reader","LONGTEXT");
+        return fieldTypeMapping;
+    }
+
+    @Override
+    protected boolean hasIndexExists(Entity entity, IndexType indexType) throws SQLException {
         String indexName = (entity.tableName+"_"+indexType.name()).toUpperCase();
         String sql = "select count(1) from information_schema.indexes where index_name = '"+indexName+"'";
         MDC.put("name","查看索引是否存在");
@@ -79,4 +122,6 @@ public class H2DDLBuilder extends MySQLDDLBuilder {
         resultSet.close();
         return result;
     }
+
+
 }

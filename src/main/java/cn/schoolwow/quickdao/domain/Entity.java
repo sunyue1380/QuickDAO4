@@ -21,10 +21,6 @@ public class Entity {
      */
     public String escapeTableName;
     /**
-     * 实体类名
-     */
-    public String className;
-    /**
      * 表注释
      */
     public String comment;
