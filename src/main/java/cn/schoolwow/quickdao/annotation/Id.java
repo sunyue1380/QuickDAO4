@@ -11,6 +11,8 @@ import java.lang.annotation.Target;
 @Target(ElementType.FIELD)
 @Retention(RetentionPolicy.RUNTIME)
 public @interface Id {
-    /**Id生成策略*/
+    /**
+     * Id生成策略
+     */
     IdStrategy strategy() default IdStrategy.AutoIncrement;
 }
