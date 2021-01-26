@@ -1,9 +1,6 @@
 package cn.schoolwow.quickdao.domain;
 
-import java.lang.reflect.Field;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 
 /**
  * 实体类信息
@@ -42,9 +39,9 @@ public class Entity {
      */
     public List<Property> foreignKeyProperties = new ArrayList<>();
     /**
-     * Field数组(实体包类)
+     * 实体类成员变量
      */
-    public Field[] compositFields;
+    public Map<String,List<String>> compositFieldMap = new HashMap<>();
     /**
      * 表编码格式
      * */
@@ -79,6 +76,23 @@ public class Entity {
             }
         }
         return null;
+    }
+
+    /**
+     * 获取对应实体类成员变量
+     * */
+    public String getCompositeFieldName(String className) {
+        if(!compositFieldMap.containsKey(className)){
+            return null;
+        }
+        List<String> fieldNameList = compositFieldMap.get(className);
+        if(fieldNameList.isEmpty()){
+            return null;
+        }
+        if(fieldNameList.size()==1){
+            return fieldNameList.get(0);
+        }
+        throw new IllegalArgumentException("类[" + clazz.getName() + "]存在[" + fieldNameList.size() + "]个类型为[" + className + "]的成员变量!请手动指定需要关联的实体类成员变量!");
     }
 
     @Override

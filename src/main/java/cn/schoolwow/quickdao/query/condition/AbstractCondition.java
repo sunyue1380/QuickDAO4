@@ -10,7 +10,6 @@ import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 
 import java.io.Serializable;
-import java.lang.reflect.Field;
 import java.lang.reflect.Proxy;
 import java.util.Arrays;
 import java.util.Collection;
@@ -359,7 +358,7 @@ public class AbstractCondition<T> implements Condition<T>, Serializable,Cloneabl
 
     @Override
     public <E> SubCondition<E> joinTable(Class<E> clazz, String primaryField, String joinTableField) {
-        return joinTable(clazz,primaryField,joinTableField,getUniqueCompositFieldInMainClass(query.entity.clazz, clazz));
+        return joinTable(clazz,primaryField,joinTableField,query.entity.getCompositeFieldName(clazz.getName()));
     }
 
     @Override
@@ -530,37 +529,6 @@ public class AbstractCondition<T> implements Condition<T>, Serializable,Cloneabl
     @Override
     public Query getQuery() {
         return this.query;
-    }
-
-    /**
-     * 找到子表中唯一一个类型为主表的成员变量名
-     * @param mainClass 主类
-     * @param fieldClass 主类里需要查找的成员变量类型
-     */
-    public String getUniqueCompositFieldInMainClass(Class mainClass, Class fieldClass) {
-        if(!query.quickDAOConfig.entityMap.containsKey(mainClass.getName())){
-            throw new IllegalArgumentException("实体类不存在或者未被扫描!实体类名:"+mainClass.getName());
-        }
-        Entity entity = query.quickDAOConfig.getEntityByClassName(mainClass.getName());
-        Field[] fields = entity.compositFields;
-        if (fields == null || fields.length == 0) {
-            return null;
-        }
-        int count = 0;
-        String fieldName = null;
-        for (Field field : fields) {
-            if (field.getType().getName().equalsIgnoreCase(fieldClass.getName())) {
-                fieldName = field.getName();
-                count++;
-            }
-        }
-        if (count == 0) {
-            return null;
-        } else if (count == 1) {
-            return fieldName;
-        } else {
-            throw new IllegalArgumentException("类[" + mainClass.getName() + "]存在[" + count + "]个类型为[" + fieldClass.getName() + "]的成员变量!请手动指定需要关联的实体类成员变量!");
-        }
     }
 
     /**添加in查询*/

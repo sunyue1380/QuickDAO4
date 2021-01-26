@@ -77,9 +77,17 @@ public class DefaultEntityHandler implements EntityHandler{
             //属性列表
             List<Property> propertyList = new ArrayList<>();
             //实体包类列表
-            List<Field> compositFieldList = new ArrayList<>();
-            Field[] fields = getAllField(c,compositFieldList);
+            Field[] fields = getAllField(c);
             for(Field field:fields){
+                //跳过实体包类
+                if (isCompositProperty(field.getType())) {
+                    if(!entity.compositFieldMap.containsKey(field.getType().getName())){
+                        entity.compositFieldMap.put(field.getType().getName(),new ArrayList<>());
+                    }
+                    entity.compositFieldMap.get(field.getType().getName()).add(field.getName());
+                    continue;
+                }
+
                 Property property = new Property();
                 if (null!=field.getAnnotation(ColumnName.class)) {
                     property.column = field.getAnnotation(ColumnName.class).value();
@@ -151,9 +159,6 @@ public class DefaultEntityHandler implements EntityHandler{
                 propertyList.add(property);
             }
             entity.properties = propertyList;
-            if (compositFieldList.size() > 0) {
-                entity.compositFields = compositFieldList.toArray(new Field[0]);
-            }
             Comment comment = getFirstAnnotation(c,Comment.class);
             if (null!=comment) {
                 entity.comment = comment.value();
@@ -421,7 +426,7 @@ public class DefaultEntityHandler implements EntityHandler{
      * 获得该类所有字段(包括父类字段)
      * @param clazz 类
      * */
-    private Field[] getAllField(Class clazz,List<Field> compositFieldList){
+    private Field[] getAllField(Class clazz){
         List<Field> fieldList = new ArrayList<>();
         Class tempClass = clazz;
         while (null != tempClass) {
@@ -441,11 +446,6 @@ public class DefaultEntityHandler implements EntityHandler{
                     continue;
                 }
                 if(needIgnoreClass(field.getType())){
-                    continue;
-                }
-                //跳过实体包类
-                if (isCompositProperty(field.getType())) {
-                    compositFieldList.add(field);
                     continue;
                 }
                 field.setAccessible(true);

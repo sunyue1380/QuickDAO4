@@ -140,7 +140,7 @@ public class AbstractSubCondition<T> implements SubCondition<T>{
 
     @Override
     public <E> SubCondition<E> joinTable(Class<E> clazz, String primaryField, String joinTableField) {
-        return joinTable(clazz,primaryField,joinTableField,subQuery.condition.getUniqueCompositFieldInMainClass(subQuery.entity.clazz,clazz));
+        return joinTable(clazz,primaryField,joinTableField,subQuery.entity.getCompositeFieldName(clazz.getName()));
     }
 
     @Override
