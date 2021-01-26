@@ -1,7 +1,6 @@
 package cn.schoolwow.quickdao.builder.ddl;
 
 import cn.schoolwow.quickdao.domain.Entity;
-import cn.schoolwow.quickdao.domain.IndexType;
 import cn.schoolwow.quickdao.domain.Property;
 import cn.schoolwow.quickdao.domain.QuickDAOConfig;
 import org.slf4j.MDC;
@@ -66,6 +65,25 @@ public class SQLServerDDLBuilder extends AbstractDDLBuilder {
     }
 
     @Override
+    public boolean hasIndexExists(String tableName, String indexName) throws SQLException {
+        String sql = "EXEC Sp_helpindex '"+tableName+"'";
+        MDC.put("name","查看索引是否存在");
+        MDC.put("sql",sql);
+        connection.prepareStatement(MDC.get("sql")).executeUpdate();
+
+        ResultSet resultSet = connection.prepareStatement(sql).executeQuery();
+        boolean result = false;
+        while(resultSet.next()) {
+            if(indexName.equals(resultSet.getString("index_name"))){
+                result = true;
+                break;
+            }
+        }
+        resultSet.close();
+        return result;
+    }
+
+    @Override
     public Map<String, String> getTypeFieldMapping() {
         Map<String,String> fieldTypeMapping = new HashMap<>();
         fieldTypeMapping.put("byte","TINYINT");
@@ -103,25 +121,5 @@ public class SQLServerDDLBuilder extends AbstractDDLBuilder {
         fieldTypeMapping.put("java.io.InputStream","TEXT");
         fieldTypeMapping.put("java.io.Reader","TEXT");
         return fieldTypeMapping;
-    }
-
-    @Override
-    protected boolean hasIndexExists(Entity entity, IndexType indexType) throws SQLException {
-        String indexName = entity.tableName+"_"+indexType.name();
-        String sql = "EXEC Sp_helpindex '"+entity.tableName+"'";
-        MDC.put("name","查看索引是否存在");
-        MDC.put("sql",sql);
-        connection.prepareStatement(MDC.get("sql")).executeUpdate();
-
-        ResultSet resultSet = connection.prepareStatement(sql).executeQuery();
-        boolean result = false;
-        while(resultSet.next()) {
-            if(indexName.equals(resultSet.getString("index_name"))){
-                result = true;
-                break;
-            }
-        }
-        resultSet.close();
-        return result;
     }
 }

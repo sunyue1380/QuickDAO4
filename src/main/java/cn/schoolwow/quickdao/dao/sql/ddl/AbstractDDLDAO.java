@@ -3,6 +3,7 @@ package cn.schoolwow.quickdao.dao.sql.ddl;
 import cn.schoolwow.quickdao.builder.ddl.AbstractDDLBuilder;
 import cn.schoolwow.quickdao.dao.sql.AbstractSQLDAO;
 import cn.schoolwow.quickdao.domain.Entity;
+import cn.schoolwow.quickdao.domain.IndexField;
 import cn.schoolwow.quickdao.domain.Property;
 import cn.schoolwow.quickdao.domain.QuickDAOConfig;
 import cn.schoolwow.quickdao.exception.SQLRuntimeException;
@@ -105,7 +106,32 @@ public class AbstractDDLDAO extends AbstractSQLDAO implements DDLDAO {
         return deleteProperty;
     }
 
+    @Override
+    public boolean hasIndex(String tableName, String indexName) {
+        try {
+            return ddlBuilder.hasIndexExists(tableName,indexName);
+        } catch (SQLException e) {
+            throw new SQLRuntimeException(e);
+        }
+    }
 
+    @Override
+    public void createIndex(IndexField indexField) {
+        try {
+            ddlBuilder.createIndex(indexField);
+        } catch (SQLException e) {
+            throw new SQLRuntimeException(e);
+        }
+    }
+
+    @Override
+    public void dropIndex(String tableName, String indexName) {
+        try {
+            ddlBuilder.dropIndex(tableName,indexName);
+        } catch (SQLException e) {
+            throw new SQLRuntimeException(e);
+        }
+    }
 
     @Override
     public void syncEntityList() {
@@ -113,7 +139,7 @@ public class AbstractDDLDAO extends AbstractSQLDAO implements DDLDAO {
             throw new IllegalArgumentException("请先指定要扫描的实体类包或者实体类!");
         }
         try {
-            ddlBuilder.automaticCreateTableAndField();
+            ddlBuilder.automaticCreateTableAndColumn();
             //删除数据库多余的表和字段
             Collection<Entity> entityList = quickDAOConfig.entityMap.values();
             for(Entity dbEntity:quickDAOConfig.dbEntityList){
@@ -135,9 +161,9 @@ public class AbstractDDLDAO extends AbstractSQLDAO implements DDLDAO {
     }
 
     @Override
-    public void automaticCreateTableAndField(){
+    public void automaticCreateTableAndColumn(){
         try {
-            ddlBuilder.automaticCreateTableAndField();
+            ddlBuilder.automaticCreateTableAndColumn();
         } catch (SQLException e) {
             throw new SQLRuntimeException(e);
         }

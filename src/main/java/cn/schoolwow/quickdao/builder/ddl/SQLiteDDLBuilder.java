@@ -1,7 +1,9 @@
 package cn.schoolwow.quickdao.builder.ddl;
 
+import cn.schoolwow.quickdao.annotation.IdStrategy;
+import cn.schoolwow.quickdao.annotation.IndexType;
 import cn.schoolwow.quickdao.domain.Entity;
-import cn.schoolwow.quickdao.domain.IndexType;
+import cn.schoolwow.quickdao.domain.IndexField;
 import cn.schoolwow.quickdao.domain.Property;
 import cn.schoolwow.quickdao.domain.QuickDAOConfig;
 import org.slf4j.MDC;
@@ -21,36 +23,23 @@ public class SQLiteDDLBuilder extends AbstractDDLBuilder {
 
     @Override
     public List<Entity> getDatabaseEntity() throws SQLException {
-        PreparedStatement tablePs = connection.prepareStatement("select name from sqlite_master where type='table' and name != 'sqlite_sequence';");
-        ResultSet tableRs = tablePs.executeQuery();
-        List<Entity> entityList = new ArrayList<>();
-        while (tableRs.next()) {
-            Entity entity = new Entity();
-            entity.tableName = tableRs.getString(1);
-
-            List<Property> propertyList = new ArrayList<>();
-            //获取所有列
-            {
-                ResultSet propertiesRs = connection.prepareStatement("PRAGMA table_info(`" + entity.tableName + "`)").executeQuery();
-                while (propertiesRs.next()) {
-                    Property property = new Property();
-                    property.column = propertiesRs.getString("name");
-                    property.columnType = propertiesRs.getString("type");
-                    property.notNull = "1".equals(propertiesRs.getString("notnull"));
-                    if (null != propertiesRs.getString("dflt_value")) {
-                        property.defaultValue = propertiesRs.getString("dflt_value");
-                    }
-                    propertyList.add(property);
-                }
-                propertiesRs.close();
-            }
-            updateTableIndex("SELECT sql FROM sqlite_master WHERE type='index' and tbl_name = '"+entity.tableName+"';",propertyList);
-            entity.properties = propertyList;
-            entityList.add(entity);
+        List<Entity> entityList = getEntityList();
+        for(Entity entity:entityList){
+            getEntityPropertyList(entity);
+            getIndex(entity);
         }
-        tableRs.close();
-        tablePs.close();
         return entityList;
+    }
+
+    @Override
+    public boolean hasTableExists(Entity entity) throws SQLException {
+        ResultSet resultSet = connection.prepareStatement("select name from sqlite_master where type='table' and name = '"+entity.tableName+"';").executeQuery();
+        boolean result = false;
+        if(resultSet.next()){
+            result = true;
+        }
+        resultSet.close();
+        return result;
     }
 
     @Override
@@ -59,7 +48,47 @@ public class SQLiteDDLBuilder extends AbstractDDLBuilder {
             //手动开启外键约束
             connection.prepareStatement("PRAGMA foreign_keys = ON;").executeUpdate();
         }
-        super.createTable(entity);
+        StringBuilder builder = new StringBuilder("create table " + entity.escapeTableName + "(");
+        for (Property property : entity.properties) {
+            if(property.id&&property.strategy== IdStrategy.AutoIncrement){
+                builder.append(getAutoIncrementSQL(property));
+            }else{
+                builder.append(quickDAOConfig.database.escape(property.column) + " " + property.columnType);
+                if (property.notNull) {
+                    builder.append(" not null");
+                }
+                if (null!=property.defaultValue&&!property.defaultValue.isEmpty()) {
+                    builder.append(" default " + property.defaultValue);
+                }
+                if (null != property.comment) {
+                    builder.append(" "+quickDAOConfig.database.comment(property.comment));
+                }
+                if (null!=property.check&&!property.check.isEmpty()) {
+                    builder.append(" check " + property.check);
+                }
+            }
+            builder.append(",");
+        }
+        if (quickDAOConfig.openForeignKey&&null!=entity.foreignKeyProperties&&entity.foreignKeyProperties.size()>0) {
+            for (Property property : entity.foreignKeyProperties) {
+                builder.append("foreign key(" + quickDAOConfig.database.escape(property.column) + ") references ");
+                String operation = property.foreignKey.foreignKeyOption().getOperation();
+                builder.append(quickDAOConfig.database.escape(quickDAOConfig.getEntityByClassName(property.foreignKey.table().getName()).tableName) + "(" + quickDAOConfig.database.escape(property.foreignKey.field()) + ") ON DELETE " + operation+ " ON UPDATE " + operation);
+                builder.append(",");
+            }
+        }
+        builder.deleteCharAt(builder.length() - 1);
+        builder.append(")");
+        if (null != entity.comment) {
+            builder.append(" "+quickDAOConfig.database.comment(entity.comment));
+        }
+        MDC.put("name","生成新表");
+        MDC.put("sql",builder.toString());
+        connection.prepareStatement(MDC.get("sql")).executeUpdate();
+        //创建索引
+        for(IndexField indexField:entity.indexFieldList){
+            createIndex(indexField);
+        }
     }
 
     @Override
@@ -70,6 +99,21 @@ public class SQLiteDDLBuilder extends AbstractDDLBuilder {
     @Override
     public void dropColumn(Property property) throws SQLException{
         throw new UnsupportedOperationException("SQLite不支持删除列");
+    }
+
+    @Override
+    public boolean hasIndexExists(String tableName, String indexName) throws SQLException {
+        String sql = "select count(1) from sqlite_master where type = 'index' and name = '"+indexName+"'";
+        MDC.put("name","查看索引是否存在");
+        MDC.put("sql",sql);
+
+        ResultSet resultSet = connection.prepareStatement(sql).executeQuery();
+        boolean result = false;
+        if (resultSet.next()) {
+            result = resultSet.getInt(1) > 0;
+        }
+        resultSet.close();
+        return result;
     }
 
     @Override
@@ -113,30 +157,72 @@ public class SQLiteDDLBuilder extends AbstractDDLBuilder {
         return fieldTypeMapping;
     }
 
-    @Override
-    public boolean hasTableExists(Entity entity) throws SQLException {
-        ResultSet resultSet = connection.prepareStatement("select name from sqlite_master where type='table' and name = '"+entity.tableName+"';").executeQuery();
-        boolean result = false;
-        if(resultSet.next()){
-            result = true;
+    /**
+     * 提取索引信息
+     * */
+    private void getIndex(Entity entity) throws SQLException {
+        PreparedStatement preparedStatement = connection.prepareStatement("select sql from sqlite_master where type='index' and sql is not null and tbl_name = '" + entity.tableName+"'");
+        ResultSet resultSet = preparedStatement.executeQuery();
+        while (resultSet.next()) {
+            String sql = resultSet.getString("sql");
+            String[] tokens = sql.split("`");
+            IndexField indexField = new IndexField();
+            if(tokens[0].contains("UNIQUE")){
+                indexField.indexType = IndexType.UNIQUE;
+            }else{
+                indexField.indexType = IndexType.NORMAL;
+            }
+            indexField.indexName = tokens[1];
+            indexField.tableName = tokens[3];
+            for(int i=5;i<tokens.length-1;i++){
+                indexField.columns.add(tokens[i]);
+            }
+            entity.indexFieldList.add(indexField);
         }
         resultSet.close();
-        return result;
+        preparedStatement.close();
     }
 
-    @Override
-    protected boolean hasIndexExists(Entity entity, IndexType indexType) throws SQLException {
-        String indexName = entity.tableName+"_"+indexType.name();
-        String sql = "select count(1) from sqlite_master where type = 'index' and name = '"+indexName+"'";
-        MDC.put("name","查看索引是否存在");
-        MDC.put("sql",sql);
-
-        ResultSet resultSet = connection.prepareStatement(sql).executeQuery();
-        boolean result = false;
-        if (resultSet.next()) {
-            result = resultSet.getInt(1) > 0;
+    /**
+     * 提取表字段信息
+     * */
+    private void getEntityPropertyList(Entity entity) throws SQLException {
+        PreparedStatement preparedStatement = connection.prepareStatement("PRAGMA table_info(`" + entity.tableName + "`)");
+        ResultSet resultSet = preparedStatement.executeQuery();
+        List<Property> propertyList = new ArrayList<>();
+        while (resultSet.next()) {
+            Property property = new Property();
+            property.column = resultSet.getString("name");
+            property.columnType = resultSet.getString("type");
+            property.notNull = "1".equals(resultSet.getString("notnull"));
+            if (null != resultSet.getString("dflt_value")) {
+                property.defaultValue = resultSet.getString("dflt_value");
+            }
+            if(1==resultSet.getInt("pk")){
+                property.id = true;
+                property.strategy = IdStrategy.AutoIncrement;
+            }
+            propertyList.add(property);
         }
         resultSet.close();
-        return result;
+        preparedStatement.close();
+        entity.properties = propertyList;
+    }
+
+    /**
+     * 从数据库提取表信息
+     * */
+    private List<Entity> getEntityList() throws SQLException {
+        List<Entity> entityList = new ArrayList<>();
+        PreparedStatement preparedStatement = connection.prepareStatement("select name from sqlite_master where type='table' and name != 'sqlite_sequence';");
+        ResultSet resultSet = preparedStatement.executeQuery();
+        while (resultSet.next()) {
+            Entity entity = new Entity();
+            entity.tableName = resultSet.getString("name");
+            entityList.add(entity);
+        }
+        resultSet.close();
+        preparedStatement.close();
+        return entityList;
     }
 }

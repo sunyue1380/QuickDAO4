@@ -2,9 +2,9 @@ package cn.schoolwow.quickdao.mysql.test;
 
 import cn.schoolwow.quickdao.QuickDAO;
 import cn.schoolwow.quickdao.annotation.IdStrategy;
+import cn.schoolwow.quickdao.annotation.IndexType;
 import cn.schoolwow.quickdao.dao.DAO;
 import cn.schoolwow.quickdao.domain.Entity;
-import cn.schoolwow.quickdao.domain.Property;
 import cn.schoolwow.quickdao.domain.QuickDAOConfig;
 import cn.schoolwow.quickdao.mysql.MySQLTest;
 import cn.schoolwow.quickdao.mysql.entity.DownloadTask;
@@ -27,47 +27,6 @@ import java.util.Date;
 
 /**配置项测试*/
 public class ConfigTest extends MySQLTest {
-    /**
-     * 实体类同步
-     * */
-    @Test
-    public void syncEntityList() {
-        DAO dao = QuickDAO.newInstance()
-                .dataSource(dataSource)
-                .entity(Person.class)
-                .entity(Order.class)
-                .build();
-        dao.rebuild(Person.class);
-        //缺少字段时同步
-        {
-            dao.dropColumn("person","city");
-            dao.syncEntityList();
-            Entity dbEntity = dao.getDbEntityList().stream().filter(entity -> entity.tableName.equals("person")).findFirst().orElse(null);
-            Assert.assertNotNull("同步新增实体字段信息失败!",dbEntity);
-            Property dbProperty = dbEntity.properties.stream().filter(property -> property.column.equals("city")).findFirst().orElse(null);
-            Assert.assertNotNull("同步新增实体字段信息失败!",dbProperty);
-        }
-        //多余字段时同步
-        {
-            Property property = new Property();
-            property.column = "phone_number";
-            property.columnType = "varchar(16)";
-            property.comment = "手机号码";
-            dao.createColumn("person",property);
-            dao.syncEntityList();
-            Entity dbEntity = dao.getDbEntityList().stream().filter(entity -> entity.tableName.equals("person")).findFirst().orElse(null);
-            Assert.assertNotNull("同步删除实体字段信息失败!",dbEntity);
-            Property dbProperty = dbEntity.properties.stream().filter(property1 -> property1.column.equals("phone_number")).findFirst().orElse(null);
-            Assert.assertNull("同步删除实体字段信息失败!",dbProperty);
-        }
-        {
-            Property property = dao.getProperty("person","last_name");
-            Assert.assertEquals("last_name",property.column);
-            Assert.assertEquals("varchar(64)",property.columnType);
-            Assert.assertEquals("姓",property.comment);
-        }
-    }
-
     /**
      * 测试实体类扫描
      * */
@@ -129,6 +88,7 @@ public class ConfigTest extends MySQLTest {
                 .notNull(true)
                 .check("#{fileSize}>0")
                 .comment("文件大小")
+                .index(IndexType.NORMAL,"","","文件大小索引")
                 .done()
                 .done()
                 .build();
@@ -224,4 +184,5 @@ public class ConfigTest extends MySQLTest {
                 .getArray();
         Assert.assertEquals(1,array.size());
     }
+
 }

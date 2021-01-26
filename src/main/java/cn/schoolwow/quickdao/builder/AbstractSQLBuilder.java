@@ -69,7 +69,7 @@ public class AbstractSQLBuilder implements SQLBuilder{
         if (!quickDAOConfig.sqlCache.containsKey(key)) {
             StringBuilder builder = new StringBuilder();
             builder.append("select count(1) from " + entity.escapeTableName + " where ");
-            for(Property property:entity.uniqueKeyProperties){
+            for(Property property:entity.uniqueProperties){
                 builder.append(quickDAOConfig.database.escape(property.column)+ "= "+(null==property.function?"?":property.function)+" and ");
             }
             builder.delete(builder.length()-5,builder.length());
@@ -79,7 +79,7 @@ public class AbstractSQLBuilder implements SQLBuilder{
         StringBuilder builder = new StringBuilder(sql.replace("?", PLACEHOLDER));
         PreparedStatement ps = connection.prepareStatement(sql);
         int parameterIndex = 1;
-        for(Property property:entity.uniqueKeyProperties){
+        for(Property property:entity.uniqueProperties){
             setParameter(instance,property,ps,parameterIndex, builder);
             parameterIndex++;
         }

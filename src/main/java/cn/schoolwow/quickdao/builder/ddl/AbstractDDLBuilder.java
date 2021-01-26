@@ -3,7 +3,7 @@ package cn.schoolwow.quickdao.builder.ddl;
 import cn.schoolwow.quickdao.annotation.IdStrategy;
 import cn.schoolwow.quickdao.builder.AbstractSQLBuilder;
 import cn.schoolwow.quickdao.domain.Entity;
-import cn.schoolwow.quickdao.domain.IndexType;
+import cn.schoolwow.quickdao.domain.IndexField;
 import cn.schoolwow.quickdao.domain.Property;
 import cn.schoolwow.quickdao.domain.QuickDAOConfig;
 import com.alibaba.fastjson.JSONObject;
@@ -13,10 +13,7 @@ import org.slf4j.MDC;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public abstract class AbstractDDLBuilder extends AbstractSQLBuilder implements DDLBuilder {
     protected Logger logger = LoggerFactory.getLogger(DDLBuilder.class);
@@ -37,9 +34,9 @@ public abstract class AbstractDDLBuilder extends AbstractSQLBuilder implements D
 
     @Override
     public void createTable(Entity entity) throws SQLException {
-        StringBuilder createTableBuilder = getCreateTableBuilder(entity);
+        StringBuilder builder = getCreateTableBuilder(entity);
         MDC.put("name","生成新表");
-        MDC.put("sql",createTableBuilder.toString());
+        MDC.put("sql",builder.toString());
         connection.prepareStatement(MDC.get("sql")).executeUpdate();
     }
 
@@ -106,53 +103,53 @@ public abstract class AbstractDDLBuilder extends AbstractSQLBuilder implements D
             dropTable(entity.tableName);
         }
         createTable(entity);
-        createIndex(entity, IndexType.Index);
-        createIndex(entity, IndexType.Unique);
     }
 
     @Override
-    public void createIndex(Entity entity, IndexType indexType) throws SQLException {
-        if(null==entity||null==indexType){
+    public abstract boolean hasIndexExists(String tableName, String indexName) throws SQLException;
+
+    @Override
+    public boolean hasConstraintExists(String tableName, String constraintName) throws SQLException {
+        ResultSet resultSet = connection.prepareStatement("select count(1) from information_schema.KEY_COLUMN_USAGE where constraint_name='" + constraintName + "'").executeQuery();
+        boolean result = false;
+        if (resultSet.next()) {
+            result = resultSet.getInt(1) > 0;
+        }
+        resultSet.close();
+        return result;
+    }
+
+    @Override
+    public void createIndex(IndexField indexField) throws SQLException {
+        if(indexField.columns.isEmpty()){
             return;
         }
-        String indexName = entity.tableName+"_"+indexType.name();
-        switch (indexType){
-            case Index:{
-                if (null == entity.indexProperties || entity.indexProperties.size() == 0) {
-                    return;
-                }
-                StringBuilder indexBuilder = new StringBuilder("create index " + quickDAOConfig.database.escape(indexName)+" on " + entity.escapeTableName + " (");
-                for (Property property : entity.indexProperties) {
-                    indexBuilder.append(quickDAOConfig.database.escape(property.column)+",");
-                }
-                indexBuilder.deleteCharAt(indexBuilder.length() - 1);
-                indexBuilder.append(");");
-
-                MDC.put("name","添加索引");
-                MDC.put("sql",indexBuilder.toString());
-                connection.prepareStatement(MDC.get("sql")).executeUpdate();
-            }break;
-            case Unique:{
-                if (null == entity.uniqueKeyProperties || entity.uniqueKeyProperties.size() == 0) {
-                    return;
-                }
-                StringBuilder indexUniqueBuilder = new StringBuilder("create unique index " + quickDAOConfig.database.escape(indexName)+" on " + entity.escapeTableName + " (");
-                for (Property property : entity.uniqueKeyProperties) {
-                    indexUniqueBuilder.append(quickDAOConfig.database.escape(property.column)+",");
-                }
-                indexUniqueBuilder.deleteCharAt(indexUniqueBuilder.length() - 1);
-                indexUniqueBuilder.append(");");
-
-                MDC.put("name","添加唯一性约束");
-                MDC.put("sql",indexUniqueBuilder.toString());
-                connection.prepareStatement(MDC.get("sql")).executeUpdate();
-            }break;
+        StringBuilder builder = new StringBuilder("create ");
+        switch (indexField.indexType){
+            case NORMAL:{}break;
+            case UNIQUE:{builder.append("unique");}break;
+            case FULLTEXT:{builder.append("fulltext");}break;
         }
+        builder.append(" index " + quickDAOConfig.database.escape(indexField.indexName) + " on " + quickDAOConfig.database.escape(indexField.tableName) + "(");
+        for(String column:indexField.columns){
+            builder.append(quickDAOConfig.database.escape(column)+",");
+        }
+        builder.deleteCharAt(builder.length()-1);
+        builder.append(")");
+        if(null!=indexField.using&&!indexField.using.isEmpty()){
+            builder.append(" "+indexField.using);
+        }
+        if(null!=indexField.comment&&!indexField.comment.isEmpty()){
+            builder.append(" "+quickDAOConfig.database.comment(indexField.comment));
+        }
+        builder.append(";");
+        MDC.put("name","添加索引");
+        MDC.put("sql",builder.toString());
+        connection.prepareStatement(MDC.get("sql")).executeUpdate();
     }
 
     @Override
-    public void dropIndex(Entity entity, IndexType indexType) throws SQLException{
-        String indexName = entity.tableName+"_"+indexType.name();
+    public void dropIndex(String tableName, String indexName) throws SQLException{
         String dropIndexSQL = "drop index "+quickDAOConfig.database.escape(indexName);
         MDC.put("name","删除索引");
         MDC.put("sql",dropIndexSQL);
@@ -161,6 +158,9 @@ public abstract class AbstractDDLBuilder extends AbstractSQLBuilder implements D
 
     @Override
     public void createForeignKey(Property property) throws SQLException{
+        if(!quickDAOConfig.openForeignKey){
+            return;
+        }
         String operation = property.foreignKey.foreignKeyOption().getOperation();
         String reference = quickDAOConfig.database.escape(quickDAOConfig.getEntityByClassName(property.foreignKey.table().getName()).tableName) + "(" + quickDAOConfig.database.escape(property.foreignKey.field()) + ") ON DELETE " + operation + " ON UPDATE " + operation;
         String foreignKeyName = "FK_" + property.entity.tableName + "_" + property.foreignKey.field() + "_" + quickDAOConfig.getEntityByClassName(property.foreignKey.table().getName()).tableName + "_" + property.name;
@@ -174,55 +174,45 @@ public abstract class AbstractDDLBuilder extends AbstractSQLBuilder implements D
     }
 
     @Override
-    public void automaticCreateTableAndField() throws SQLException {
-        //确定需要新增的表和更新的表
+    public void automaticCreateTableAndColumn() throws SQLException {
         Collection<Entity> entityList = quickDAOConfig.entityMap.values();
         List<Entity> newEntityList = new ArrayList<>();
-        List<Entity> updateEntityList = new ArrayList<>();
+        Map<Entity,Entity> updateEntityMap = new HashMap<>();
         for (Entity entity : entityList) {
-            for(Property property:entity.properties){
-                if(null!=property.check&&!property.check.isEmpty()){
-                    property.check = property.check.replace("#{"+property.name+"}",quickDAOConfig.database.escape(property.column));
-                    if(!property.check.contains("(")){
-                        property.check = "("+property.check+")";
-                    }
-                }
-            }
-            for (Entity dbEntity : quickDAOConfig.dbEntityList) {
-                if (entity.tableName.toLowerCase().equals(dbEntity.tableName.toLowerCase())) {
-                    updateEntityList.add(entity);
-                    break;
-                }
-            }
-            if(!updateEntityList.contains(entity)){
+            Entity dbEntity = quickDAOConfig.dbEntityList.stream().filter(entity1 -> entity1.tableName.equalsIgnoreCase(entity.tableName)).findFirst().orElse(null);
+            if(null==dbEntity){
                 newEntityList.add(entity);
+            }else{
+                updateEntityMap.put(entity,dbEntity);
             }
-        }
-        List<Entity> finalNewEntityList = new ArrayList<>(newEntityList.size());
-        for(Entity entity:newEntityList){
-            changeNewEntityCreateOrder(entity,finalNewEntityList);
         }
         //自动建表
         if (quickDAOConfig.autoCreateTable) {
             for(Entity entity: newEntityList){
                 createTable(entity);
-                createIndex(entity, IndexType.Index);
-                createIndex(entity, IndexType.Unique);
             }
         }
-        //自动新增字段
+        //自动新增字段和索引
         if(quickDAOConfig.autoCreateProperty){
-            //更新表
-            for(Entity entity : updateEntityList){
-                for (Entity dbEntity : quickDAOConfig.dbEntityList) {
-                    if (entity.tableName.equals(dbEntity.tableName)) {
-                        compareEntityDatabase(entity,dbEntity);
-                        break;
+            for(Map.Entry<Entity,Entity> entry:updateEntityMap.entrySet()){
+                List<Property> propertyList = entry.getKey().properties;
+                for(Property property:propertyList){
+                    if(entry.getValue().properties.stream().noneMatch(property1 -> property1.column.equals(property.column))){
+                        createProperty(property);
+                    }
+                    if(null!=property.foreignKey){
+                        createForeignKey(property);
+                    }
+                }
+
+                List<IndexField> indexFieldList = entry.getKey().indexFieldList;
+                for(IndexField indexField:indexFieldList){
+                    if(entry.getValue().indexFieldList.stream().noneMatch(indexField1 -> indexField1.indexName.equalsIgnoreCase(indexField.indexName))){
+                        createIndex(indexField);
                     }
                 }
             }
         }
-
         //添加虚拟表
         if(null==quickDAOConfig.visualTableList||quickDAOConfig.visualTableList.isEmpty()){
             quickDAOConfig.visualTableList = getVirtualEntity();
@@ -258,183 +248,68 @@ public abstract class AbstractDDLBuilder extends AbstractSQLBuilder implements D
     protected abstract String getAutoIncrementSQL(Property property);
 
     /**
-     * 判断索引是否存在
-     * @param entity 表信息
-     * @param indexType 索引类型
-     * */
-    protected abstract boolean hasIndexExists(Entity entity, IndexType indexType) throws SQLException;
-
-    /**
      * 获取建表语句
      * @param entity 建表实体类
      * */
     protected StringBuilder getCreateTableBuilder(Entity entity){
-        StringBuilder createTableBuilder = new StringBuilder("create table " + entity.escapeTableName + "(");
+        StringBuilder builder = new StringBuilder("create table " + entity.escapeTableName + "(");
         for (Property property : entity.properties) {
-            if(null==property.columnType||property.columnType.isEmpty()){
-                continue;
-            }
             if(property.id&&property.strategy== IdStrategy.AutoIncrement){
-                createTableBuilder.append(getAutoIncrementSQL(property));
+                builder.append(getAutoIncrementSQL(property));
             }else{
-                createTableBuilder.append(quickDAOConfig.database.escape(property.column) + " " + property.columnType);
+                builder.append(quickDAOConfig.database.escape(property.column) + " " + property.columnType);
                 if (property.notNull) {
-                    createTableBuilder.append(" not null");
+                    builder.append(" not null");
                 }
                 if (null!=property.defaultValue&&!property.defaultValue.isEmpty()) {
-                    createTableBuilder.append(" default " + property.defaultValue);
+                    builder.append(" default " + property.defaultValue);
                 }
                 if (null != property.comment) {
-                    createTableBuilder.append(" "+quickDAOConfig.database.comment(property.comment));
+                    builder.append(" "+quickDAOConfig.database.comment(property.comment));
                 }
                 if (null!=property.check&&!property.check.isEmpty()) {
-                    createTableBuilder.append(" check " + property.check);
-                }
-                if (property.unique&&!property.unionUnique){
-                    createTableBuilder.append(" unique ");
+                    builder.append(" check " + property.check);
                 }
             }
-            createTableBuilder.append(",");
+            builder.append(",");
+        }
+        for(IndexField indexField:entity.indexFieldList){
+            if(null==indexField.columns||indexField.columns.isEmpty()){
+                logger.warn("[忽略索引]该索引字段信息为空!表:{},索引名称:{}",entity.tableName,indexField.indexName);
+                continue;
+            }
+            switch (indexField.indexType){
+                case NORMAL:{}break;
+                case UNIQUE:{builder.append("unique");}break;
+                case FULLTEXT:{builder.append("fulltext");}break;
+            }
+            builder.append(" index " + quickDAOConfig.database.escape(indexField.indexName) + " (");
+            for(String column:indexField.columns){
+                builder.append(quickDAOConfig.database.escape(column)+",");
+            }
+            builder.deleteCharAt(builder.length()-1);
+            builder.append(")");
+            if(null!=indexField.using&&!indexField.using.isEmpty()){
+                builder.append(" "+indexField.using);
+            }
+            if(null!=indexField.comment&&!indexField.comment.isEmpty()){
+                builder.append(" "+quickDAOConfig.database.comment(indexField.comment));
+            }
+            builder.append(",");
         }
         if (quickDAOConfig.openForeignKey&&null!=entity.foreignKeyProperties&&entity.foreignKeyProperties.size()>0) {
             for (Property property : entity.foreignKeyProperties) {
-                createTableBuilder.append("foreign key(" + quickDAOConfig.database.escape(property.column) + ") references ");
+                builder.append("foreign key(" + quickDAOConfig.database.escape(property.column) + ") references ");
                 String operation = property.foreignKey.foreignKeyOption().getOperation();
-                createTableBuilder.append(quickDAOConfig.database.escape(quickDAOConfig.getEntityByClassName(property.foreignKey.table().getName()).tableName) + "(" + quickDAOConfig.database.escape(property.foreignKey.field()) + ") ON DELETE " + operation+ " ON UPDATE " + operation);
-                createTableBuilder.append(",");
+                builder.append(quickDAOConfig.database.escape(quickDAOConfig.getEntityByClassName(property.foreignKey.table().getName()).tableName) + "(" + quickDAOConfig.database.escape(property.foreignKey.field()) + ") ON DELETE " + operation+ " ON UPDATE " + operation);
+                builder.append(",");
             }
         }
-        createTableBuilder.deleteCharAt(createTableBuilder.length() - 1);
-        createTableBuilder.append(")");
+        builder.deleteCharAt(builder.length() - 1);
+        builder.append(")");
         if (null != entity.comment) {
-            createTableBuilder.append(" "+quickDAOConfig.database.comment(entity.comment));
+            builder.append(" "+quickDAOConfig.database.comment(entity.comment));
         }
-        return createTableBuilder;
-    }
-
-    /**
-     * 判断约束是否已经存在
-     * @param tableName 表名
-     * @param constraintName 约束名称
-     * */
-    protected boolean hasConstraintExists(String tableName, String constraintName) throws SQLException {
-        ResultSet resultSet = connection.prepareStatement("select count(1) from information_schema.KEY_COLUMN_USAGE where constraint_name='" + constraintName + "'").executeQuery();
-        boolean result = false;
-        if (resultSet.next()) {
-            result = resultSet.getInt(1) > 0;
-        }
-        resultSet.close();
-        return result;
-    }
-
-    /**
-     * 更新字段索引信息
-     * @param executeSQL 待执行SQL语句
-     * @param propertyList 字段列表
-     * */
-    protected void updateTableIndex(String executeSQL, List<Property> propertyList) throws SQLException{
-        ResultSet resultSet = connection.prepareStatement(executeSQL).executeQuery();
-        while (resultSet.next()) {
-            //判断是普通索引还是唯一性约束
-            String sql = resultSet.getString(1);
-            if(null==sql){
-                continue;
-            }
-            sql = sql.toLowerCase();
-            String[] columns = sql.substring(sql.indexOf("(")+1,sql.indexOf(")")).toLowerCase().split(",");
-            if(sql.contains("create unique index")){
-                for(String column:columns){
-                    for(Property property:propertyList){
-                        if(property.column.equals(column.substring(1,column.length()-1))){
-                            property.unique = true;
-                            break;
-                        }
-                    }
-                }
-            }else if(sql.contains("create index")){
-                for(String column:columns){
-                    for(Property property:propertyList){
-                        if(property.column.equals(column.substring(1,column.length()-1))){
-                            property.index = true;
-                            break;
-                        }
-                    }
-                }
-            }
-        }
-        resultSet.close();
-    }
-
-    /**
-     * 对比实体类和数据表并创建新列
-     */
-    private void compareEntityDatabase(Entity entity, Entity dbEntity) throws SQLException{
-        boolean hasIndexProperty = false;
-        boolean hasUniqueProperty = false;
-        List<Property> foreignKeyPropertyList = new ArrayList<>();
-        for (Property entityProperty : entity.properties) {
-            boolean columnExist = false;
-            for (Property dbEntityProperty : dbEntity.properties) {
-                if (dbEntityProperty.column.equals(entityProperty.column)) {
-                    columnExist = true;
-                    if(entityProperty.id){
-                        break;
-                    }
-                    //判断有无唯一性约束的改变
-                    if(dbEntityProperty.unique != entityProperty.unique){
-                        hasUniqueProperty = true;
-                    }
-                    //判断有无索引的改变
-                    if(dbEntityProperty.index != entityProperty.index){
-                        hasIndexProperty = true;
-                    }
-                    break;
-                }
-            }
-            if (!columnExist&&null!=entityProperty.columnType&&!entityProperty.columnType.isEmpty()) {
-                createProperty(entityProperty);
-                if(entityProperty.index){
-                    hasIndexProperty = true;
-                }
-                if(entityProperty.unique){
-                    hasUniqueProperty = true;
-                }
-                if(null!=entityProperty.foreignKey){
-                    foreignKeyPropertyList.add(entityProperty);
-                }
-            }
-        }
-        //如果新增属性中有索引属性,则重新建立联合索引
-        if (hasIndexProperty) {
-            if(hasIndexExists(entity, IndexType.Index)){
-                dropIndex(entity, IndexType.Index);
-            }
-            createIndex(entity, IndexType.Index);
-        }
-        //如果新增属性中有唯一约束,则重新建立联合唯一约束
-        if (hasUniqueProperty) {
-            if(hasIndexExists(entity, IndexType.Unique)){
-                dropIndex(entity, IndexType.Unique);
-            }
-            createIndex(entity, IndexType.Unique);
-        }
-        //建立外键
-        for(Property property:foreignKeyPropertyList){
-            createForeignKey(property);
-        }
-    }
-
-    /**
-     * 根据外键依赖关系调整外键创建顺序
-     * @param entity 当前要创建的实体类
-     * @param finalNewEntityList 最终实体类顺序
-     * */
-    private void changeNewEntityCreateOrder(Entity entity, List<Entity> finalNewEntityList){
-        if(null!=entity.foreignKeyProperties&&entity.foreignKeyProperties.size()>0){
-            for(Property property : entity.foreignKeyProperties){
-                changeNewEntityCreateOrder(quickDAOConfig.getEntityByClassName(property.foreignKey.table().getName()),finalNewEntityList);
-            }
-        }
-        finalNewEntityList.add(entity);
+        return builder;
     }
 }

@@ -193,7 +193,7 @@ public class AbstractDMLDAO extends AbstractSQLDAO implements DMLDAO{
         PreparedStatement ps = null;
         Entity entity = quickDAOConfig.getEntityByClassName(instance.getClass().getName());
         try {
-            if (entity.uniqueKeyProperties.size()>0&&entity.uniqueKeyProperties.size() + 1 != entity.properties.size()) {
+            if(!entity.uniqueProperties.isEmpty()){
                 ps = dmlBuilder.updateByUniqueKey(instance);
                 effect = ps.executeUpdate();
             }else if(null!=entity.id){
@@ -221,7 +221,7 @@ public class AbstractDMLDAO extends AbstractSQLDAO implements DMLDAO{
         PreparedStatement ps = null;
         try {
             Entity entity = quickDAOConfig.getEntityByClassName(instances[0].getClass().getName());
-            if(null!=entity.uniqueKeyProperties&&entity.uniqueKeyProperties.size()>0&&entity.uniqueKeyProperties.size() + 1 != entity.properties.size()){
+            if(!entity.uniqueProperties.isEmpty()){
                 //根据唯一性约束更新
                 ps = dmlBuilder.updateByUniqueKey(instances);
             }else if(null!=entity.id){

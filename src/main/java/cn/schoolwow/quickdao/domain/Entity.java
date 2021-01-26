@@ -1,6 +1,7 @@
 package cn.schoolwow.quickdao.domain;
 
 import java.lang.reflect.Field;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
@@ -29,25 +30,17 @@ public class Entity {
      */
     public Property id;
     /**
+     * 索引列表
+     */
+    public List<IndexField> indexFieldList = new ArrayList<>();
+    /**
      * 属性字段(排除ignore字段和实体包内字段)
      */
     public List<Property> properties;
     /**
-     * 索引字段
-     */
-    public List<Property> indexProperties;
-    /**
-     * 唯一约束字段
-     */
-    public List<Property> uniqueKeyProperties;
-    /**
-     * Check约束字段
-     */
-    public List<Property> checkProperties;
-    /**
      * 外键约束字段
      */
-    public List<Property> foreignKeyProperties;
+    public List<Property> foreignKeyProperties = new ArrayList<>();
     /**
      * Field数组(实体包类)
      */
@@ -60,6 +53,10 @@ public class Entity {
      * 表引擎
      * */
     public String engine;
+    /**
+     * 判断记录是否唯一的字段列表
+     * */
+    public List<Property> uniqueProperties = new ArrayList<>();
 
     /**
      * 根据字段名查询数据库列名,只返回列名

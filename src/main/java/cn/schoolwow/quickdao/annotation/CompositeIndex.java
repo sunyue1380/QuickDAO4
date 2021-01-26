@@ -3,12 +3,17 @@ package cn.schoolwow.quickdao.annotation;
 import java.lang.annotation.*;
 
 /**
- * 在字段上建立索引
+ * 组合索引
  */
-@Target(ElementType.FIELD)
+@Target(ElementType.TYPE)
 @Retention(RetentionPolicy.RUNTIME)
-@Repeatable(Indexes.class)
-public @interface Index {
+@Repeatable(CompositeIndexes.class)
+public @interface CompositeIndex {
+    /**
+     * 索引字段
+     */
+    String[] columns();
+
     /**
      * 索引类型
      */

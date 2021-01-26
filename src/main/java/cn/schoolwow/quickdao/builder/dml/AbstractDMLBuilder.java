@@ -250,7 +250,7 @@ public class  AbstractDMLBuilder extends AbstractSQLBuilder implements DMLBuilde
             Entity entity = quickDAOConfig.getEntityByClassName(clazz.getName());
             builder.append("update " + entity.escapeTableName + " set ");
             for (Property property : entity.properties) {
-                if (property.id || property.unique) {
+                if (property.id || entity.uniqueProperties.contains(property)) {
                     continue;
                 }
                 if(property.createdAt){
@@ -261,7 +261,7 @@ public class  AbstractDMLBuilder extends AbstractSQLBuilder implements DMLBuilde
             builder.deleteCharAt(builder.length() - 1);
             builder.append(" where ");
             for (Property property : entity.properties) {
-                if (property.unique&&!property.id) {
+                if (entity.uniqueProperties.contains(property)&&!property.id) {
                     builder.append(quickDAOConfig.database.escape(property.column) + " = ? and ");
                 }
             }
@@ -281,7 +281,7 @@ public class  AbstractDMLBuilder extends AbstractSQLBuilder implements DMLBuilde
         int parameterIndex = 1;
         Entity entity = quickDAOConfig.getEntityByClassName(instance.getClass().getName());
         for (Property property : entity.properties) {
-            if (property.id || property.unique) {
+            if (property.id || entity.uniqueProperties.contains(property)) {
                 continue;
             }
             if(property.createdAt){
@@ -294,7 +294,7 @@ public class  AbstractDMLBuilder extends AbstractSQLBuilder implements DMLBuilde
             parameterIndex++;
         }
         for (Property property : entity.properties) {
-            if (property.unique&&!property.id) {
+            if (entity.uniqueProperties.contains(property)&&!property.id) {
                 setParameter(instance, property, preparedStatement, parameterIndex, sqlBuilder);
                 parameterIndex++;
             }

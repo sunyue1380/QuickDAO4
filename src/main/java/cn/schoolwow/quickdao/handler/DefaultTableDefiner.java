@@ -2,6 +2,7 @@ package cn.schoolwow.quickdao.handler;
 
 import cn.schoolwow.quickdao.QuickDAO;
 import cn.schoolwow.quickdao.domain.Entity;
+import cn.schoolwow.quickdao.domain.IndexField;
 import cn.schoolwow.quickdao.domain.Property;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -28,6 +29,12 @@ public class DefaultTableDefiner implements TableDefiner{
     @Override
     public TableDefiner comment(String comment) {
         entity.comment = comment;
+        return this;
+    }
+
+    @Override
+    public TableDefiner index(IndexField indexField) {
+        entity.indexFieldList.add(indexField);
         return this;
     }
 

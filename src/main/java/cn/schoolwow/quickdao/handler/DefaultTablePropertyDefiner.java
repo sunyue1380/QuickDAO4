@@ -1,6 +1,8 @@
 package cn.schoolwow.quickdao.handler;
 
 import cn.schoolwow.quickdao.annotation.IdStrategy;
+import cn.schoolwow.quickdao.annotation.IndexType;
+import cn.schoolwow.quickdao.domain.IndexField;
 import cn.schoolwow.quickdao.domain.Property;
 
 /**实体类列定义*/
@@ -53,18 +55,6 @@ public class DefaultTablePropertyDefiner implements TablePropertyDefiner{
     }
 
     @Override
-    public TablePropertyDefiner unique(boolean unique) {
-        property.unique = unique;
-        return this;
-    }
-
-    @Override
-    public TablePropertyDefiner index(boolean index) {
-        property.index = index;
-        return this;
-    }
-
-    @Override
     public TablePropertyDefiner primaryKey(boolean primaryKey) {
         property.id = true;
         return this;
@@ -72,13 +62,35 @@ public class DefaultTablePropertyDefiner implements TablePropertyDefiner{
 
     @Override
     public TablePropertyDefiner check(String check) {
-        property.check = check;
+        if(null!=check){
+            property.check = check.replace("#{"+property.name+"}",property.column);
+            if(!property.check.isEmpty()&&!property.check.contains("(")){
+                property.check = "("+property.check+")";
+            }
+        }
         return this;
     }
 
     @Override
     public TablePropertyDefiner defaultValue(String defaultValue) {
         property.defaultValue = defaultValue;
+        return this;
+    }
+
+    @Override
+    public TablePropertyDefiner index(IndexType indexType, String indexName, String using, String comment) {
+        IndexField indexField = new IndexField();
+        indexField.tableName = property.entity.tableName;
+        indexField.indexType = indexType;
+        if(null==indexName||indexName.isEmpty()){
+            indexField.indexName = indexField.tableName+"_"+indexType.name().toLowerCase()+"_"+property.column;
+        }else{
+            indexField.indexName = indexName;
+        }
+        indexField.using = using;
+        indexField.comment = comment;
+        indexField.columns.add(property.column);
+        property.entity.indexFieldList.add(indexField);
         return this;
     }
 

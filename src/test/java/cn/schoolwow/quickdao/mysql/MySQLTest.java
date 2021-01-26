@@ -20,6 +20,7 @@ public class MySQLTest extends DatabaseTest {
                 .packageName("cn.schoolwow.quickdao.mysql.entity")
                 .charset("utf8")
                 .engine("InnoDB")
+                .foreignKey(false)
                 .build();
     }
 

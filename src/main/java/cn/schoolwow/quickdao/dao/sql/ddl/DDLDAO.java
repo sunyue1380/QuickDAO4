@@ -1,6 +1,7 @@
 package cn.schoolwow.quickdao.dao.sql.ddl;
 
 import cn.schoolwow.quickdao.domain.Entity;
+import cn.schoolwow.quickdao.domain.IndexField;
 import cn.schoolwow.quickdao.domain.Property;
 
 /**
@@ -54,6 +55,26 @@ public interface DDLDAO {
     Property dropColumn(String tableName, String column);
 
     /**
+     * 索引是否存在
+     * @param tableName 表名
+     * @param indexName 索引名称
+     */
+    boolean hasIndex(String tableName, String indexName);
+
+    /**
+     * 新增索引
+     * @param indexField 索引信息
+     */
+    void createIndex(IndexField indexField);
+
+    /**
+     * 删除索引
+     * @param tableName 表名
+     * @param indexName 索引名称
+     */
+    void dropIndex(String tableName, String indexName);
+
+    /**
      * 双向同步扫描实体类信息和数据库表信息
      */
     void syncEntityList();
@@ -61,7 +82,7 @@ public interface DDLDAO {
     /**
      * 自动建表和新增字段
      */
-    void automaticCreateTableAndField();
+    void automaticCreateTableAndColumn();
 
     /**
      * 重新获取数据库信息

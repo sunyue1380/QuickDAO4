@@ -24,6 +24,10 @@ public class Property {
      */
     public String columnType;
     /**
+     * 注释
+     */
+    public String comment;
+    /**
      * 类名
      */
     public String className;
@@ -31,22 +35,6 @@ public class Property {
      * 属性名
      */
     public String name;
-    /**
-     * 属性所在位置
-     */
-    public int position;
-    /**
-     * 是否建立索引
-     */
-    public boolean index;
-    /**
-     * 是否唯一
-     */
-    public boolean unique;
-    /**
-     * 是否是联合唯一索引
-     */
-    public boolean unionUnique;
     /**
      * 是否非空
      */
@@ -60,9 +48,9 @@ public class Property {
      */
     public String defaultValue;
     /**
-     * 注释
+     * 属性所在位置
      */
-    public String comment;
+    public int position;
     /**
      * 在哪个字段之后
      */

@@ -1,6 +1,7 @@
 package cn.schoolwow.quickdao.handler;
 
 import cn.schoolwow.quickdao.QuickDAO;
+import cn.schoolwow.quickdao.domain.IndexField;
 
 /**
  * 自定义表
@@ -15,6 +16,11 @@ public interface TableDefiner {
      * 注释
      */
     TableDefiner comment(String comment);
+
+    /**
+     * 建立索引
+     */
+    TableDefiner index(IndexField indexField);
 
     /**
      * 处理列

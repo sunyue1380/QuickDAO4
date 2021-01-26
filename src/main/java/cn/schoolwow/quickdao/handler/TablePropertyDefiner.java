@@ -1,6 +1,7 @@
 package cn.schoolwow.quickdao.handler;
 
 import cn.schoolwow.quickdao.annotation.IdStrategy;
+import cn.schoolwow.quickdao.annotation.IndexType;
 
 /**
  * 自定义列属性
@@ -37,16 +38,6 @@ public interface TablePropertyDefiner {
     TablePropertyDefiner notNull(boolean notNull);
 
     /**
-     * 是否唯一
-     */
-    TablePropertyDefiner unique(boolean unique);
-
-    /**
-     * 是否建立索引
-     */
-    TablePropertyDefiner index(boolean index);
-
-    /**
      * 是否主键
      */
     TablePropertyDefiner primaryKey(boolean primaryKey);
@@ -60,6 +51,15 @@ public interface TablePropertyDefiner {
      * 默认值
      */
     TablePropertyDefiner defaultValue(String defaultValue);
+
+    /**
+     * 建立索引
+     * @param indexType 索引类型
+     * @param indexName 索引名称(可为空)
+     * @param using 索引方法(可为空)
+     * @param comment 索引注释(可为空)
+     */
+    TablePropertyDefiner index(IndexType indexType, String indexName, String using, String comment);
 
     /**
      * 结束

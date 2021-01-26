@@ -52,6 +52,18 @@ public interface DAOOperation {
     List<Entity> getDbEntityList();
 
     /**
+     * 获取实体类表
+     * @param clazz 实体类
+     */
+    Entity getEntity(Class clazz);
+
+    /**
+     * 获取数据库表
+     * @param tableName 表名
+     */
+    Entity getDbEntity(String tableName);
+
+    /**
      * 获取表字段
      *
      * @param tableName 表名

@@ -1,16 +1,17 @@
 package cn.schoolwow.quickdao.sqlite.entity;
 
-import cn.schoolwow.quickdao.annotation.ColumnType;
-import cn.schoolwow.quickdao.annotation.Comment;
-import cn.schoolwow.quickdao.annotation.Constraint;
-import cn.schoolwow.quickdao.annotation.Ignore;
+import cn.schoolwow.quickdao.annotation.*;
 
-/**人详细信息*/
 @Ignore
+@Comment("人物表详细信息")
+@CompositeIndex(columns = {"lastName","firstName"},comment = "人物姓名索引")
+@CompositeIndex(columns = {"address"},comment = "地址索引")
+@UniqueField(columns = "lastName")
 public class PersonDetail {
     @Comment("姓")
     @ColumnType("varchar(64)")
-    @Constraint(notNull = true,unique = true)
+    @Constraint(notNull = true)
+    @Index(indexType = IndexType.NORMAL, indexName = "last_name_index", comment = "人物姓氏")
     private String lastName;
 
     @Comment("名")

@@ -1,8 +1,9 @@
 package cn.schoolwow.quickdao.builder.ddl;
 
 import cn.schoolwow.quickdao.annotation.IdStrategy;
+import cn.schoolwow.quickdao.annotation.IndexType;
 import cn.schoolwow.quickdao.domain.Entity;
-import cn.schoolwow.quickdao.domain.IndexType;
+import cn.schoolwow.quickdao.domain.IndexField;
 import cn.schoolwow.quickdao.domain.Property;
 import cn.schoolwow.quickdao.domain.QuickDAOConfig;
 import org.slf4j.MDC;
@@ -29,72 +30,11 @@ public class MySQLDDLBuilder extends AbstractDDLBuilder {
 
     @Override
     public List<Entity> getDatabaseEntity() throws SQLException {
-        PreparedStatement tablePs = connection.prepareStatement("select table_name,table_comment from information_schema.tables where table_schema = database()");
-        ResultSet tableRs = tablePs.executeQuery();
-        List<Entity> entityList = new ArrayList<>();
-        while (tableRs.next()) {
-            Entity entity = new Entity();
-            entity.tableName = tableRs.getString(1);
-            entity.comment = tableRs.getString(2);
-
-            List<Property> propertyList = new ArrayList<>();
-            //获取所有列
-            {
-                connection.getMetaData().getUserName();
-                ResultSet propertiesRs = connection.prepareStatement("show full columns from " + quickDAOConfig.database.escape(entity.tableName)).executeQuery();
-                while (propertiesRs.next()) {
-                    Property property = new Property();
-                    property.column = propertiesRs.getString("Field");
-                    //无符号填充0 => float unsigned zerofill
-                    property.columnType = propertiesRs.getString("Type");
-                    if(property.columnType.contains(" ")){
-                        property.columnType = property.columnType.substring(0,property.columnType.indexOf(" "));
-                    }
-                    property.notNull = "NO".equals(propertiesRs.getString("Null"));
-                    String key = propertiesRs.getString("Key");
-                    if(null!=key){
-                        switch(key){
-                            case "PRI":{property.id = true;}break;
-                            case "UNI":{property.unique = true;}break;
-                        }
-                    }
-                    if("auto_increment".equals(propertiesRs.getString("Extra"))){
-                        property.id = true;
-                        property.strategy = IdStrategy.AutoIncrement;
-                    }else{
-                        property.strategy = IdStrategy.None;
-                    }
-                    if (null != propertiesRs.getString("Default")) {
-                        property.defaultValue = propertiesRs.getString("Default");
-                    }
-                    property.comment = propertiesRs.getString("Comment");
-                    propertyList.add(property);
-                }
-                propertiesRs.close();
-            }
-            //处理索引
-            {
-                ResultSet resultSet = connection.prepareStatement("show index from " + quickDAOConfig.database.escape(entity.tableName)).executeQuery();
-                while (resultSet.next()) {
-                    String columnName = resultSet.getString("Column_name");
-                    for(Property property:propertyList){
-                        if(property.column.equals(columnName)){
-                            int nonUnique = resultSet.getInt("Non_unique");
-                            if(nonUnique==0){
-                                property.unique = true;
-                            }else{
-                                property.index = true;
-                            }
-                            break;
-                        }
-                    }
-                }
-                resultSet.close();
-            }
-            entity.properties = propertyList;
-            entityList.add(entity);
+        List<Entity> entityList = getEntityList();
+        for(Entity entity:entityList){
+            getEntityPropertyList(entity);
+            getIndex(entity);
         }
-        tableRs.close();
         return entityList;
     }
 
@@ -116,14 +56,71 @@ public class MySQLDDLBuilder extends AbstractDDLBuilder {
 
     @Override
     public void createTable(Entity entity) throws SQLException {
-        StringBuilder createTableBuilder = getCreateTableBuilder(entity);
+        StringBuilder builder = new StringBuilder("create table " + entity.escapeTableName + "(");
+        for (Property property : entity.properties) {
+            if(property.id&&property.strategy== IdStrategy.AutoIncrement){
+                builder.append(getAutoIncrementSQL(property));
+            }else{
+                builder.append(quickDAOConfig.database.escape(property.column) + " " + property.columnType);
+                if (property.notNull) {
+                    builder.append(" not null");
+                }
+                if (null!=property.defaultValue&&!property.defaultValue.isEmpty()) {
+                    builder.append(" default " + property.defaultValue);
+                }
+                if (null != property.comment) {
+                    builder.append(" "+quickDAOConfig.database.comment(property.comment));
+                }
+                if (null!=property.check&&!property.check.isEmpty()) {
+                    builder.append(" check " + property.check);
+                }
+            }
+            builder.append(",");
+        }
+        for(IndexField indexField:entity.indexFieldList){
+            if(null==indexField.columns||indexField.columns.isEmpty()){
+                logger.warn("[忽略索引]该索引字段信息为空!表:{},索引名称:{}",entity.tableName,indexField.indexName);
+                continue;
+            }
+            switch (indexField.indexType){
+                case NORMAL:{}break;
+                case UNIQUE:{builder.append("unique");}break;
+                case FULLTEXT:{builder.append("fulltext");}break;
+            }
+            builder.append(" index " + quickDAOConfig.database.escape(indexField.indexName) + " (");
+            for(String column:indexField.columns){
+                builder.append(quickDAOConfig.database.escape(column)+",");
+            }
+            builder.deleteCharAt(builder.length()-1);
+            builder.append(")");
+            if(null!=indexField.using&&!indexField.using.isEmpty()){
+                builder.append(" "+indexField.using);
+            }
+            if(null!=indexField.comment&&!indexField.comment.isEmpty()){
+                builder.append(" "+quickDAOConfig.database.comment(indexField.comment));
+            }
+            builder.append(",");
+        }
+        if (quickDAOConfig.openForeignKey&&null!=entity.foreignKeyProperties&&entity.foreignKeyProperties.size()>0) {
+            for (Property property : entity.foreignKeyProperties) {
+                builder.append("foreign key(" + quickDAOConfig.database.escape(property.column) + ") references ");
+                String operation = property.foreignKey.foreignKeyOption().getOperation();
+                builder.append(quickDAOConfig.database.escape(quickDAOConfig.getEntityByClassName(property.foreignKey.table().getName()).tableName) + "(" + quickDAOConfig.database.escape(property.foreignKey.field()) + ") ON DELETE " + operation+ " ON UPDATE " + operation);
+                builder.append(",");
+            }
+        }
+        builder.deleteCharAt(builder.length() - 1);
+        builder.append(")");
+        if (null != entity.comment) {
+            builder.append(" "+quickDAOConfig.database.comment(entity.comment));
+        }
         //添加表引擎
         String engine = entity.engine;
         if(null==engine||engine.isEmpty()){
             engine = quickDAOConfig.engine;
         }
         if(null!=engine&&!engine.isEmpty()) {
-            createTableBuilder.append(" ENGINE="+engine);
+            builder.append(" ENGINE="+engine);
         }
         //指定表编码
         String charset = entity.charset;
@@ -131,17 +128,31 @@ public class MySQLDDLBuilder extends AbstractDDLBuilder {
             charset = quickDAOConfig.charset;
         }
         if(null!=charset&&!charset.isEmpty()){
-            createTableBuilder.append(" DEFAULT CHARSET="+charset);
+            builder.append(" DEFAULT CHARSET="+charset);
         }
         MDC.put("name","生成新表");
-        MDC.put("sql",createTableBuilder.toString());
+        MDC.put("sql",builder.toString());
         connection.prepareStatement(MDC.get("sql")).executeUpdate();
     }
 
     @Override
-    public void dropIndex(Entity entity, IndexType indexType) throws SQLException{
-        String indexName = entity.tableName+"_"+indexType.name();
-        String dropIndexSQL = "drop index "+quickDAOConfig.database.escape(indexName)+" on "+quickDAOConfig.database.escape(entity.tableName);
+    public boolean hasIndexExists(String tableName, String indexName) throws SQLException {
+        String sql = "show index from "+quickDAOConfig.database.escape(tableName)+" where key_name = '"+indexName+"'";
+
+        MDC.put("name","查看索引是否存在");
+        MDC.put("sql",sql);
+        ResultSet resultSet = connection.prepareStatement(sql).executeQuery();
+        boolean result = false;
+        if (resultSet.next()) {
+            result = true;
+        }
+        resultSet.close();
+        return result;
+    }
+
+    @Override
+    public void dropIndex(String tableName, String indexName) throws SQLException{
+        String dropIndexSQL = "drop index "+quickDAOConfig.database.escape(indexName)+" on "+quickDAOConfig.database.escape(tableName);
         MDC.put("name","删除索引");
         MDC.put("sql",dropIndexSQL);
         connection.prepareStatement(MDC.get("sql")).executeUpdate();
@@ -188,22 +199,6 @@ public class MySQLDDLBuilder extends AbstractDDLBuilder {
         return fieldTypeMapping;
     }
 
-    @Override
-    protected boolean hasIndexExists(Entity entity, IndexType indexType) throws SQLException {
-        String indexName = entity.tableName+"_"+indexType.name();
-        String sql = "show index from "+quickDAOConfig.database.escape(entity.tableName)+" where key_name = '"+indexName+"'";
-
-        MDC.put("name","查看索引是否存在");
-        MDC.put("sql",sql);
-        ResultSet resultSet = connection.prepareStatement(sql).executeQuery();
-        boolean result = false;
-        if (resultSet.next()) {
-            result = true;
-        }
-        resultSet.close();
-        return result;
-    }
-
     /**获取虚拟表信息*/
     protected List<Entity> getVirtualEntity(){
         Entity entity = new Entity();
@@ -211,5 +206,93 @@ public class MySQLDDLBuilder extends AbstractDDLBuilder {
         entity.escapeTableName = "dual";
         entity.properties = new ArrayList<>();
         return Arrays.asList(entity);
+    }
+
+    /**
+     * 提取索引信息
+     * */
+    private void getIndex(Entity entity) throws SQLException {
+        PreparedStatement preparedStatement = connection.prepareStatement("show index from " + quickDAOConfig.database.escape(entity.tableName));
+        ResultSet resultSet = preparedStatement.executeQuery();
+        while (resultSet.next()) {
+            String indexName = resultSet.getString("Key_name");
+            IndexField indexField = null;
+            for(IndexField indexField1:entity.indexFieldList){
+                if(indexField1.indexName.equals(indexName)){
+                    indexField = indexField1;
+                    break;
+                }
+            }
+            if(null==indexField) {
+                indexField = new IndexField();
+                indexField.indexType = resultSet.getInt("Non_unique")==0?IndexType.UNIQUE:IndexType.NORMAL;
+                indexField.indexName = resultSet.getString("Key_name");
+                indexField.columns.add(resultSet.getString("Column_name"));
+                indexField.using = resultSet.getString("Index_type");
+                indexField.comment = resultSet.getString("Index_comment");
+                entity.indexFieldList.add(indexField);
+            }else{
+                indexField.columns.add(resultSet.getString("Column_name"));
+            }
+        }
+        resultSet.close();
+        preparedStatement.close();
+    }
+
+    /**
+     * 提取表字段信息
+     * */
+    private void getEntityPropertyList(Entity entity) throws SQLException {
+        PreparedStatement preparedStatement = connection.prepareStatement("show full columns from " + quickDAOConfig.database.escape(entity.tableName));
+        ResultSet resultSet = preparedStatement.executeQuery();
+        List<Property> propertyList = new ArrayList<>();
+        while (resultSet.next()) {
+            Property property = new Property();
+            property.column = resultSet.getString("Field");
+            //无符号填充0 => float unsigned zerofill
+            property.columnType = resultSet.getString("Type");
+            if(property.columnType.contains(" ")){
+                property.columnType = property.columnType.substring(0,property.columnType.indexOf(" "));
+            }
+            property.notNull = "NO".equals(resultSet.getString("Null"));
+            String key = resultSet.getString("Key");
+            if("PRI".equals(key)){
+                property.id = true;
+            }
+            if("auto_increment".equals(resultSet.getString("Extra"))){
+                property.id = true;
+                property.strategy = IdStrategy.AutoIncrement;
+            }else{
+                property.strategy = IdStrategy.None;
+            }
+            if (null != resultSet.getString("Default")) {
+                property.defaultValue = resultSet.getString("Default");
+            }
+            property.comment = resultSet.getString("Comment");
+            propertyList.add(property);
+        }
+        resultSet.close();
+        preparedStatement.close();
+        entity.properties = propertyList;
+    }
+
+    /**
+     * 从数据库提取表信息
+     * */
+    private List<Entity> getEntityList() throws SQLException {
+        List<Entity> entityList = new ArrayList<>();
+        PreparedStatement preparedStatement = connection.prepareStatement("show table status;");
+        ResultSet resultSet = preparedStatement.executeQuery();
+        while (resultSet.next()) {
+            Entity entity = new Entity();
+            entity.tableName = resultSet.getString("Name");
+            entity.comment = resultSet.getString("Comment");
+            entity.engine = resultSet.getString("Engine");
+            entity.charset = resultSet.getString("Collation");
+            entityList.add(entity);
+        }
+        resultSet.close();
+        preparedStatement.close();
+        return entityList;
     }
 }

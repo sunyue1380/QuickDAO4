@@ -226,7 +226,7 @@ public class QuickDAO {
         quickDAOConfig.dao = daoProxy;
         //自动建表和新增字段
         daoProxy.refreshDbEntityList();
-        daoProxy.automaticCreateTableAndField();
+        daoProxy.automaticCreateTableAndColumn();
         return daoProxy;
     }
 }

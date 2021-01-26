@@ -35,7 +35,7 @@ public class AbstractSQLDAO implements SQLDAO {
         try {
             Entity entity = quickDAOConfig.getEntityByClassName(instance.getClass().getName());
             PreparedStatement ps = null;
-            if(null!=entity.uniqueKeyProperties&&entity.uniqueKeyProperties.size()>0){
+            if(!entity.uniqueProperties.isEmpty()){
                 ps = sqlBuilder.selectCountByUniqueKey(instance);
             }else if(null!=entity.id){
                 ps = sqlBuilder.selectCountById(instance);

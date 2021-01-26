@@ -1,7 +1,7 @@
 package cn.schoolwow.quickdao.builder.ddl;
 
 import cn.schoolwow.quickdao.domain.Entity;
-import cn.schoolwow.quickdao.domain.IndexType;
+import cn.schoolwow.quickdao.domain.IndexField;
 import cn.schoolwow.quickdao.domain.Property;
 
 import java.sql.SQLException;
@@ -58,14 +58,31 @@ public interface DDLBuilder {
     void rebuild(Entity entity) throws SQLException;
 
     /**
+     * 判断索引是否存在
+     * @param tableName 表名
+     * @param indexName 索引名称
+     * */
+    boolean hasIndexExists(String tableName, String indexName) throws SQLException;
+
+    /**
+     * 判断约束是否存在
+     * @param tableName 表名
+     * @param constraintName 约束名称
+     * */
+    boolean hasConstraintExists(String tableName, String constraintName) throws SQLException;
+
+    /**
      * 创建索引
+     * @param indexField 索引字段
      */
-    void createIndex(Entity entity, IndexType indexType) throws SQLException;
+    void createIndex(IndexField indexField) throws SQLException;
 
     /**
      * 删除索引
+     * @param tableName 表名
+     * @param indexName 索引名称
      */
-    void dropIndex(Entity entity, IndexType indexType) throws SQLException;
+    void dropIndex(String tableName, String indexName) throws SQLException;
 
     /**
      * 建立外键约束
@@ -75,7 +92,7 @@ public interface DDLBuilder {
     /**
      * 自动建表和新增字段
      */
-    void automaticCreateTableAndField() throws SQLException;
+    void automaticCreateTableAndColumn() throws SQLException;
 
     /**
      * 刷新数据库字段信息

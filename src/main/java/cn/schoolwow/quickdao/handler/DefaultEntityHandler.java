@@ -2,6 +2,7 @@ package cn.schoolwow.quickdao.handler;
 
 import cn.schoolwow.quickdao.annotation.*;
 import cn.schoolwow.quickdao.domain.Entity;
+import cn.schoolwow.quickdao.domain.IndexField;
 import cn.schoolwow.quickdao.domain.Property;
 import cn.schoolwow.quickdao.domain.QuickDAOConfig;
 import org.slf4j.Logger;
@@ -72,15 +73,7 @@ public class DefaultEntityHandler implements EntityHandler{
         for (Class c : classList) {
             Entity entity = quickDAOConfig.getEntityByClassName(c.getName());
             entity.escapeTableName = quickDAOConfig.database.escape(entity.tableName);
-            if (c.getDeclaredAnnotation(Comment.class) != null) {
-                Comment comment = (Comment) c.getDeclaredAnnotation(Comment.class);
-                entity.comment = comment.value();
-            }
-            if (c.getDeclaredAnnotation(Table.class) != null) {
-                Table table = (Table) c.getDeclaredAnnotation(Table.class);
-                entity.charset = table.charset();
-                entity.engine = table.engine();
-            }
+
             //属性列表
             List<Property> propertyList = new ArrayList<>();
             //实体包类列表
@@ -105,10 +98,11 @@ public class DefaultEntityHandler implements EntityHandler{
                 Constraint constraint = field.getDeclaredAnnotation(Constraint.class);
                 if(null!=constraint){
                     property.notNull = constraint.notNull();
-                    property.unique = constraint.unique();
-                    property.check = constraint.check();
+                    property.check = constraint.check().replace("#{"+property.name+"}",quickDAOConfig.database.escape(property.column));
+                    if(!property.check.isEmpty()&&!property.check.contains("(")){
+                        property.check = "("+property.check+")";
+                    }
                     property.defaultValue = constraint.defaultValue();
-                    property.unionUnique = constraint.unionUnique();
                 }
                 if(property.name.equals("id")){
                     property.id = true;
@@ -127,7 +121,28 @@ public class DefaultEntityHandler implements EntityHandler{
                     property.createdAt = tableField.createdAt();
                     property.updateAt = tableField.updatedAt();
                 }
-                property.index = field.getDeclaredAnnotation(Index.class) != null;
+                List<Index> indexList = new ArrayList<>();
+                if(null!=field.getDeclaredAnnotation(Index.class)){
+                    indexList.add(field.getDeclaredAnnotation(Index.class));
+                }
+                Indexes indexes = field.getDeclaredAnnotation(Indexes.class);
+                if(null!=indexes&&indexes.value().length>0){
+                    indexList.addAll(Arrays.asList(indexes.value()));
+                }
+                for(Index index:indexList){
+                    IndexField indexField = new IndexField();
+                    indexField.tableName = entity.tableName;
+                    indexField.indexType = index.indexType();
+                    if(!index.indexName().isEmpty()){
+                        indexField.indexName = index.indexName();
+                    }else{
+                        indexField.indexName = entity.tableName+"_"+indexField.indexType.name().toLowerCase()+"_"+property.column;
+                    }
+                    indexField.using = index.using();
+                    indexField.comment = index.comment();
+                    indexField.columns.add(property.column);
+                    entity.indexFieldList.add(indexField);
+                }
                 if(null!=field.getDeclaredAnnotation(Comment.class)){
                     property.comment = field.getDeclaredAnnotation(Comment.class).value();
                 }
@@ -139,6 +154,61 @@ public class DefaultEntityHandler implements EntityHandler{
             if (compositFieldList.size() > 0) {
                 entity.compositFields = compositFieldList.toArray(new Field[0]);
             }
+            Comment comment = getFirstAnnotation(c,Comment.class);
+            if (null!=comment) {
+                entity.comment = comment.value();
+            }
+            Table table = getFirstAnnotation(c,Table.class);
+            if (null!=table) {
+                entity.charset = table.charset();
+                entity.engine = table.engine();
+            }
+            List<CompositeIndex> compositeIndexList = new ArrayList<>();
+            CompositeIndex compositeIndexAnno = getFirstAnnotation(c,CompositeIndex.class);
+            if(null!=compositeIndexAnno){
+                compositeIndexList.add(compositeIndexAnno);
+            }
+            CompositeIndexes compositeIndexs = getFirstAnnotation(c,CompositeIndexes.class);
+            if(null!=compositeIndexs) {
+                compositeIndexList.addAll(Arrays.asList(compositeIndexs.value()));
+            }
+            if(compositeIndexList.size()>0){
+                StringBuilder builder = new StringBuilder();
+                for(CompositeIndex compositeIndex:compositeIndexList){
+                    if(compositeIndex.columns().length==0){
+                        continue;
+                    }
+                    IndexField indexField = new IndexField();
+                    indexField.tableName = entity.tableName;
+                    indexField.indexType = compositeIndex.indexType();
+                    indexField.using = compositeIndex.using();
+                    for(String column:compositeIndex.columns()){
+                        indexField.columns.add(entity.getColumnNameByFieldName(column));
+                    }
+                    indexField.comment = compositeIndex.comment();
+                    if(!compositeIndex.indexName().isEmpty()){
+                        indexField.indexName = compositeIndex.indexName();
+                    }else{
+                        builder.setLength(0);
+                        for(String column:indexField.columns){
+                            builder.append(column+",");
+                        }
+                        builder.deleteCharAt(builder.length()-1);
+                        indexField.indexName = entity.tableName+"_"+indexField.indexType.name().toLowerCase()+"_"+builder.toString();
+                    }
+                    entity.indexFieldList.add(indexField);
+                }
+            }
+            UniqueField uniqueField = getFirstAnnotation(c,UniqueField.class);
+            if(null!=uniqueField){
+                for(String column:uniqueField.columns()){
+                    Property property = entity.getPropertyByFieldName(column);
+                    if(null==property){
+                        throw new IllegalArgumentException("UniqueField注解参数无法匹配字段!类:"+entity.clazz.getName()+",字段:"+column);
+                    }
+                    entity.uniqueProperties.add(property);
+                }
+            }
         }
 
         //后处理实体类信息
@@ -147,10 +217,6 @@ public class DefaultEntityHandler implements EntityHandler{
                 entity.tableName = entity.tableName.toUpperCase();
                 entity.escapeTableName = quickDAOConfig.database.escape(entity.tableName);
             }
-            List<Property> indexPropertyList = new ArrayList<>();
-            List<Property> uniquePropertyList = new ArrayList<>();
-            List<Property> checkPropertyList = new ArrayList<>();
-            List<Property> foreignKeyPropertyList = new ArrayList<>();
             for(Property property : entity.properties){
                 if(quickDAOConfig.database.name().equals("H2")){
                     property.column = property.column.toUpperCase();
@@ -158,36 +224,16 @@ public class DefaultEntityHandler implements EntityHandler{
                 if(property.id){
                     entity.id = property;
                     property.notNull = true;
-                    property.unique = true;
                     property.comment = "自增id";
                     //@Id注解生成策略为默认值又在全局指定里Id生成策略则使用全局策略
                     if(property.strategy==IdStrategy.AutoIncrement&&null!=quickDAOConfig.idStrategy){
                         property.strategy = quickDAOConfig.idStrategy;
                     }
                 }
-                if(property.unique){
-                    property.notNull = true;
-                    if(!property.id){
-                        property.index = true;
-                    }
-                }
-                if(property.index){
-                    indexPropertyList.add(property);
-                }
-                if(property.unique&&property.unionUnique){
-                    uniquePropertyList.add(property);
-                }
-                if(null!=property.check&&!property.check.isEmpty()){
-                    checkPropertyList.add(property);
-                }
                 if(null!=property.foreignKey){
-                    foreignKeyPropertyList.add(property);
+                    entity.foreignKeyProperties.add(property);
                 }
             }
-            entity.indexProperties = indexPropertyList;
-            entity.uniqueKeyProperties = uniquePropertyList;
-            entity.checkProperties = checkPropertyList;
-            entity.foreignKeyProperties = foreignKeyPropertyList;
         }
     }
 
@@ -356,6 +402,19 @@ public class DefaultEntityHandler implements EntityHandler{
             return !needIgnoreClass(clazz);
         });
         return stream.collect(Collectors.toList());
+    }
+
+    /**
+     * 自下而上查找注解
+     * @param clazz 类
+     * */
+    private <T> T getFirstAnnotation(Class clazz, Class<T> annotation){
+        T annotation1 = null;
+        while(null!=clazz&&null==annotation1){
+            annotation1 = (T) clazz.getDeclaredAnnotation(annotation);
+            clazz = clazz.getSuperclass();
+        }
+        return annotation1;
     }
 
     /**
