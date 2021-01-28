@@ -226,7 +226,6 @@ public class AbstractDQLBuilder extends AbstractSQLBuilder implements DQLBuilder
         addJoinTableStatement(query,builder);
         builder.append(query.setBuilder.toString());
         addWhereStatement(query,builder);
-        addJoinTableStatement(query,builder);
 
         PreparedStatement ps = connection.prepareStatement(builder.toString());
         builder = new StringBuilder(builder.toString().replace("?",PLACEHOLDER));
@@ -343,15 +342,28 @@ public class AbstractDQLBuilder extends AbstractSQLBuilder implements DQLBuilder
      * 添加where的SQL语句
      */
     private void addWhereStatement(Query query, StringBuilder sqlBuilder) {
-        sqlBuilder.append(" " + query.whereBuilder.toString());
+        StringBuilder whereBuilder = new StringBuilder();
+        whereBuilder.append(query.whereBuilder.toString());
         for (SubQuery subQuery : query.subQueryList) {
-            if (subQuery.whereBuilder.length() > 0) {
-                sqlBuilder.append(" and " + subQuery.whereBuilder.toString() + " ");
+            if(subQuery.whereBuilder.length()>0){
+                whereBuilder.append(" and (" + subQuery.whereBuilder.toString() + ")");
             }
         }
         for(AbstractCondition orCondition:query.orList){
-            sqlBuilder.append(" or (" + orCondition.query.whereBuilder.toString()+")");
+            if(orCondition.query.whereBuilder.length()>0){
+                whereBuilder.append(" or (" + orCondition.query.whereBuilder.toString() + ")");
+            }
         }
+        if(query.whereBuilder.length()==0){
+            int index = whereBuilder.indexOf("(");
+            if(index>0){
+                whereBuilder.delete(0,index);
+            }
+        }
+        if(whereBuilder.length()>0){
+            whereBuilder.insert(0," where ");
+        }
+        sqlBuilder.append(whereBuilder.toString());
     }
 
     /**

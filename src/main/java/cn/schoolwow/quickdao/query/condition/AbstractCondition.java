@@ -285,7 +285,9 @@ public class AbstractCondition<T> implements Condition<T>, Serializable,Cloneabl
 
     @Override
     public Condition<T> or(String or, Object... parameterList) {
-        query.whereBuilder.replace(query.whereBuilder.length()-5,query.whereBuilder.length()," or ");
+        if(query.whereBuilder.length()>0){
+            query.whereBuilder.replace(query.whereBuilder.length()-5,query.whereBuilder.length()," or ");
+        }
         query.whereBuilder.append("(" + or + ") and ");
         if(null!=parameterList&&parameterList.length>0){
             query.parameterList.addAll(Arrays.asList(parameterList));
@@ -482,7 +484,6 @@ public class AbstractCondition<T> implements Condition<T>, Serializable,Cloneabl
         }
         if (query.whereBuilder.length() > 0) {
             query.whereBuilder.delete(query.whereBuilder.length() - 5, query.whereBuilder.length());
-            query.whereBuilder.insert(0, "where ");
         }
         if (query.groupByBuilder.length() > 0) {
             query.groupByBuilder.deleteCharAt(query.groupByBuilder.length()-1);
@@ -508,7 +509,6 @@ public class AbstractCondition<T> implements Condition<T>, Serializable,Cloneabl
         }
         for(AbstractCondition condition:query.orList){
             condition.execute();
-            condition.query.whereBuilder.delete(0,5);
         }
         hasExecute = true;
         AbstractResponse<T> abstractResponse = new AbstractResponse<T>(query);

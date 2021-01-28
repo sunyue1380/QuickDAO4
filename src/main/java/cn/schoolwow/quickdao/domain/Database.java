@@ -2,7 +2,6 @@ package cn.schoolwow.quickdao.domain;
 
 import cn.schoolwow.quickdao.builder.ddl.*;
 import cn.schoolwow.quickdao.builder.dql.AbstractDQLBuilder;
-import cn.schoolwow.quickdao.builder.dql.PostgreDQLBuilder;
 import cn.schoolwow.quickdao.builder.dql.SQLiteDQLBuilder;
 import cn.schoolwow.quickdao.query.condition.AbstractCondition;
 import cn.schoolwow.quickdao.query.condition.Condition;
@@ -106,10 +105,10 @@ public enum Database {
     /**获取DQL实例*/
     public AbstractDQLBuilder getDQLBuilderInstance(QuickDAOConfig quickDAOConfig){
         switch(this){
-            case SQLite:{return new SQLiteDQLBuilder(quickDAOConfig);}
+            case SQLite:
+            case Postgre:{return new SQLiteDQLBuilder(quickDAOConfig);}
             case Mysql:
-            case H2:
-            case Postgre:{return new PostgreDQLBuilder(quickDAOConfig);}
+            case H2:{};
             case SQLServer:{return new AbstractDQLBuilder(quickDAOConfig);}
             default:{
                 throw new IllegalArgumentException("不支持的数据库类型!");

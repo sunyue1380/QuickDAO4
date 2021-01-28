@@ -161,6 +161,17 @@ public class DMLTest extends MySQLTest {
                 }
             }
         }
+        //关联更新
+        {
+            int effect = dao.query(Order.class)
+                    .joinTable(Person.class,"person_id","id")
+                    .addQuery("id",1)
+                    .done()
+                    .addUpdate("orderNo",1)
+                    .execute()
+                    .update();
+            Assert.assertEquals(0, effect);
+        }
     }
 
     private void save() {
