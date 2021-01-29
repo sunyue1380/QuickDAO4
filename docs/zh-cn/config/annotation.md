@@ -82,18 +82,57 @@ public class User{
 }
 ```
 
+> 从4.1.2版本开始新增以下属性
+
+|属性|说明|默认值|
+|---|---|---|
+|indexType|索引类型|IndexType.NORMAL 一般索引|
+|indexName|索引名称|为空则程序自动生成|
+|using|索引方法|为空则使用数据库默认值|
+|comment|索引注释|无|
+
+同时支持重复注解,可在一个字段上添加多个Index注解
+
+## @CompositeIndex
+
+> 此注解从4.1.2开始提供
+
+作用于类,在表上建立组合索引
+
+```java
+@CompositeIndex(columns={"username","password"})
+public class User{
+    private String username;
+    private String password;
+}
+```
+
+同时支持重复注解,可在一个字段上添加多个CompositeIndex注解
+
+## UniqueField
+
+> 此注解从4.1.2开始提供
+
+作用于类,指定哪些字段作为判断该记录是否唯一的依据
+
+此注解主要影响exist,save方法,用于判断记录是否存在于数据库中.
+
+```java
+@UniqueField(columns={"username"})
+public class User{
+    private String username;
+}
+```
+
 ## @Constraint
 
-添加约束,包括是否非空,是否唯一,check约束以及默认值,作用于类字段上
+添加约束,包括是否非空,check约束以及默认值,作用于类字段上
 
 * notNull 是否非空,默认为false
-* unique 是否唯一,默认为false
 * check check约束,默认为空
 * defaultValue 默认值,默认为为空
-* unionUnique 是否建立联合唯一约束,默认为true
 
-建立唯一约束时,会将所有unionUnique属性为true的字段建立一个联合唯一约束.
-对于unionUnique为false的字段会单独建立唯一约束
+> 4.1.2版本移除了原来的unique和unionUnique属性,使用@UniqueField和@CompositeIndex注解代替.
 
 ```java
 public class User{
@@ -133,7 +172,7 @@ public class User{
 * charset 指定表编码
 * engine 指定表引擎
 
-目前该注解只对Mysql数据有效.
+目前该注解只对Mysql数据库有效.
 
 ```java
 @Table(charset="utf8",engine="innoDB")
