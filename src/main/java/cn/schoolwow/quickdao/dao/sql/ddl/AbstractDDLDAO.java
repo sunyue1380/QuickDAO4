@@ -82,6 +82,12 @@ public class AbstractDDLDAO extends AbstractSQLDAO implements DDLDAO {
             Entity entity = new Entity();
             entity.tableName = tableName;
             property.entity = entity;
+            if(null!=property.check){
+                property.check = property.check.replace("#{"+property.name+"}",quickDAOConfig.database.escape(property.column));
+                if(!property.check.isEmpty()&&!property.check.contains("(")){
+                    property.check = "("+property.check+")";
+                }
+            }
             ddlBuilder.createProperty(property);
         } catch (SQLException e) {
             throw new SQLRuntimeException(e);
