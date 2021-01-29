@@ -210,7 +210,7 @@ public class AbstractDQLBuilder extends AbstractSQLBuilder implements DQLBuilder
                 if(property.id&&property.strategy.equals(IdStrategy.AutoIncrement)){
                     continue;
                 }
-                setParameter(o.getString(property.column),ps,parameterIndex++,sqlBuilder);
+                setParameter(o.get(property.column),ps,parameterIndex++,sqlBuilder);
             }
             builder.append(sqlBuilder.toString()+";");
             preparedStatements[i] = ps;
