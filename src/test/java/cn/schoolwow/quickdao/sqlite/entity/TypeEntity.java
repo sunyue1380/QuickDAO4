@@ -11,6 +11,8 @@ import java.sql.Blob;
 import java.sql.Clob;
 import java.sql.NClob;
 import java.sql.Timestamp;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.Date;
 
 @Comment("测试类型实体类")
@@ -42,13 +44,11 @@ public class TypeEntity {
 
     private Timestamp timestampType;
 
+    private LocalDate localDate;
+
+    private LocalDateTime localDateTime;
+
     private BigDecimal bigDecimalType;
-
-    private Blob blobType;
-
-    private Clob clobType;
-
-    private NClob nClobType;
 
     private InputStream inputStreamType;
 
@@ -158,36 +158,28 @@ public class TypeEntity {
         this.timestampType = timestampType;
     }
 
+    public LocalDate getLocalDate() {
+        return localDate;
+    }
+
+    public void setLocalDate(LocalDate localDate) {
+        this.localDate = localDate;
+    }
+
+    public LocalDateTime getLocalDateTime() {
+        return localDateTime;
+    }
+
+    public void setLocalDateTime(LocalDateTime localDateTime) {
+        this.localDateTime = localDateTime;
+    }
+
     public BigDecimal getBigDecimalType() {
         return bigDecimalType;
     }
 
     public void setBigDecimalType(BigDecimal bigDecimalType) {
         this.bigDecimalType = bigDecimalType;
-    }
-
-    public Blob getBlobType() {
-        return blobType;
-    }
-
-    public void setBlobType(Blob blobType) {
-        this.blobType = blobType;
-    }
-
-    public Clob getClobType() {
-        return clobType;
-    }
-
-    public void setClobType(Clob clobType) {
-        this.clobType = clobType;
-    }
-
-    public NClob getnClobType() {
-        return nClobType;
-    }
-
-    public void setnClobType(NClob nClobType) {
-        this.nClobType = nClobType;
     }
 
     public InputStream getInputStreamType() {

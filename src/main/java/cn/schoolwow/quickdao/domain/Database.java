@@ -15,7 +15,10 @@ import com.alibaba.fastjson.JSONObject;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.time.Instant;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.util.Date;
 
 /**数据库类型*/
@@ -216,7 +219,7 @@ public enum Database {
                 case "java.time.LocalDate": {
                     switch(this){
                         case SQLite:{
-                            value = resultSet.getString(columnName);
+                            value = LocalDate.parse(resultSet.getString(columnName), DateTimeFormatter.ISO_DATE);
                         }break;
                         default:{
                             Date date = resultSet.getTimestamp(columnName);
@@ -230,7 +233,7 @@ public enum Database {
                 case "java.time.LocalDateTime": {
                     switch(this){
                         case SQLite:{
-                            value = resultSet.getString(columnName);
+                            value = LocalDateTime.parse(resultSet.getString(columnName), DateTimeFormatter.ISO_DATE_TIME);
                         }break;
                         default:{
                             Date date = resultSet.getTimestamp(columnName);

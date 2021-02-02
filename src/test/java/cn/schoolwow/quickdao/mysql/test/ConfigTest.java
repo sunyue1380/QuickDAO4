@@ -179,7 +179,7 @@ public class ConfigTest extends MySQLTest {
         int effect = dao.insert(typeEntity);
         Assert.assertEquals(1,effect);
 
-        JSONArray array = dao.query("type_entity")
+        JSONArray array = dao.query(TypeEntity.class)
                 .execute()
                 .getArray();
         Assert.assertEquals(1,array.size());

@@ -178,7 +178,7 @@ public class ConfigTest extends H2Test {
         int effect = dao.insert(typeEntity);
         Assert.assertEquals(1,effect);
 
-        JSONArray array = dao.query("TYPE_ENTITY")
+        JSONArray array = dao.query(TypeEntity.class)
                 .execute()
                 .getArray();
         Assert.assertEquals(1,array.size());

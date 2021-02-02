@@ -20,7 +20,10 @@ import java.math.BigDecimal;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.sql.Timestamp;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.Date;
+import java.util.List;
 
 /**配置项测试*/
 public class ConfigTest extends SQLiteTest {
@@ -168,18 +171,20 @@ public class ConfigTest extends SQLiteTest {
         typeEntity.setDateType(new Date());
         typeEntity.setDateSQLType(new java.sql.Date(System.currentTimeMillis()));
         typeEntity.setTimestampType(new Timestamp(System.currentTimeMillis()));
+        typeEntity.setLocalDate(LocalDate.now());
+        typeEntity.setLocalDateTime(LocalDateTime.now());
         typeEntity.setBigDecimalType(new BigDecimal(0));
-        typeEntity.setBlobType(null);
-        typeEntity.setClobType(null);
-        typeEntity.setnClobType(null);
         typeEntity.setInputStreamType(null);
         typeEntity.setReaderType(null);
         int effect = dao.insert(typeEntity);
         Assert.assertEquals(1,effect);
 
-        JSONArray array = dao.query("type_entity")
+        JSONArray array = dao.query(TypeEntity.class)
                 .execute()
                 .getArray();
         Assert.assertEquals(1,array.size());
+
+        List<TypeEntity> typeEntityList = array.toJavaList(TypeEntity.class);
+        Assert.assertEquals(1,typeEntityList.size());
     }
 }
