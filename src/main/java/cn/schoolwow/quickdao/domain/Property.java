@@ -16,6 +16,10 @@ public class Property {
      * */
     public IdStrategy strategy;
     /**
+     * 返回列标签名称
+     */
+    public String columnLabel;
+    /**
      * 列名
      */
     public String column;

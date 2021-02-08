@@ -1,5 +1,7 @@
 package cn.schoolwow.quickdao.query.condition;
 
+import cn.schoolwow.quickdao.domain.ColumnTypeMapping;
+import cn.schoolwow.quickdao.domain.Property;
 import cn.schoolwow.quickdao.domain.Query;
 import cn.schoolwow.quickdao.domain.UnionType;
 import cn.schoolwow.quickdao.query.response.Response;
@@ -9,6 +11,7 @@ import com.alibaba.fastjson.JSONObject;
 
 import java.io.Serializable;
 import java.util.Collection;
+import java.util.function.Function;
 
 /**
  * 查询接口
@@ -231,13 +234,12 @@ public interface Condition<T> extends Serializable {
     Condition<T> addColumn(String... fields);
 
     /**
-     * 添加自定义字段,返回指定类型
+     * 设置返回列类型转换
      *
-     * @param field 自定义查询列
-     * @param type  返回列类型
+     * @param columnTypeMapping 列类型转换函数,参数为列信息,返回列的类型
      * @see Condition
      */
-    Condition<T> addColumnType(String field, Class type);
+    Condition<T> setColumnTypeMapping(ColumnTypeMapping columnTypeMapping);
 
     /**
      * 添加select子查询

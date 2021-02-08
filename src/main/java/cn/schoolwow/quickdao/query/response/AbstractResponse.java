@@ -1,6 +1,7 @@
 package cn.schoolwow.quickdao.query.response;
 
 import cn.schoolwow.quickdao.domain.PageVo;
+import cn.schoolwow.quickdao.domain.Property;
 import cn.schoolwow.quickdao.domain.Query;
 import cn.schoolwow.quickdao.domain.SubQuery;
 import cn.schoolwow.quickdao.exception.SQLRuntimeException;
@@ -197,18 +198,25 @@ public class AbstractResponse<T> implements Response<T>{
             ResultSet resultSet = ps.executeQuery();
             if(query.columnBuilder.length()>0){
                 ResultSetMetaData metaData = resultSet.getMetaData();
-                String[] columnNames = new String[metaData.getColumnCount()];
-                for (int i = 1; i <= columnNames.length; i++) {
-                    columnNames[i - 1] = metaData.getColumnLabel(i);
+                Property[] properties = new Property[metaData.getColumnCount()];
+                for (int i = 1; i <= properties.length; i++) {
+                    properties[i-1] = new Property();
+                    properties[i-1].columnLabel = metaData.getColumnLabel(i);
+                    properties[i-1].column = metaData.getColumnName(i);
+                    properties[i-1].columnType = metaData.getColumnTypeName(i);
+                    properties[i-1].className = metaData.getColumnClassName(i);
                 }
                 while (resultSet.next()) {
                     JSONObject o = new JSONObject(true);
-                    for (int i = 1; i <= columnNames.length; i++) {
-                        o.put(columnNames[i - 1], resultSet.getObject(i));
-                        Class type = query.columnTypeMap.get(columnNames[i-1].toLowerCase());
-                        if(null!=type){
-                            Object value = o.getObject(columnNames[i-1],type);
-                            o.put(columnNames[i-1],value);
+                    for (int i = 1; i <= properties.length; i++) {
+                        Class type = null;
+                        if(null!=query.columnTypeMapping){
+                            type = query.columnTypeMapping.columnMappingType(properties[i-1]);
+                        }
+                        if(null==type){
+                            o.put(properties[i-1].columnLabel, resultSet.getObject(i));
+                        }else{
+                            o.put(properties[i-1].columnLabel, resultSet.getObject(i,type));
                         }
                     }
                     array.add(o);

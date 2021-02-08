@@ -10,6 +10,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Function;
 
 /**
  * 查询
@@ -44,9 +45,9 @@ public class Query implements Serializable,Cloneable {
      */
     public StringBuilder columnBuilder = new StringBuilder();
     /**
-     * 列名类型转换<返回列名,类型>
+     * 列类型转换
      */
-    public Map<String,Class> columnTypeMap = new HashMap<>();
+    public transient ColumnTypeMapping columnTypeMapping;
     /**
      * 字段插入
      */
@@ -154,6 +155,7 @@ public class Query implements Serializable,Cloneable {
             query.entity = this.entity;
             query.unionType = this.unionType;
             query.quickDAOConfig = this.quickDAOConfig;
+            query.columnTypeMapping = this.columnTypeMapping;
             query.dqlBuilder = quickDAOConfig.database.getDQLBuilderInstance(quickDAOConfig);
             for(int i=0;i<query.orList.size();i++){
                 query.orList.get(i).query = query;

@@ -14,6 +14,7 @@ import java.lang.reflect.Proxy;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
+import java.util.function.Function;
 
 public class AbstractCondition<T> implements Condition<T>, Serializable,Cloneable {
     /**查询对象*/
@@ -192,16 +193,8 @@ public class AbstractCondition<T> implements Condition<T>, Serializable,Cloneabl
     }
 
     @Override
-    public Condition<T> addColumnType(String field, Class type) {
-        query.columnBuilder.append(query.entity.getColumnNameByFieldName(field)+ ",");
-        String columnLabel = field;
-        if(columnLabel.contains(".")){
-            columnLabel = columnLabel.substring(columnLabel.lastIndexOf(".")+1);
-        }
-        if(columnLabel.contains(" ")){
-            columnLabel = columnLabel.substring(columnLabel.lastIndexOf(" ")+1);
-        }
-        query.columnTypeMap.put(columnLabel.toLowerCase(),type);
+    public Condition<T> setColumnTypeMapping(ColumnTypeMapping columnTypeMapping){
+        query.columnTypeMapping = columnTypeMapping;
         return this;
     }
 

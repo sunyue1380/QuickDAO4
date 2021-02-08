@@ -96,6 +96,7 @@ public class VirtualTest extends MySQLTest {
             int price = (int) dao.query("product")
                     .addQuery("name","冰箱")
                     .addColumn("price")
+                    .setColumnTypeMapping(property -> property.columnType.equals("datetime")?String.class:null)
                     .execute()
                     .getSingleColumn(Integer.class);
             Assert.assertEquals(600,price);
