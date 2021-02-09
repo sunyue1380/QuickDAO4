@@ -75,6 +75,10 @@ public class QuickDAOConfig {
      * */
     public String engine;
     /**
+     * 全局类型转换
+     */
+    public ColumnTypeMapping columnTypeMapping;
+    /**
      * 扫描后的实体类信息
      * */
     public final Map<String, Entity> entityMap = new HashMap<>();

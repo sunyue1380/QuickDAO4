@@ -3,6 +3,7 @@ package cn.schoolwow.quickdao;
 import cn.schoolwow.quickdao.annotation.IdStrategy;
 import cn.schoolwow.quickdao.dao.DAO;
 import cn.schoolwow.quickdao.dao.DAOInvocationHandler;
+import cn.schoolwow.quickdao.domain.ColumnTypeMapping;
 import cn.schoolwow.quickdao.domain.Database;
 import cn.schoolwow.quickdao.domain.Entity;
 import cn.schoolwow.quickdao.domain.QuickDAOConfig;
@@ -186,6 +187,15 @@ public class QuickDAO {
      * */
     public QuickDAO charset(String charset) {
         quickDAOConfig.charset = charset;
+        return this;
+    }
+
+    /**
+     * 指定全局类型转换
+     * @param columnTypeMapping 全局类型转换函数
+     * */
+    public QuickDAO columnTypeMapping(ColumnTypeMapping columnTypeMapping) {
+        quickDAOConfig.columnTypeMapping = columnTypeMapping;
         return this;
     }
 
