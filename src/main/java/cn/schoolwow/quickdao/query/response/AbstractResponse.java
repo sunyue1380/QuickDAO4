@@ -206,6 +206,9 @@ public class AbstractResponse<T> implements Response<T>{
                     properties[i-1].columnType = metaData.getColumnTypeName(i);
                     properties[i-1].className = metaData.getColumnClassName(i);
                 }
+                if(null==query.columnTypeMapping){
+                    query.columnTypeMapping = query.quickDAOConfig.columnTypeMapping;
+                }
                 while (resultSet.next()) {
                     JSONObject o = new JSONObject(true);
                     for (int i = 1; i <= properties.length; i++) {
