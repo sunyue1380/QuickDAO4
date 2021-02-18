@@ -219,7 +219,10 @@ public enum Database {
                 case "java.time.LocalDate": {
                     switch(this){
                         case SQLite:{
-                            value = LocalDate.parse(resultSet.getString(columnName), DateTimeFormatter.ISO_DATE);
+                            String date = resultSet.getString(columnName);
+                            if(null!=date){
+                                value = LocalDate.parse(date, DateTimeFormatter.ISO_DATE);
+                            }
                         }break;
                         default:{
                             Date date = resultSet.getTimestamp(columnName);
@@ -233,7 +236,10 @@ public enum Database {
                 case "java.time.LocalDateTime": {
                     switch(this){
                         case SQLite:{
-                            value = LocalDateTime.parse(resultSet.getString(columnName), DateTimeFormatter.ISO_DATE_TIME);
+                            String datetime = resultSet.getString(columnName);
+                            if(null!=datetime){
+                                value = LocalDateTime.parse(datetime, DateTimeFormatter.ISO_DATE_TIME);
+                            }
                         }break;
                         default:{
                             Date date = resultSet.getTimestamp(columnName);

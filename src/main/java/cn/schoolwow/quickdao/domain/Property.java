@@ -32,6 +32,10 @@ public class Property {
      */
     public String comment;
     /**
+     * 类
+     */
+    public Class clazz;
+    /**
      * 类名
      */
     public String className;

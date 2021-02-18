@@ -6,6 +6,7 @@ import cn.schoolwow.quickdao.mysql.entity.Product;
 import cn.schoolwow.quickdao.transaction.Transaction;
 import com.zaxxer.hikari.HikariDataSource;
 
+import java.time.LocalDateTime;
 import java.util.Date;
 
 public class MySQLTest extends DatabaseTest {
@@ -21,6 +22,13 @@ public class MySQLTest extends DatabaseTest {
                 .charset("utf8")
                 .engine("InnoDB")
                 .foreignKey(false)
+                .columnTypeMapping((property) -> {
+                    if(property.column.equalsIgnoreCase("created_at")||
+                            property.column.equalsIgnoreCase("updated_at")){
+                        return LocalDateTime.class;
+                    }
+                    return null;
+                })
                 .build();
     }
 

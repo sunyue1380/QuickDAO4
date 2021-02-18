@@ -1,7 +1,6 @@
 package cn.schoolwow.quickdao.query.condition;
 
 import cn.schoolwow.quickdao.domain.ColumnTypeMapping;
-import cn.schoolwow.quickdao.domain.Property;
 import cn.schoolwow.quickdao.domain.Query;
 import cn.schoolwow.quickdao.domain.UnionType;
 import cn.schoolwow.quickdao.query.response.Response;
@@ -11,7 +10,6 @@ import com.alibaba.fastjson.JSONObject;
 
 import java.io.Serializable;
 import java.util.Collection;
-import java.util.function.Function;
 
 /**
  * 查询接口

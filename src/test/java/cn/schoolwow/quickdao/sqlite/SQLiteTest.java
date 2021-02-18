@@ -7,6 +7,7 @@ import cn.schoolwow.quickdao.transaction.Transaction;
 import com.zaxxer.hikari.HikariDataSource;
 
 import java.io.File;
+import java.time.LocalDateTime;
 import java.util.Date;
 
 public class SQLiteTest extends DatabaseTest {
@@ -19,6 +20,13 @@ public class SQLiteTest extends DatabaseTest {
         dao = QuickDAO.newInstance().dataSource(dataSource)
                 .packageName("cn.schoolwow.quickdao.sqlite.entity")
                 .autoCreateTable(true)
+                .columnTypeMapping((property) -> {
+                    if(property.column.equalsIgnoreCase("created_at")||
+                            property.column.equalsIgnoreCase("updated_at")){
+                        return LocalDateTime.class;
+                    }
+                    return null;
+                })
                 .build();
     }
 
