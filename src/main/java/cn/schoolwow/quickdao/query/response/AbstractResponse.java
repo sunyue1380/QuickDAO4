@@ -197,6 +197,10 @@ public class AbstractResponse<T> implements Response<T>{
             array = new JSONArray(query.dqlBuilder.getResultSetRowCount(query));
             ResultSet resultSet = ps.executeQuery();
             if(query.columnBuilder.length()>0){
+                if(null==query.columnTypeMapping){
+                    query.columnTypeMapping = query.quickDAOConfig.columnTypeMapping;
+                }
+
                 ResultSetMetaData metaData = resultSet.getMetaData();
                 Property[] properties = new Property[metaData.getColumnCount()];
                 for (int i = 1; i <= properties.length; i++) {
@@ -205,21 +209,21 @@ public class AbstractResponse<T> implements Response<T>{
                     properties[i-1].column = metaData.getColumnName(i);
                     properties[i-1].columnType = metaData.getColumnTypeName(i);
                     properties[i-1].className = metaData.getColumnClassName(i);
+                    if(null!=query.columnTypeMapping){
+                        Class type = query.columnTypeMapping.columnMappingType(properties[i-1]);
+                        if(null!=type){
+                            properties[i-1].clazz = type;
+                        }
+                    }
                 }
-                if(null==query.columnTypeMapping){
-                    query.columnTypeMapping = query.quickDAOConfig.columnTypeMapping;
-                }
+
                 while (resultSet.next()) {
                     JSONObject o = new JSONObject(true);
                     for (int i = 1; i <= properties.length; i++) {
-                        Class type = null;
-                        if(null!=query.columnTypeMapping){
-                            type = query.columnTypeMapping.columnMappingType(properties[i-1]);
-                        }
-                        if(null==type){
+                        if(null==properties[i-1].clazz){
                             o.put(properties[i-1].columnLabel, resultSet.getObject(i));
                         }else{
-                            o.put(properties[i-1].columnLabel, resultSet.getObject(i,type));
+                            o.put(properties[i-1].columnLabel, resultSet.getObject(i,properties[i-1].clazz));
                         }
                     }
                     array.add(o);

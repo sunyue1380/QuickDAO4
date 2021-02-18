@@ -6,6 +6,7 @@ import cn.schoolwow.quickdao.postgre.entity.Product;
 import cn.schoolwow.quickdao.transaction.Transaction;
 import com.zaxxer.hikari.HikariDataSource;
 
+import java.time.LocalDateTime;
 import java.util.Date;
 
 public class PostgreLTest extends DatabaseTest {
@@ -20,6 +21,13 @@ public class PostgreLTest extends DatabaseTest {
                 .packageName("cn.schoolwow.quickdao.postgre.entity")
                 .charset("utf8")
                 .engine("InnoDB")
+                .columnTypeMapping((property) -> {
+                    if(property.column.equalsIgnoreCase("created_at")||
+                            property.column.equalsIgnoreCase("updated_at")){
+                        return LocalDateTime.class;
+                    }
+                    return null;
+                })
                 .build();
     }
 

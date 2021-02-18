@@ -14,7 +14,6 @@ import java.lang.reflect.Proxy;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
-import java.util.function.Function;
 
 public class AbstractCondition<T> implements Condition<T>, Serializable,Cloneable {
     /**查询对象*/

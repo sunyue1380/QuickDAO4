@@ -95,6 +95,8 @@ public class DefaultEntityHandler implements EntityHandler{
                     property.column = camel2Underline(field.getName());
                 }
                 property.name = field.getName();
+                property.columnLabel = property.name;
+                property.clazz = field.getType();
                 property.className = field.getType().getName();
                 if(null!=field.getAnnotation(ColumnType.class)){
                     property.columnType = field.getAnnotation(ColumnType.class).value();

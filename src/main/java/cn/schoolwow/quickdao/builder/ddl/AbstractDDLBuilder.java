@@ -226,6 +226,12 @@ public abstract class AbstractDDLBuilder extends AbstractSQLBuilder implements D
             dbEntity.escapeTableName = quickDAOConfig.database.escape(dbEntity.tableName);
             dbEntity.clazz = JSONObject.class;
             for (Property property : dbEntity.properties) {
+                if(null!=quickDAOConfig.columnTypeMapping){
+                    Class type = quickDAOConfig.columnTypeMapping.columnMappingType(property);
+                    if(null!=type){
+                        property.className = type.getName();
+                    }
+                }
                 property.entity = dbEntity;
             }
         }
