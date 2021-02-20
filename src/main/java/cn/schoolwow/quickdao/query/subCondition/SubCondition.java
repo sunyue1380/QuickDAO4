@@ -39,6 +39,11 @@ public interface SubCondition<T> extends Serializable {
     SubCondition<T> fullJoin();
 
     /**
+     * 添加on查询条件
+     */
+    SubCondition<T> on(String primaryField, String joinTableField);
+
+    /**
      * 添加空查询
      *
      * @param field 指明哪个字段为Null

@@ -113,6 +113,7 @@ public class DQLTest extends H2Test {
         {
             List<Person> personList = dao.query(Person.class)
                     .joinTable(Order.class,"id","personId")
+                    .on("lastName","lastName")
                     .addQuery("personId",1)
                     .done()
                     .compositField()
@@ -241,6 +242,7 @@ public class DQLTest extends H2Test {
             Order order = new Order();
             order.setId(UUID.randomUUID().toString());
             order.setPersonId(1);
+            order.setLastName("Gates");
             order.setOrderNo(1);
             int effect = dao.insert(order);
             Assert.assertEquals(1, effect);

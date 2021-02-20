@@ -5,7 +5,9 @@ import cn.schoolwow.quickdao.query.subCondition.SubCondition;
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * 子查询
@@ -31,6 +33,10 @@ public class SubQuery<T> implements Serializable {
      * 对象变量名
      */
     public String compositField;
+    /**
+     * on条件映射
+     * */
+    public Map<String,String> onConditionMap = new HashMap();
     /**
      * 连接方式
      */

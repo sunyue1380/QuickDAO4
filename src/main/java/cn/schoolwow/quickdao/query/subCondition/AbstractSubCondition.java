@@ -39,6 +39,24 @@ public class AbstractSubCondition<T> implements SubCondition<T>{
     }
 
     @Override
+    public SubCondition<T> on(String primaryField, String joinTableField) {
+        if(null==subQuery.parentSubQuery){
+            //主表关联子表
+            subQuery.onConditionMap.put(
+                    subQuery.query.entity.getColumnNameByFieldName(primaryField),
+                    subQuery.entity.getColumnNameByFieldName(joinTableField)
+            );
+        }else{
+            //子表再次关联子表
+            subQuery.onConditionMap.put(
+                    subQuery.parentSubQuery.entity.getColumnNameByFieldName(primaryField),
+                    subQuery.entity.getColumnNameByFieldName(joinTableField)
+            );
+        }
+        return this;
+    }
+
+    @Override
     public SubCondition<T> addNullQuery(String field) {
         subQuery.whereBuilder.append("(" + getQueryColumnNameByFieldName(field) + " is null) and ");
         return this;

@@ -16,6 +16,10 @@ public class Order {
     @Constraint(notNull = true,check = "#{personId} > 0")
     private long personId;
 
+    @Comment("所属人姓名")
+    @ForeignKey(table = Person.class,field = "last_name")
+    private String lastName;
+
     private Person person;
 
     public String getId() {
@@ -41,6 +45,15 @@ public class Order {
     public void setPersonId(long personId) {
         this.personId = personId;
     }
+
+    public String getLastName() {
+        return lastName;
+    }
+
+    public void setLastName(String lastName) {
+        this.lastName = lastName;
+    }
+
     public Person getPerson() {
         return person;
     }
