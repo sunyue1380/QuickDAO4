@@ -12,6 +12,8 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 public class AbstractDQLBuilder extends AbstractSQLBuilder implements DQLBuilder {
     public AbstractDQLBuilder(QuickDAOConfig quickDAOConfig) {
@@ -333,6 +335,17 @@ public class AbstractDQLBuilder extends AbstractSQLBuilder implements DQLBuilder
                     sqlBuilder.append(query.tableAliasName + "." + query.quickDAOConfig.database.escape(subQuery.primaryField) + " = " + subQuery.tableAliasName + "." + query.quickDAOConfig.database.escape(subQuery.joinTableField) + " ");
                 }else{
                     sqlBuilder.append(subQuery.tableAliasName + "." + query.quickDAOConfig.database.escape(subQuery.joinTableField) + " = " + subQuery.parentSubQuery.tableAliasName + "." + query.quickDAOConfig.database.escape(subQuery.primaryField) + " ");
+                }
+                if(!subQuery.onConditionMap.isEmpty()){
+                    Set<Map.Entry<String,String>> entrySet = subQuery.onConditionMap.entrySet();
+                    for(Map.Entry<String,String> entry:entrySet){
+                        sqlBuilder.append(" and ");
+                        if (subQuery.parentSubQuery == null) {
+                            sqlBuilder.append(query.tableAliasName + "." + query.quickDAOConfig.database.escape(entry.getKey()) + " = " + subQuery.tableAliasName + "." + query.quickDAOConfig.database.escape(entry.getValue()) + " ");
+                        }else{
+                            sqlBuilder.append(subQuery.tableAliasName + "." + query.quickDAOConfig.database.escape(entry.getValue()) + " = " + subQuery.parentSubQuery.tableAliasName + "." + query.quickDAOConfig.database.escape(entry.getKey()) + " ");
+                        }
+                    }
                 }
             }
         }
