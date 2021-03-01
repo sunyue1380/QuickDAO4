@@ -151,7 +151,7 @@ public class AbstractSubCondition<T> implements SubCondition<T>{
     @Override
     public SubCondition<T> addColumn(String... fields) {
         for(String field:fields){
-            subQuery.query.columnBuilder.append(subQuery.tableAliasName+"."+subQuery.entity.getColumnNameByFieldName(field)+ ",");
+            subQuery.query.columnBuilder.append(getQueryColumnNameByFieldName(field)+ ",");
         }
         return this;
     }
@@ -234,14 +234,14 @@ public class AbstractSubCondition<T> implements SubCondition<T>{
      * 根据字段名查询数据库列名
      * */
     private String getQueryColumnNameByFieldName(String field) {
-        if(null==field||field.isEmpty()){
+        Property property = subQuery.entity.getPropertyByFieldName(field);
+        if(null==property){
             return field;
         }
-        for(Property property:subQuery.entity.properties){
-            if(field.equals(property.name)||field.equals(property.column)){
-                return subQuery.tableAliasName+"."+subQuery.query.quickDAOConfig.database.escape(property.column);
-            }
+        if(subQuery.query.unionList.isEmpty()){
+            return subQuery.tableAliasName+"."+subQuery.query.quickDAOConfig.database.escape(property.column);
+        }else{
+            return subQuery.query.quickDAOConfig.database.escape(property.column);
         }
-        return field;
     }
 }
