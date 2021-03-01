@@ -186,6 +186,12 @@ public class AbstractSubCondition<T> implements SubCondition<T>{
     }
 
     @Override
+    public SubCondition<T> order(String field, String asc) {
+        subQuery.query.orderByBuilder.append(getQueryColumnNameByFieldName(field) + " " + asc + ",");
+        return this;
+    }
+
+    @Override
     public SubCondition<T> orderBy(String... fields) {
         for(String field:fields){
             subQuery.query.orderByBuilder.append(getQueryColumnNameByFieldName(field) + " asc,");

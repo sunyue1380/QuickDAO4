@@ -423,9 +423,15 @@ public class AbstractCondition<T> implements Condition<T>, Serializable,Cloneabl
     }
 
     @Override
+    public Condition<T> order(String field, String asc) {
+        query.orderByBuilder.append(getQueryColumnNameByFieldName(field)+" " + asc + ",");
+        return this;
+    }
+
+    @Override
     public Condition<T> orderBy(String... fields) {
         for(String field:fields){
-            query.orderByBuilder.append(getQueryColumnNameByFieldName(field)+" asc,");
+            query.orderByBuilder.append(getQueryColumnNameByFieldName(field) + " asc,");
         }
         return this;
     }
@@ -433,7 +439,7 @@ public class AbstractCondition<T> implements Condition<T>, Serializable,Cloneabl
     @Override
     public Condition<T> orderByDesc(String... fields) {
         for(String field:fields){
-            query.orderByBuilder.append(getQueryColumnNameByFieldName(field)+" desc,");
+            query.orderByBuilder.append(getQueryColumnNameByFieldName(field) + " desc,");
         }
         return this;
     }

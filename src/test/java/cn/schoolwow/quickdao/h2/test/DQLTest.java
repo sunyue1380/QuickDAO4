@@ -173,7 +173,7 @@ public class DQLTest extends H2Test {
         }
         {
             Response response = dao.query(Person.class)
-                    .orderByDesc("lastName")
+                    .order("lastName","desc")
                     .addColumn("lastName")
                     .execute();
             JSONArray array = response.getArray();
