@@ -70,6 +70,9 @@ public class Entity {
         if(null==field||field.isEmpty()){
             return null;
         }
+        if(field.contains(" ")){
+            field = field.substring(0,field.indexOf(" "));
+        }
         for(Property property:properties){
             if(field.equals(property.name)||field.equals(property.column)){
                 return property;

@@ -186,7 +186,7 @@ public class AbstractCondition<T> implements Condition<T>, Serializable,Cloneabl
     @Override
     public Condition<T> addColumn(String... fields) {
         for(String field:fields){
-            query.columnBuilder.append(query.entity.getColumnNameByFieldName(field)+ ",");
+            query.columnBuilder.append(getQueryColumnNameByFieldName(field)+ ",");
         }
         return this;
     }
