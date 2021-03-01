@@ -417,8 +417,15 @@ public interface Condition<T> extends Serializable {
     SubCondition joinTable(String tableName, String primaryField, String joinTableField);
 
     /**
+     * 设置指定字段排序方式
+     *
+     * @param field 升序排列字段名
+     * @param asc 排序方式,值为asc或者desc
+     */
+    Condition<T> order(String field, String asc);
+
+    /**
      * 根据指定字段升序排列
-     * <b>注意</b>若调用了addColumn方法,请将调用本方法放在addColumn方法之后
      *
      * @param field 升序排列字段名
      */
@@ -426,7 +433,6 @@ public interface Condition<T> extends Serializable {
 
     /**
      * 根据指定字段降序排列
-     * <b>注意</b>若调用了addColumn方法,请将调用本方法放在addColumn方法之后
      *
      * @param field 降序排列字段名
      */

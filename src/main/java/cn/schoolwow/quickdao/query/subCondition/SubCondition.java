@@ -201,6 +201,14 @@ public interface SubCondition<T> extends Serializable {
     SubCondition<T> groupBy(String... fields);
 
     /**
+     * 设置指定字段排序方式
+     *
+     * @param field 升序排列字段名
+     * @param asc 排序方式,值为asc或者desc
+     */
+    SubCondition<T> order(String field, String asc);
+
+    /**
      * 根据指定字段升序排列
      *
      * @param fields 升序排列字段名
