@@ -10,6 +10,7 @@ public class Person {
     private String username;
     private String password;
     private int type;
+    private Date createdTime;
 }
 ```
 
@@ -96,6 +97,23 @@ Condition condition = dao.query(User.class);
 Response response = condition.execute();
 List<User> userList = response.getList();
 ```
+
+## 指定返回字段类型
+
+> 此特性从v4.1.2版本开始提供
+
+QuickDAO支持在调用[虚拟查询](virtual.md)相关方法时,指定返回的列类型
+
+```java
+dao.query(Person.class)
+        //对于数据库列类型为datetime的以String类型返回
+        .setColumnTypeMapping(property -> property.columnType.equals("datetime")?String.class:null)
+        .execute()
+```
+
+此外,QuickDAO还支持指定全局字段返回类型,请参阅[配置DAO](zh-cn/config/configuration.md)
+
+> 若同时调用setColumnTypeMapping方法和指定全局字段返回类型,则setColumnTypeMapping方法优先级更高
 
 ## clone方法
 

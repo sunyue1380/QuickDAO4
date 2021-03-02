@@ -10,6 +10,8 @@ QuickDAO提供了强大的外键关联查询,核心方法为joinTable方法.
 public class Person{
     @Id(strategy = IdStrategy.AutoIncrement)
     private long id;
+    
+    private String lastName;
     //省略get/set方法
 }
 
@@ -19,6 +21,8 @@ public class Order{
     private long id;
     @ForeignKey(table = Person.class)
     private long personId;
+    
+    private String lastName;
     
     private Person person;
     //省略get/set方法
@@ -97,6 +101,22 @@ dao.query(Person.class)
     .addQuery("name","quickdao")
     .doneSubCondition()
     .done();
+```
+
+## 多字段关联查询
+
+> 此特性从4.1.3版本开始提供
+
+QuickDAO支持关联查询时同时关联多个字段.通过调用SubCondition接口的on方法指定关联的多个字段
+
+```java
+//from person
+dao.query(Person.class)
+        //join order on person.id = order.person_id
+        .joinTable(Order.class,"id","personId")
+        //and person.last_name = order.last_name
+        .on("lastName","lastName")
+        .done();
 ```
 
 ## 关联查询结果
