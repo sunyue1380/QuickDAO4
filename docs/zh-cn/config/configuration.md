@@ -78,3 +78,32 @@ QuickDAO内置了SnowflakeIdGenerator生成器,您也可以通过实现IdGenerat
 
 > id生成器只对所有用@Id注解的属性起效果,请务必在id属性上添加@Id注解
 
+## 全局字段类型转换
+
+> 此特性从v4.1.3版本开始提供
+
+QuickDAO允许指定返回结果的字段类型,默认情况下返回JDBC返回的数据类型
+
+> 注意:此方法仅影响[虚拟查询](virtual.md)相关方法返回结果
+
+> 在v4.1.2版本之前,所有虚拟查询返回结果都是String类型且无法改变.
+
+```java
+QuickDAO.newInstance()
+        //指定全局列类型转换函数
+        .columnTypeMapping((property) -> {
+            //property属性包含了字段的列名,数据库类型等信息
+            return String.class;
+        });
+```
+
+为了兼容性考虑,建议从v4.1.1版本升级的用户使用以下配置兼容
+
+```java
+QuickDAO.newInstance()
+        //指定全局列类型转换函数
+        .columnTypeMapping((property) -> {
+            //为了兼容考虑,v4.1.2版本之前默认全部返回String类型
+            return String.class;
+        });
+```

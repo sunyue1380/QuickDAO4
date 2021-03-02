@@ -11,7 +11,9 @@ Condition condition = dao.query(Person.class)
        //根据该字段升序排列
        .orderBy("id")
        //根据该字段升序排列
-       .orderByDesc("id");
+       .orderByDesc("id")
+       //下述方法从v4.1.4版本开始提供
+       .order("id", "asc");
 Response response = condition.execute();
 PageVo<Person> personList = response.getPagingList();
 ```

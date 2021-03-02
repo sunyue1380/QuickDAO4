@@ -32,9 +32,11 @@ QuickDAO基于JDBC,为提高效率,默认只支持数据库连接池.
 <dependency>
   <groupId>cn.schoolwow</groupId>
   <artifactId>QuickDAO</artifactId>
-  <version>4.0</version>
+  <version>{最新版本}</version>
 </dependency>
 ```
+
+> [QuickDAO最新版本查询](https://search.maven.org/search?q=a:QuickDAO)
 
 ## 2 配置QuickDAO
 ```java
