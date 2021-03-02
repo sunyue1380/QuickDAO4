@@ -4,10 +4,11 @@ import cn.schoolwow.quickdao.domain.Property;
 import cn.schoolwow.quickdao.domain.SubQuery;
 import cn.schoolwow.quickdao.query.condition.Condition;
 
+import java.lang.reflect.Proxy;
 import java.util.Arrays;
 import java.util.List;
 
-public class AbstractSubCondition<T> implements SubCondition<T>{
+public class AbstractSubCondition<T,P> implements SubCondition<T,P>{
     private SubQuery subQuery;
 
     public AbstractSubCondition(SubQuery subQuery) {
@@ -15,31 +16,31 @@ public class AbstractSubCondition<T> implements SubCondition<T>{
     }
 
     @Override
-    public SubCondition<T> tableAliasName(String tableAliasName) {
+    public SubCondition<T,P> tableAliasName(String tableAliasName) {
         this.subQuery.tableAliasName = tableAliasName;
         return this;
     }
 
     @Override
-    public SubCondition<T> leftJoin() {
+    public SubCondition<T,P> leftJoin() {
         subQuery.join = "left outer join";
         return this;
     }
 
     @Override
-    public SubCondition<T> rightJoin() {
+    public SubCondition<T,P> rightJoin() {
         subQuery.join = "right outer join";
         return this;
     }
 
     @Override
-    public SubCondition<T> fullJoin() {
+    public SubCondition<T,P> fullJoin() {
         subQuery.join = "full outer join";
         return this;
     }
 
     @Override
-    public SubCondition<T> on(String primaryField, String joinTableField) {
+    public SubCondition<T,P> on(String primaryField, String joinTableField) {
         if(null==subQuery.parentSubQuery){
             //主表关联子表
             subQuery.onConditionMap.put(
@@ -57,53 +58,53 @@ public class AbstractSubCondition<T> implements SubCondition<T>{
     }
 
     @Override
-    public SubCondition<T> addNullQuery(String field) {
+    public SubCondition<T,P> addNullQuery(String field) {
         subQuery.whereBuilder.append("(" + getQueryColumnNameByFieldName(field) + " is null) and ");
         return this;
     }
 
     @Override
-    public SubCondition<T> addNotNullQuery(String field) {
+    public SubCondition<T,P> addNotNullQuery(String field) {
         subQuery.whereBuilder.append("(" + getQueryColumnNameByFieldName(field) + " is not null) and ");
         return this;
     }
 
     @Override
-    public SubCondition<T> addEmptyQuery(String field) {
+    public SubCondition<T,P> addEmptyQuery(String field) {
         subQuery.whereBuilder.append("(" + getQueryColumnNameByFieldName(field) + " is not null and " + getQueryColumnNameByFieldName(field) + " = '') and ");
         return this;
     }
 
     @Override
-    public SubCondition<T> addNotEmptyQuery(String field) {
+    public SubCondition<T,P> addNotEmptyQuery(String field) {
         subQuery.whereBuilder.append("(" + getQueryColumnNameByFieldName(field) + " is not null and " + getQueryColumnNameByFieldName(field) + " != '') and ");
         return this;
     }
 
     @Override
-    public SubCondition<T> addInQuery(String field, Object... values) {
+    public SubCondition<T,P> addInQuery(String field, Object... values) {
         addInQuery(field,values,"in");
         return this;
     }
 
     @Override
-    public SubCondition<T> addInQuery(String field, List values) {
+    public SubCondition<T,P> addInQuery(String field, List values) {
         return addInQuery(field, values.toArray(new Object[0]));
     }
 
     @Override
-    public SubCondition<T> addNotInQuery(String field, Object... values) {
+    public SubCondition<T,P> addNotInQuery(String field, Object... values) {
         addInQuery(field,values,"not in");
         return this;
     }
 
     @Override
-    public SubCondition<T> addNotInQuery(String field, List values) {
+    public SubCondition<T,P> addNotInQuery(String field, List values) {
         return addNotInQuery(field, values.toArray(new Object[0]));
     }
 
     @Override
-    public SubCondition<T> addBetweenQuery(String field, Object start, Object end) {
+    public SubCondition<T,P> addBetweenQuery(String field, Object start, Object end) {
         subQuery.whereBuilder.append("(" + getQueryColumnNameByFieldName(field) + " between ? and ? ) and ");
         subQuery.parameterList.add(start);
         subQuery.parameterList.add(end);
@@ -111,7 +112,7 @@ public class AbstractSubCondition<T> implements SubCondition<T>{
     }
 
     @Override
-    public SubCondition<T> addLikeQuery(String field, Object value) {
+    public SubCondition<T,P> addLikeQuery(String field, Object value) {
         if (value == null || value.toString().equals("")) {
             return this;
         }
@@ -121,13 +122,13 @@ public class AbstractSubCondition<T> implements SubCondition<T>{
     }
 
     @Override
-    public SubCondition<T> addQuery(String field, Object value) {
+    public SubCondition<T,P> addQuery(String field, Object value) {
         addQuery(field, "=", value);
         return this;
     }
 
     @Override
-    public SubCondition<T> addQuery(String field, String operator, Object value) {
+    public SubCondition<T,P> addQuery(String field, String operator, Object value) {
         if(null==value){
             addNullQuery(field);
         }else if(value.toString().isEmpty()){
@@ -140,7 +141,7 @@ public class AbstractSubCondition<T> implements SubCondition<T>{
     }
 
     @Override
-    public SubCondition<T> addRawQuery(String query, Object... parameterList) {
+    public SubCondition<T,P> addRawQuery(String query, Object... parameterList) {
         subQuery.whereBuilder.append("(" + query + ") and ");
         if(null!=parameterList&&parameterList.length>0){
             subQuery.parameterList.addAll(Arrays.asList(parameterList));
@@ -149,7 +150,7 @@ public class AbstractSubCondition<T> implements SubCondition<T>{
     }
 
     @Override
-    public SubCondition<T> addColumn(String... fields) {
+    public SubCondition<T,P> addColumn(String... fields) {
         for(String field:fields){
             subQuery.query.columnBuilder.append(getQueryColumnNameByFieldName(field)+ ",");
         }
@@ -157,12 +158,12 @@ public class AbstractSubCondition<T> implements SubCondition<T>{
     }
 
     @Override
-    public <E> SubCondition<E> joinTable(Class<E> clazz, String primaryField, String joinTableField) {
+    public <E> SubCondition<E,T> joinTable(Class<E> clazz, String primaryField, String joinTableField) {
         return joinTable(clazz,primaryField,joinTableField,subQuery.entity.getCompositeFieldName(clazz.getName()));
     }
 
     @Override
-    public <E> SubCondition<E> joinTable(Class<E> clazz, String primaryField, String joinTableField, String compositField) {
+    public <E> SubCondition<E,T> joinTable(Class<E> clazz, String primaryField, String joinTableField, String compositField) {
         AbstractSubCondition abstractSubCondition = (AbstractSubCondition) subQuery.condition.joinTable(clazz, primaryField, joinTableField, compositField);
         abstractSubCondition.subQuery.parentSubQuery = this.subQuery;
         abstractSubCondition.subQuery.parentSubCondition = this;
@@ -170,7 +171,7 @@ public class AbstractSubCondition<T> implements SubCondition<T>{
     }
 
     @Override
-    public SubCondition joinTable(String tableName, String primaryField, String joinTableField) {
+    public SubCondition<?,T> joinTable(String tableName, String primaryField, String joinTableField) {
         AbstractSubCondition abstractSubCondition = (AbstractSubCondition) subQuery.condition.joinTable(tableName, primaryField, joinTableField);
         abstractSubCondition.subQuery.parentSubQuery = this.subQuery;
         abstractSubCondition.subQuery.parentSubCondition = this;
@@ -178,7 +179,7 @@ public class AbstractSubCondition<T> implements SubCondition<T>{
     }
 
     @Override
-    public SubCondition<T> groupBy(String... fields) {
+    public SubCondition<T,P> groupBy(String... fields) {
         for(String field:fields){
             subQuery.query.groupByBuilder.append(getQueryColumnNameByFieldName(field) + ",");
         }
@@ -186,13 +187,13 @@ public class AbstractSubCondition<T> implements SubCondition<T>{
     }
 
     @Override
-    public SubCondition<T> order(String field, String asc) {
+    public SubCondition<T,P> order(String field, String asc) {
         subQuery.query.orderByBuilder.append(getQueryColumnNameByFieldName(field) + " " + asc + ",");
         return this;
     }
 
     @Override
-    public SubCondition<T> orderBy(String... fields) {
+    public SubCondition<T,P> orderBy(String... fields) {
         for(String field:fields){
             subQuery.query.orderByBuilder.append(getQueryColumnNameByFieldName(field) + " asc,");
         }
@@ -200,7 +201,7 @@ public class AbstractSubCondition<T> implements SubCondition<T>{
     }
 
     @Override
-    public SubCondition<T> orderByDesc(String... fields) {
+    public SubCondition<T,P> orderByDesc(String... fields) {
         for(String field:fields){
             subQuery.query.orderByBuilder.append(getQueryColumnNameByFieldName(field) + " desc,");
         }
@@ -208,16 +209,19 @@ public class AbstractSubCondition<T> implements SubCondition<T>{
     }
 
     @Override
-    public SubCondition<T> doneSubCondition() {
-        if (subQuery.parentSubCondition == null) {
-            return this;
-        } else {
-            return subQuery.parentSubCondition;
-        }
+    public LambdaSubCondition<T,P> lambdaSubCondition() {
+        LambdaSubConditionInvocationHandler<T,P> invocationHandler = new LambdaSubConditionInvocationHandler<T,P>(this);
+        LambdaSubCondition<T,P> lambdaSubCondition = (LambdaSubCondition<T,P>) Proxy.newProxyInstance(Thread.currentThread().getContextClassLoader(),new Class<?>[]{LambdaSubCondition.class},invocationHandler);
+        return lambdaSubCondition;
     }
 
     @Override
-    public Condition<T> done() {
+    public SubCondition<P,?> doneSubCondition() {
+        return subQuery.parentSubCondition;
+    }
+
+    @Override
+    public Condition<P> done() {
         return subQuery.condition;
     }
 

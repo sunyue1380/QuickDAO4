@@ -17,59 +17,59 @@ import java.util.List;
  *
  * @see cn.schoolwow.quickdao.query.condition.Condition
  */
-public interface SubCondition<T> extends Serializable {
+public interface SubCondition<T,P> extends Serializable {
     /**
      * 设置子表别名
      */
-    SubCondition<T> tableAliasName(String tableAliasName);
+    SubCondition<T,P> tableAliasName(String tableAliasName);
 
     /**
      * 左外连接
      */
-    SubCondition<T> leftJoin();
+    SubCondition<T,P> leftJoin();
 
     /**
      * 右外连接
      */
-    SubCondition<T> rightJoin();
+    SubCondition<T,P> rightJoin();
 
     /**
      * 全外连接
      */
-    SubCondition<T> fullJoin();
+    SubCondition<T,P> fullJoin();
 
     /**
      * 添加on查询条件
      */
-    SubCondition<T> on(String primaryField, String joinTableField);
+    SubCondition<T,P> on(String primaryField, String joinTableField);
 
     /**
      * 添加空查询
      *
      * @param field 指明哪个字段为Null
      */
-    SubCondition<T> addNullQuery(String field);
+    SubCondition<T,P> addNullQuery(String field);
 
     /**
      * 添加非空查询
      *
      * @param field 指明哪个字段不为Null
      */
-    SubCondition<T> addNotNullQuery(String field);
+    SubCondition<T,P> addNotNullQuery(String field);
 
     /**
      * 添加空查询
      *
      * @param field 指明哪个字段不为空字符串
      */
-    SubCondition<T> addEmptyQuery(String field);
+    SubCondition<T,P> addEmptyQuery(String field);
 
     /**
      * 添加非空查询
      *
      * @param field 指明哪个字段不为空字符串
      */
-    SubCondition<T> addNotEmptyQuery(String field);
+    SubCondition<T,P> addNotEmptyQuery(String field);
 
     /**
      * 添加范围查询语句
@@ -77,7 +77,7 @@ public interface SubCondition<T> extends Serializable {
      * @param field  字段名
      * @param values 指明在该范围内的值
      */
-    SubCondition<T> addInQuery(String field, Object... values);
+    SubCondition<T,P> addInQuery(String field, Object... values);
 
     /**
      * 添加范围查询语句
@@ -85,7 +85,7 @@ public interface SubCondition<T> extends Serializable {
      * @param field  字段名
      * @param values 指明在该范围内的值
      */
-    SubCondition<T> addInQuery(String field, List values);
+    SubCondition<T,P> addInQuery(String field, List values);
 
     /**
      * 添加范围查询语句
@@ -93,7 +93,7 @@ public interface SubCondition<T> extends Serializable {
      * @param field  字段名
      * @param values 指明在不该范围内的值
      */
-    SubCondition<T> addNotInQuery(String field, Object... values);
+    SubCondition<T,P> addNotInQuery(String field, Object... values);
 
     /**
      * 添加范围查询语句
@@ -101,7 +101,7 @@ public interface SubCondition<T> extends Serializable {
      * @param field  字段名
      * @param values 指明在不该范围内的值
      */
-    SubCondition<T> addNotInQuery(String field, List values);
+    SubCondition<T,P> addNotInQuery(String field, List values);
 
     /**
      * 添加between语句
@@ -110,7 +110,7 @@ public interface SubCondition<T> extends Serializable {
      * @param start 范围开始值
      * @param end   范围结束值
      */
-    SubCondition<T> addBetweenQuery(String field, Object start, Object end);
+    SubCondition<T,P> addBetweenQuery(String field, Object start, Object end);
 
     /**
      * 添加Like查询
@@ -118,7 +118,7 @@ public interface SubCondition<T> extends Serializable {
      * @param field 字段名
      * @param value 字段值
      */
-    SubCondition<T> addLikeQuery(String field, Object value);
+    SubCondition<T,P> addLikeQuery(String field, Object value);
 
     /**
      * 添加字段查询
@@ -126,7 +126,7 @@ public interface SubCondition<T> extends Serializable {
      * @param field 字段名
      * @param value 字段值
      */
-    SubCondition<T> addQuery(String field, Object value);
+    SubCondition<T,P> addQuery(String field, Object value);
 
     /**
      * 添加字段查询
@@ -135,7 +135,7 @@ public interface SubCondition<T> extends Serializable {
      * @param operator 操作符,可为<b>></b>,<b>>=</b>,<b>=</b>,<b><</b><b><=</b>
      * @param value    字段值
      */
-    SubCondition<T> addQuery(String field, String operator, Object value);
+    SubCondition<T,P> addQuery(String field, String operator, Object value);
 
     /**
      * 添加自定义查询条件
@@ -146,7 +146,7 @@ public interface SubCondition<T> extends Serializable {
      * @see cn.schoolwow.quickdao.query.condition.Condition
      * @see SubCondition
      */
-    SubCondition<T> addRawQuery(String query, Object... parameterList);
+    SubCondition<T,P> addRawQuery(String query, Object... parameterList);
 
     /**
      * 添加自定义字段,具体映射规则请看Condition类的JavaDoc注释
@@ -154,7 +154,7 @@ public interface SubCondition<T> extends Serializable {
      * @param fields 自定义查询列\
      * @see cn.schoolwow.quickdao.query.condition.Condition
      */
-    SubCondition<T> addColumn(String... fields);
+    SubCondition<T,P> addColumn(String... fields);
 
     /**
      * 关联表查询,子表可再次关联子表
@@ -166,7 +166,7 @@ public interface SubCondition<T> extends Serializable {
      * @see cn.schoolwow.quickdao.query.condition.Condition
      * @see SubCondition
      */
-    <E> SubCondition<E> joinTable(Class<E> clazz, String primaryField, String joinTableField);
+    <E> SubCondition<E,T> joinTable(Class<E> clazz, String primaryField, String joinTableField);
 
     /**
      * 关联表查询,子表可再次关联子表
@@ -179,7 +179,7 @@ public interface SubCondition<T> extends Serializable {
      * @see cn.schoolwow.quickdao.query.condition.Condition
      * @see SubCondition
      */
-    <E> SubCondition<E> joinTable(Class<E> clazz, String primaryField, String joinTableField, String compositField);
+    <E> SubCondition<E,T> joinTable(Class<E> clazz, String primaryField, String joinTableField, String compositField);
 
     /**
      * 关联表查询,子表可再次关联子表
@@ -198,7 +198,7 @@ public interface SubCondition<T> extends Serializable {
      *
      * @param fields 分组字段
      */
-    SubCondition<T> groupBy(String... fields);
+    SubCondition<T,P> groupBy(String... fields);
 
     /**
      * 设置指定字段排序方式
@@ -206,33 +206,38 @@ public interface SubCondition<T> extends Serializable {
      * @param field 升序排列字段名
      * @param asc 排序方式,值为asc或者desc
      */
-    SubCondition<T> order(String field, String asc);
+    SubCondition<T,P> order(String field, String asc);
 
     /**
      * 根据指定字段升序排列
      *
      * @param fields 升序排列字段名
      */
-    SubCondition<T> orderBy(String... fields);
+    SubCondition<T,P> orderBy(String... fields);
 
     /**
      * 根据指定字段降序排列
      *
      * @param fields 降序排列字段名
      */
-    SubCondition<T> orderByDesc(String... fields);
+    SubCondition<T,P> orderByDesc(String... fields);
+
+    /**
+     * 获取lambdaSubCondition对象
+     */
+    LambdaSubCondition<T,P> lambdaSubCondition();
 
     /**
      * 返回<b>父表</b>
      *
      * @see {@link SubCondition#joinTable(Class, String, String)}
      */
-    SubCondition<T> doneSubCondition();
+    SubCondition<P,?> doneSubCondition();
 
     /**
      * 返回<b>主表</b>
      *
      * @see {@link cn.schoolwow.quickdao.query.condition.Condition#joinTable(Class, String, String)}
      */
-    Condition<T> done();
+    Condition<P> done();
 }

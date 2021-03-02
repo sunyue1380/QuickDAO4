@@ -1,5 +1,6 @@
 package cn.schoolwow.quickdao.dao.sql.dql;
 
+import cn.schoolwow.quickdao.domain.SFunction;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 
@@ -34,6 +35,24 @@ public interface DQLDAO {
      * @param value 指字段值
      */
     <T> List<T> fetchList(Class<T> clazz, String field, Object value);
+
+    /**
+     * 根据属性查询单个记录
+     *
+     * @param clazz 实例类对象
+     * @param field 指定字段名
+     * @param value 指字段值
+     */
+    <T> T fetch(Class<T> clazz, SFunction<T,?> field, Object value);
+
+    /**
+     * 根据属性查询多个记录
+     *
+     * @param clazz 实例类对象
+     * @param field 指定字段名
+     * @param value 指字段值
+     */
+    <T> List<T> fetchList(Class<T> clazz, SFunction<T,?> field, Object value);
 
     /**
      * 根据属性查询单个记录

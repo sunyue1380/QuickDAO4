@@ -3,14 +3,14 @@ package cn.schoolwow.quickdao.query.condition;
 import cn.schoolwow.quickdao.domain.PageVo;
 import cn.schoolwow.quickdao.domain.Query;
 
-public class SQLServerCondition extends AbstractCondition{
+public class SQLServerCondition<T> extends AbstractCondition<T>{
 
     public SQLServerCondition(Query query) {
         super(query);
     }
 
     @Override
-    public Condition addLikeQuery(String field, Object value) {
+    public Condition<T> addLikeQuery(String field, Object value) {
         if (value == null || value.toString().equals("")) {
             return this;
         }
@@ -20,7 +20,7 @@ public class SQLServerCondition extends AbstractCondition{
     }
 
     @Override
-    public Condition limit(long offset, long limit) {
+    public Condition<T> limit(long offset, long limit) {
         if(query.orderByBuilder.length()==0){
             throw new IllegalArgumentException("SQL Server的分页操作必须包含order子句!");
         }
@@ -29,7 +29,7 @@ public class SQLServerCondition extends AbstractCondition{
     }
 
     @Override
-    public Condition page(int pageNum, int pageSize) {
+    public Condition<T> page(int pageNum, int pageSize) {
         if(query.orderByBuilder.length()==0){
             throw new IllegalArgumentException("SQL Server的分页操作必须包含order子句!");
         }

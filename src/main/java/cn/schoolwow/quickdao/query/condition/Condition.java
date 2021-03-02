@@ -359,7 +359,7 @@ public interface Condition<T> extends Serializable {
      *
      * @param clazz 待关联的子表
      */
-    <E> SubCondition<E> crossJoinTable(Class<E> clazz);
+    <E> SubCondition<E,T> crossJoinTable(Class<E> clazz);
 
     /**
      * cross join 关联表,获取笛卡尔积
@@ -367,7 +367,7 @@ public interface Condition<T> extends Serializable {
      *
      * @param tableName 待关联的子表
      */
-    <E> SubCondition<E> crossJoinTable(String tableName);
+    SubCondition<?,T> crossJoinTable(String tableName);
 
     /**
      * 关联表查询
@@ -377,7 +377,7 @@ public interface Condition<T> extends Serializable {
      * @param primaryField   <b>主表</b>关联字段
      * @param joinTableField <b>子表</b>关联字段
      */
-    <E> SubCondition<E> joinTable(Class<E> clazz, String primaryField, String joinTableField);
+    <E> SubCondition<E,T> joinTable(Class<E> clazz, String primaryField, String joinTableField);
 
     /**
      * 关联表查询
@@ -388,7 +388,7 @@ public interface Condition<T> extends Serializable {
      * @param joinTableField <b>子表</b>关联字段
      * @param compositField  <b>子表</b>实体类成员变量名
      */
-    <E> SubCondition<E> joinTable(Class<E> clazz, String primaryField, String joinTableField, String compositField);
+    <E> SubCondition<E,T> joinTable(Class<E> clazz, String primaryField, String joinTableField, String compositField);
 
     /**
      * 关联子查询
@@ -401,7 +401,7 @@ public interface Condition<T> extends Serializable {
      * @param primaryField       <b>主表</b>关联字段
      * @param joinConditionField <b>子查询</b>关联字段
      */
-    <E> SubCondition<E> joinTable(Condition<E> joinCondition, String primaryField, String joinConditionField);
+    <E> SubCondition<E,T> joinTable(Condition<E> joinCondition, String primaryField, String joinConditionField);
 
     /**
      * 关联表查询
@@ -414,7 +414,7 @@ public interface Condition<T> extends Serializable {
      * @param primaryField   <b>主表</b>关联字段
      * @param joinTableField <b>子表</b>关联字段
      */
-    SubCondition joinTable(String tableName, String primaryField, String joinTableField);
+    SubCondition<?,T> joinTable(String tableName, String primaryField, String joinTableField);
 
     /**
      * 设置指定字段排序方式
@@ -461,6 +461,11 @@ public interface Condition<T> extends Serializable {
      * @see {@link cn.schoolwow.quickdao.query.condition.Condition#joinTable(Class, String, String, String)} ()}
      */
     Condition<T> compositField();
+
+    /**
+     * 获取lambdaCondition对象
+     */
+    LambdaCondition<T> lambdaCondition();
 
     /**
      * 执行并返回Response实例

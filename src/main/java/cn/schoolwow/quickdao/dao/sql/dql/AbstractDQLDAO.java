@@ -4,7 +4,9 @@ import cn.schoolwow.quickdao.builder.dql.AbstractDQLBuilder;
 import cn.schoolwow.quickdao.dao.sql.AbstractSQLDAO;
 import cn.schoolwow.quickdao.domain.Entity;
 import cn.schoolwow.quickdao.domain.QuickDAOConfig;
+import cn.schoolwow.quickdao.domain.SFunction;
 import cn.schoolwow.quickdao.exception.SQLRuntimeException;
+import cn.schoolwow.quickdao.util.LambdaUtils;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import org.slf4j.MDC;
@@ -57,6 +59,26 @@ public class AbstractDQLDAO extends AbstractSQLDAO implements DQLDAO {
             MDC.put("count",array.size()+"");
             return array.toJavaList(clazz);
         } catch (SQLException e) {
+            throw new SQLRuntimeException(e);
+        }
+    }
+
+    @Override
+    public <T> T fetch(Class<T> clazz, SFunction<T, ?> field, Object value) {
+        try {
+            String convertField = LambdaUtils.resolveLambdaProperty(field);
+            return fetch(clazz,convertField,value);
+        } catch (Exception e) {
+            throw new SQLRuntimeException(e);
+        }
+    }
+
+    @Override
+    public <T> List<T> fetchList(Class<T> clazz, SFunction<T, ?> field, Object value) {
+        try {
+            String convertField = LambdaUtils.resolveLambdaProperty(field);
+            return fetchList(clazz,convertField,value);
+        } catch (Exception e) {
             throw new SQLRuntimeException(e);
         }
     }

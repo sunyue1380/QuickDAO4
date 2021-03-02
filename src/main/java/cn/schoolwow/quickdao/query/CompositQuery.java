@@ -11,7 +11,7 @@ public interface CompositQuery {
      *
      * @param clazz 实体类表
      */
-    Condition query(Class clazz);
+    <T> Condition<T> query(Class<T> clazz);
 
     /**
      * 复杂查询

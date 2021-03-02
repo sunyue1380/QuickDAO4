@@ -1,5 +1,7 @@
 package cn.schoolwow.quickdao.dao.sql.dml;
 
+import cn.schoolwow.quickdao.domain.SFunction;
+
 import java.util.Collection;
 
 /**
@@ -146,6 +148,15 @@ public interface DMLDAO {
      * @param value 指定字段值
      */
     int delete(Class clazz, String field, Object value);
+
+    /**
+     * 根据指定字段值删除对象
+     *
+     * @param clazz 实体类对象,对应数据库中的一张表
+     * @param field 指定字段名
+     * @param value 指定字段值
+     */
+    <T> int delete(Class<T> clazz, SFunction<T,?> field, Object value);
 
     /**
      * 根据指定字段值删除数据库记录

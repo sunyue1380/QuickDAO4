@@ -17,7 +17,7 @@ public class AbstractCompositQuery implements CompositQuery{
     }
 
     @Override
-    public Condition query(Class clazz) {
+    public <T> Condition<T> query(Class<T> clazz) {
         Entity entity = quickDAOConfig.getEntityByClassName(clazz.getName());
         if(null==entity){
             throw new IllegalArgumentException("不存在的实体类:"+clazz.getName()+"!");
