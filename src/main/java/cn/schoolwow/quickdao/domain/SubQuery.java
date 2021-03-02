@@ -12,7 +12,7 @@ import java.util.Map;
 /**
  * 子查询
  */
-public class SubQuery<T> implements Serializable {
+public class SubQuery<T,P> implements Serializable {
     /**
      * 关联实体
      */
@@ -60,11 +60,11 @@ public class SubQuery<T> implements Serializable {
     /**
      * 父表
      */
-    public SubQuery parentSubQuery;
+    public SubQuery<T,P> parentSubQuery;
     /**
      * 父表
      */
-    public SubCondition parentSubCondition;
+    public SubCondition<T,P> parentSubCondition;
     /**
      * 主表
      */
@@ -72,5 +72,5 @@ public class SubQuery<T> implements Serializable {
     /**
      * 主表
      */
-    public transient AbstractCondition condition;
+    public transient AbstractCondition<P> condition;
 }

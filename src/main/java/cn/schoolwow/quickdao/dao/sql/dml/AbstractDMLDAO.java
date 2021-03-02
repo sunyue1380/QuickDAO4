@@ -5,7 +5,9 @@ import cn.schoolwow.quickdao.builder.dml.AbstractDMLBuilder;
 import cn.schoolwow.quickdao.dao.sql.AbstractSQLDAO;
 import cn.schoolwow.quickdao.domain.Entity;
 import cn.schoolwow.quickdao.domain.QuickDAOConfig;
+import cn.schoolwow.quickdao.domain.SFunction;
 import cn.schoolwow.quickdao.exception.SQLRuntimeException;
+import cn.schoolwow.quickdao.util.LambdaUtils;
 import org.slf4j.MDC;
 
 import java.lang.reflect.Field;
@@ -308,6 +310,16 @@ public class AbstractDMLDAO extends AbstractSQLDAO implements DMLDAO{
         }
         MDC.put("count",effect+"");
         return effect;
+    }
+
+    @Override
+    public <T> int delete(Class<T> clazz, SFunction<T, ?> field, Object value) {
+        try {
+            String convertField = LambdaUtils.resolveLambdaProperty(field);
+            return delete(clazz,convertField,value);
+        } catch (Exception e) {
+            throw new SQLRuntimeException(e);
+        }
     }
 
     @Override

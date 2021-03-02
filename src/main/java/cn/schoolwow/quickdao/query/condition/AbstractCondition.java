@@ -315,21 +315,21 @@ public class AbstractCondition<T> implements Condition<T>, Serializable,Cloneabl
     }
 
     @Override
-    public <E> SubCondition<E> crossJoinTable(Class<E> clazz) {
-        SubQuery<E> subQuery = new SubQuery<E>();
+    public <E> SubCondition<E,T> crossJoinTable(Class<E> clazz) {
+        SubQuery<E,T> subQuery = new SubQuery<E,T>();
         subQuery.entity = query.quickDAOConfig.getEntityByClassName(clazz.getName());
         subQuery.tableAliasName = query.tableAliasName + (query.joinTableIndex++);
         subQuery.join = "cross join";
         subQuery.query = query;
         subQuery.condition = this;
 
-        AbstractSubCondition<E> subCondition = (AbstractSubCondition) query.quickDAOConfig.database.getSubConditionInstance(subQuery);
+        AbstractSubCondition<E,T> subCondition = (AbstractSubCondition) query.quickDAOConfig.database.getSubConditionInstance(subQuery);
         query.subQueryList.add(subQuery);
         return subCondition;
     }
 
     @Override
-    public <E> SubCondition<E> crossJoinTable(String tableName) {
+    public SubCondition<?,T> crossJoinTable(String tableName) {
         SubQuery subQuery = new SubQuery();
         for(Entity entity:query.quickDAOConfig.dbEntityList){
             if(entity.tableName.equals(tableName)){
@@ -351,13 +351,13 @@ public class AbstractCondition<T> implements Condition<T>, Serializable,Cloneabl
     }
 
     @Override
-    public <E> SubCondition<E> joinTable(Class<E> clazz, String primaryField, String joinTableField) {
+    public <E> SubCondition<E,T> joinTable(Class<E> clazz, String primaryField, String joinTableField) {
         return joinTable(clazz,primaryField,joinTableField,query.entity.getCompositeFieldName(clazz.getName()));
     }
 
     @Override
-    public <E> SubCondition<E> joinTable(Class<E> clazz, String primaryField, String joinTableField, String compositField) {
-        SubQuery<E> subQuery = new SubQuery<E>();
+    public <E> SubCondition<E,T> joinTable(Class<E> clazz, String primaryField, String joinTableField, String compositField) {
+        SubQuery<E,T> subQuery = new SubQuery<E,T>();
         subQuery.entity = query.quickDAOConfig.getEntityByClassName(clazz.getName());
         subQuery.tableAliasName = query.tableAliasName + (query.joinTableIndex++);
         subQuery.primaryField = query.entity.getColumnNameByFieldName(primaryField);
@@ -374,16 +374,16 @@ public class AbstractCondition<T> implements Condition<T>, Serializable,Cloneabl
         subQuery.query = query;
         subQuery.condition = this;
 
-        AbstractSubCondition<E> subCondition = (AbstractSubCondition<E>) query.quickDAOConfig.database.getSubConditionInstance(subQuery);
+        AbstractSubCondition<E,T> subCondition = (AbstractSubCondition<E,T>) query.quickDAOConfig.database.getSubConditionInstance(subQuery);
         query.subQueryList.add(subQuery);
         return subCondition;
     }
 
     @Override
-    public <E> SubCondition<E> joinTable(Condition<E> joinCondition, String primaryField, String joinConditionField) {
+    public <E> SubCondition<E,T> joinTable(Condition<E> joinCondition, String primaryField, String joinConditionField) {
         joinCondition.execute();
         Query joinQuery = ((AbstractCondition) joinCondition).query;
-        SubQuery<E> subQuery = new SubQuery();
+        SubQuery<E,T> subQuery = new SubQuery();
         subQuery.entity = joinQuery.entity;
         subQuery.subQuerySQLBuilder = joinQuery.dqlBuilder.getArraySQL(joinQuery);
 
@@ -394,13 +394,13 @@ public class AbstractCondition<T> implements Condition<T>, Serializable,Cloneabl
         subQuery.condition = this;
         subQuery.query = query;
 
-        AbstractSubCondition<E> subCondition = (AbstractSubCondition<E>) query.quickDAOConfig.database.getSubConditionInstance(subQuery);
+        AbstractSubCondition<E,T> subCondition = (AbstractSubCondition<E,T>) query.quickDAOConfig.database.getSubConditionInstance(subQuery);
         query.subQueryList.add(subQuery);
         return subCondition;
     }
 
     @Override
-    public SubCondition<T> joinTable(String tableName, String primaryField, String joinTableField) {
+    public SubCondition<?,T> joinTable(String tableName, String primaryField, String joinTableField) {
         SubQuery subQuery = new SubQuery();
         for(Entity entity:query.quickDAOConfig.dbEntityList){
             if(entity.tableName.equals(tableName)){
@@ -463,6 +463,13 @@ public class AbstractCondition<T> implements Condition<T>, Serializable,Cloneabl
     public Condition<T> compositField() {
         query.compositField = true;
         return this;
+    }
+
+    @Override
+    public LambdaCondition<T> lambdaCondition() {
+        LambdaConditionInvocationHandler<T> invocationHandler = new LambdaConditionInvocationHandler<T>(this);
+        LambdaCondition<T> lambdaCondition = (LambdaCondition<T>) Proxy.newProxyInstance(Thread.currentThread().getContextClassLoader(),new Class<?>[]{LambdaCondition.class},invocationHandler);
+        return lambdaCondition;
     }
 
     @Override
