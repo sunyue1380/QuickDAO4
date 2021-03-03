@@ -24,7 +24,10 @@ public class LambdaSubConditionInvocationHandler<T,P> implements InvocationHandl
             return this.subCondition;
         }
         Object result = LambdaUtils.invokeMethod(args,method,this.subCondition);
-        if(method.getReturnType().getName().equals(LambdaSubCondition.class.getName())){
+        if(method.getName().equals("joinTable")){
+            SubCondition subCondition = (SubCondition) result;
+            return subCondition.lambdaSubCondition();
+        }else if(method.getReturnType().getName().equals(LambdaSubCondition.class.getName())){
             return proxy;
         }else{
             return result;
