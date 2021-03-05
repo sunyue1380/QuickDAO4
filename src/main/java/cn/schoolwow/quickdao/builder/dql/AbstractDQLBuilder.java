@@ -31,9 +31,9 @@ public class AbstractDQLBuilder extends AbstractSQLBuilder implements DQLBuilder
             quickDAOConfig.sqlCache.put(key, builder.toString());
         }
         String sql = quickDAOConfig.sqlCache.get(key);
-        PreparedStatement ps = connection.prepareStatement(sql);
         MDC.put("name","Null查询");
         MDC.put("sql",sql);
+        PreparedStatement ps = connection.prepareStatement(sql);
         return ps;
     }
 
@@ -55,9 +55,10 @@ public class AbstractDQLBuilder extends AbstractSQLBuilder implements DQLBuilder
             quickDAOConfig.sqlCache.put(key, builder.toString());
         }
         String sql = quickDAOConfig.sqlCache.get(key);
+        MDC.put("name","字段查询");
+        MDC.put("sql",sql);
         PreparedStatement ps = connection.prepareStatement(sql);
         ps.setObject(1,value);
-        MDC.put("name","字段查询");
         MDC.put("sql",sql.replace("?",(value instanceof String)?"'"+value.toString()+"'":value.toString()));
         return ps;
     }
@@ -73,9 +74,9 @@ public class AbstractDQLBuilder extends AbstractSQLBuilder implements DQLBuilder
             quickDAOConfig.sqlCache.put(key, builder.toString());
         }
         String sql = quickDAOConfig.sqlCache.get(key);
-        PreparedStatement ps = connection.prepareStatement(sql);
         MDC.put("name","Null查询");
         MDC.put("sql",sql);
+        PreparedStatement ps = connection.prepareStatement(sql);
         return ps;
     }
 
@@ -90,9 +91,10 @@ public class AbstractDQLBuilder extends AbstractSQLBuilder implements DQLBuilder
             quickDAOConfig.sqlCache.put(key, builder.toString());
         }
         String sql = quickDAOConfig.sqlCache.get(key);
+        MDC.put("name","字段查询");
+        MDC.put("sql",sql);
         PreparedStatement ps = connection.prepareStatement(sql);
         ps.setObject(1,value);
-        MDC.put("name","字段查询");
         MDC.put("sql",sql.replace("?",(value instanceof String)?"'"+value.toString()+"'":value.toString()));
         return ps;
     }
@@ -165,13 +167,15 @@ public class AbstractDQLBuilder extends AbstractSQLBuilder implements DQLBuilder
         }
         builder.deleteCharAt(builder.length()-1);
         builder.append(")");
+        MDC.put("name","插入记录");
+        String sql = builder.toString();
+        MDC.put("sql",sql);
 
-        PreparedStatement ps = connection.prepareStatement(builder.toString(),PreparedStatement.RETURN_GENERATED_KEYS);
-        builder = new StringBuilder(builder.toString().replace("?",PLACEHOLDER));
+        PreparedStatement ps = connection.prepareStatement(sql,PreparedStatement.RETURN_GENERATED_KEYS);
+        builder = new StringBuilder(sql.replace("?",PLACEHOLDER));
         for (Object parameter : query.insertParameterList) {
             setParameter(parameter,ps,query.parameterIndex++,builder);
         }
-        MDC.put("name","插入记录");
         MDC.put("sql",builder.toString());
         return ps;
     }
@@ -196,11 +200,14 @@ public class AbstractDQLBuilder extends AbstractSQLBuilder implements DQLBuilder
         }
         builder.deleteCharAt(builder.length()-1);
         builder.append(")");
+        MDC.put("name","插入记录");
+        String sql = builder.toString();
+        MDC.put("sql",sql);
 
         connection.setAutoCommit(false);
         JSONArray array = query.insertArray;
         PreparedStatement[] preparedStatements = new PreparedStatement[array.size()];
-        String sql = builder.toString();
+
         builder.setLength(0);
         for(int i=0;i<array.size();i++){
             PreparedStatement ps = connection.prepareStatement(sql,PreparedStatement.RETURN_GENERATED_KEYS);
@@ -217,7 +224,6 @@ public class AbstractDQLBuilder extends AbstractSQLBuilder implements DQLBuilder
             builder.append(sqlBuilder.toString()+";");
             preparedStatements[i] = ps;
         }
-        MDC.put("name","插入记录");
         MDC.put("sql",builder.toString());
         return preparedStatements;
     }
@@ -228,14 +234,16 @@ public class AbstractDQLBuilder extends AbstractSQLBuilder implements DQLBuilder
         addJoinTableStatement(query,builder);
         builder.append(query.setBuilder.toString());
         addWhereStatement(query,builder);
+        MDC.put("name","批量更新");
+        String sql = builder.toString();
+        MDC.put("sql",sql);
 
-        PreparedStatement ps = connection.prepareStatement(builder.toString());
-        builder = new StringBuilder(builder.toString().replace("?",PLACEHOLDER));
+        PreparedStatement ps = connection.prepareStatement(sql);
+        builder = new StringBuilder(sql.replace("?",PLACEHOLDER));
         for (Object parameter : query.updateParameterList) {
             setParameter(parameter,ps,query.parameterIndex++,builder);
         }
         addMainTableParameters(ps,query,query,builder);
-        MDC.put("name","批量更新");
         MDC.put("sql",builder.toString());
         return ps;
     }
@@ -245,11 +253,12 @@ public class AbstractDQLBuilder extends AbstractSQLBuilder implements DQLBuilder
         StringBuilder builder = new StringBuilder("delete t from " + query.entity.escapeTableName + " as t");
         addJoinTableStatement(query,builder);
         addWhereStatement(query,builder);
+        MDC.put("name","批量删除");
+        MDC.put("sql",builder.toString());
 
         PreparedStatement ps = connection.prepareStatement(builder.toString());
         builder = new StringBuilder(builder.toString().replace("?",PLACEHOLDER));
         addMainTableParameters(ps,query,query,builder);
-        MDC.put("name","批量删除");
         MDC.put("sql",builder.toString());
         return ps;
     }
@@ -271,6 +280,8 @@ public class AbstractDQLBuilder extends AbstractSQLBuilder implements DQLBuilder
             }
         }
         builder.append(" " + query.orderByBuilder.toString() + " " + query.limit);
+        MDC.put("name","获取列表");
+        MDC.put("sql",builder.toString());
 
         PreparedStatement ps = connection.prepareStatement(builder.toString());
         builder = new StringBuilder(builder.toString().replace("?",PLACEHOLDER));
@@ -288,7 +299,6 @@ public class AbstractDQLBuilder extends AbstractSQLBuilder implements DQLBuilder
                 setParameter(parameter,ps,query.parameterIndex++,builder);
             }
         }
-        MDC.put("name","获取列表");
         MDC.put("sql",builder.toString());
         return ps;
     }

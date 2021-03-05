@@ -20,14 +20,15 @@ public class SQLiteDQLBuilder extends AbstractDQLBuilder {
         if(query.whereBuilder.length()>0){
             builder.append(" where " + query.whereBuilder.toString());
         }
-
-        PreparedStatement ps = connection.prepareStatement(builder.toString().replace(query.tableAliasName+".",""));
+        MDC.put("name","批量更新");
+        String sql = builder.toString().replace(query.tableAliasName+".","");
+        MDC.put("sql",sql);
+        PreparedStatement ps = connection.prepareStatement(sql);
         builder = new StringBuilder(builder.toString().replace("?",PLACEHOLDER));
         for (Object parameter : query.updateParameterList) {
             setParameter(parameter,ps,query.parameterIndex++,builder);
         }
         addMainTableParameters(ps,query,query,builder);
-        MDC.put("name","批量更新");
         MDC.put("sql",builder.toString());
         return ps;
     }
@@ -38,11 +39,13 @@ public class SQLiteDQLBuilder extends AbstractDQLBuilder {
         if(query.whereBuilder.length()>0){
             builder.append(" where " + query.whereBuilder.toString().replace(query.tableAliasName+".",""));
         }
-
-        PreparedStatement ps = connection.prepareStatement(builder.toString());
-        builder = new StringBuilder(builder.toString().replace("?",PLACEHOLDER));
-        addMainTableParameters(ps,query,query,builder);
         MDC.put("name","批量删除");
+        String sql = builder.toString();
+        MDC.put("sql",sql);
+
+        PreparedStatement ps = connection.prepareStatement(sql);
+        builder = new StringBuilder(sql.replace("?",PLACEHOLDER));
+        addMainTableParameters(ps,query,query,builder);
         MDC.put("sql",builder.toString());
         return ps;
     }
