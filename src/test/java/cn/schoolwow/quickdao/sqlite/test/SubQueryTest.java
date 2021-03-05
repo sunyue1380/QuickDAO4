@@ -47,7 +47,7 @@ public class SubQueryTest extends SQLiteTest {
     public void testFromSubQuery(){
         Condition<Product> fromCondition = dao.query(Product.class)
                 .addQuery("type","电器")
-                .groupBy("type,")
+                .groupBy("type")
                 .addColumn("type")
                 .addColumn("avg(price) avgPrice");
         JSONArray array = dao.query(fromCondition)
@@ -62,7 +62,7 @@ public class SubQueryTest extends SQLiteTest {
     public void testHavingSubQuery(){
         Condition havingCondition = dao.query("product")
                 .addColumn("1");
-        long count = (long) dao.query(Product.class)
+        long count = dao.query(Product.class)
                 .groupBy("type")
                 .having("count(type)",">",havingCondition)
                 .addColumn("count(type) count")

@@ -9,16 +9,59 @@ import cn.schoolwow.quickdao.query.subCondition.SubCondition;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 
-import java.io.Serializable;
+import java.io.*;
 import java.lang.reflect.Proxy;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.List;
+import java.util.*;
 
 public class AbstractCondition<T> implements Condition<T>, Serializable,Cloneable {
-    /**查询对象*/
-    public Query query;
-    /**execute方法是否已经被调用过*/
+    /**
+     * 忽略标识
+     * */
+    private transient static final String IGNORE = "##IGNORE##";
+
+    /**
+     * or标识
+     * */
+    private transient static final String OR = "##OR##";
+
+    /**
+     * column字段
+     * */
+    protected List<String> columnList = new ArrayList<>();
+
+    /**
+     * where语句
+     * */
+    protected List<FieldFragmentEntry> whereList = new ArrayList<>();
+
+    /**
+     * groupBy字段
+     * */
+    protected List<String> groupByList = new ArrayList<>();
+
+    /**
+     * having字段
+     * */
+    protected List<FieldFragmentEntry> havingList = new ArrayList<>();
+
+    /**
+     * orderBy字段
+     * */
+    protected List<FieldFragmentEntry> orderByList = new ArrayList<>();
+
+    /**
+     * 用于拼接SQL字符串
+     * */
+    private StringBuilder builder = new StringBuilder();
+
+    /**
+     * 查询对象
+     * */
+    public transient Query query;
+
+    /**
+     * execute方法是否已经被调用过
+     * */
     private boolean hasExecute;
 
     public AbstractCondition(Query query) {
@@ -39,35 +82,35 @@ public class AbstractCondition<T> implements Condition<T>, Serializable,Cloneabl
 
     @Override
     public Condition<T> addNullQuery(String field) {
-        query.whereBuilder.append("(" + getQueryColumnNameByFieldName(field) + " is null) and ");
+        whereList.add(new FieldFragmentEntry(field,"{} is null"));
         return this;
     }
 
     @Override
     public Condition<T> addNotNullQuery(String field) {
-        query.whereBuilder.append("(" + getQueryColumnNameByFieldName(field) + " is not null) and ");
+        whereList.add(new FieldFragmentEntry(field,"{} is not null"));
         return this;
     }
 
     @Override
     public Condition<T> addEmptyQuery(String field) {
-        query.whereBuilder.append("(" + getQueryColumnNameByFieldName(field) + " is not null and " + getQueryColumnNameByFieldName(field) + " = '') and ");
+        whereList.add(new FieldFragmentEntry(field,"{} is not null and {} = ''"));
         return this;
     }
 
     @Override
     public Condition<T> addNotEmptyQuery(String field) {
-        query.whereBuilder.append("(" + getQueryColumnNameByFieldName(field) + " is not null and " + getQueryColumnNameByFieldName(field) + " != '') and ");
+        whereList.add(new FieldFragmentEntry(field,"{} is not null and {} != ''"));
         return this;
     }
 
     @Override
     public Condition<T> addInQuery(String field, String inQuery) {
         if(null==inQuery||inQuery.isEmpty()){
-            query.whereBuilder.append("( 1 = 2 ) and ");
+            whereList.add(new FieldFragmentEntry(field,"1 = 2"));
             return this;
         }
-        query.whereBuilder.append("(" + getQueryColumnNameByFieldName(field) + " in ("+inQuery+") ) and ");
+        whereList.add(new FieldFragmentEntry(field,"{} in ("+inQuery+")"));
         return this;
     }
 
@@ -85,10 +128,10 @@ public class AbstractCondition<T> implements Condition<T>, Serializable,Cloneabl
     @Override
     public Condition<T> addNotInQuery(String field, String inQuery) {
         if(null==inQuery||inQuery.isEmpty()){
-            query.whereBuilder.append("( 1 = 2 ) and ");
+            whereList.add(new FieldFragmentEntry(field,"1 = 2"));
             return this;
         }
-        query.whereBuilder.append("(" + getQueryColumnNameByFieldName(field) + " not in ("+inQuery+") ) and ");
+        whereList.add(new FieldFragmentEntry(field,"{} not in ("+inQuery+")"));
         return this;
     }
 
@@ -105,7 +148,7 @@ public class AbstractCondition<T> implements Condition<T>, Serializable,Cloneabl
 
     @Override
     public Condition<T> addBetweenQuery(String field, Object start, Object end) {
-        query.whereBuilder.append("(" + getQueryColumnNameByFieldName(field) + " between ? and ? ) and ");
+        whereList.add(new FieldFragmentEntry(field,"{} between ? and ?"));
         query.parameterList.add(start);
         query.parameterList.add(end);
         return this;
@@ -116,7 +159,7 @@ public class AbstractCondition<T> implements Condition<T>, Serializable,Cloneabl
         if (value == null || value.toString().equals("")) {
             return this;
         }
-        query.whereBuilder.append("(" + getQueryColumnNameByFieldName(field) + " like ?) and ");
+        whereList.add(new FieldFragmentEntry(field,"{} like ?"));
         query.parameterList.add(value);
         return this;
     }
@@ -126,7 +169,7 @@ public class AbstractCondition<T> implements Condition<T>, Serializable,Cloneabl
         if (value == null || value.toString().equals("")) {
             return this;
         }
-        query.whereBuilder.append("(" + getQueryColumnNameByFieldName(field) + " not like ?) and ");
+        whereList.add(new FieldFragmentEntry(field,"{} not like ?"));
         query.parameterList.add(value);
         return this;
     }
@@ -145,7 +188,7 @@ public class AbstractCondition<T> implements Condition<T>, Serializable,Cloneabl
             addEmptyQuery(field);
         }else {
             Property property = query.entity.getPropertyByFieldName(field);
-            query.whereBuilder.append("(" + getQueryColumnNameByFieldName(field) + " " + operator + " "+(null==property||null==property.function?"?":property.function)+") and ");
+            whereList.add(new FieldFragmentEntry(field,"{} " + operator + " " + (null==property||null==property.function?"?":property.function)));
             query.parameterList.add(value);
         }
         return this;
@@ -153,7 +196,7 @@ public class AbstractCondition<T> implements Condition<T>, Serializable,Cloneabl
 
     @Override
     public Condition<T> addRawQuery(String query, Object... parameterList) {
-        this.query.whereBuilder.append("(" + query + ") and ");
+        this.whereList.add(new FieldFragmentEntry(IGNORE,query));
         if(null!=parameterList&&parameterList.length>0){
             this.query.parameterList.addAll(Arrays.asList(parameterList));
         }
@@ -162,11 +205,12 @@ public class AbstractCondition<T> implements Condition<T>, Serializable,Cloneabl
 
     @Override
     public Condition<T> addSubQuery(String field, String operator, Condition subQuery) {
-        subQuery.execute();
         AbstractCondition abstractCondition = (AbstractCondition) subQuery;
-        abstractCondition.query.tableAliasName = query.tableAliasName + (query.joinTableIndex++);
-        String limit = " "+((AbstractCondition) subQuery).query.limit;
-        query.whereBuilder.append(getQueryColumnNameByFieldName(field) + " " + operator + " (" + query.dqlBuilder.getArraySQL(abstractCondition.query) + limit +") and ");
+        if(null==abstractCondition.query.tableAliasName){
+            subQuery.tableAliasName("t" + (query.joinTableIndex++));
+        }
+        subQuery.execute();
+        whereList.add(new FieldFragmentEntry(field," {} " + operator + " (" + query.dqlBuilder.getArraySQL(abstractCondition.query) + abstractCondition.query.limit +")"));
         this.query.parameterList.addAll(abstractCondition.query.parameterList);
         return this;
     }
@@ -186,7 +230,7 @@ public class AbstractCondition<T> implements Condition<T>, Serializable,Cloneabl
     @Override
     public Condition<T> addColumn(String... fields) {
         for(String field:fields){
-            query.columnBuilder.append(getQueryColumnNameByFieldName(field)+ ",");
+            columnList.add(field);
         }
         return this;
     }
@@ -201,8 +245,7 @@ public class AbstractCondition<T> implements Condition<T>, Serializable,Cloneabl
     public Condition<T> addColumn(Condition subQuery) {
         subQuery.execute();
         Query selectQuery = ((AbstractCondition)subQuery).query;
-        String limit = " "+((AbstractCondition) subQuery).query.limit;
-        query.columnBuilder.append("( " + query.dqlBuilder.getArraySQL(selectQuery) + limit + " ),");
+        columnList.add("( " + query.dqlBuilder.getArraySQL(selectQuery) + " " + ((AbstractCondition) subQuery).query.limit + ")");
         query.parameterList.addAll(selectQuery.parameterList);
         return this;
     }
@@ -211,8 +254,10 @@ public class AbstractCondition<T> implements Condition<T>, Serializable,Cloneabl
     public Condition<T> addColumn(Condition subQuery, String columnNameAlias) {
         subQuery.execute();
         Query selectQuery = ((AbstractCondition)subQuery).query;
-        String limit = " "+((AbstractCondition) subQuery).query.limit;
-        query.columnBuilder.append("( " + query.dqlBuilder.getArraySQL(selectQuery) + limit +") "+columnNameAlias+",");
+        if(null==selectQuery.tableAliasName){
+            subQuery.tableAliasName("t" + (query.joinTableIndex++));
+        }
+        columnList.add("( " + query.dqlBuilder.getArraySQL(selectQuery) + " " + ((AbstractCondition) subQuery).query.limit + ") " + columnNameAlias);
         query.selectQueryList.add(selectQuery);
         return this;
     }
@@ -271,16 +316,14 @@ public class AbstractCondition<T> implements Condition<T>, Serializable,Cloneabl
     @Override
     public Condition<T> or() {
         AbstractCondition orCondition = (AbstractCondition) query.quickDAOConfig.dao.query(query.entity.clazz);
+        orCondition.tableAliasName("t");
         query.orList.add(orCondition);
         return orCondition;
     }
 
     @Override
     public Condition<T> or(String or, Object... parameterList) {
-        if(query.whereBuilder.length()>0){
-            query.whereBuilder.replace(query.whereBuilder.length()-5,query.whereBuilder.length()," or ");
-        }
-        query.whereBuilder.append("(" + or + ") and ");
+        whereList.add(new FieldFragmentEntry(OR,or));
         if(null!=parameterList&&parameterList.length>0){
             query.parameterList.addAll(Arrays.asList(parameterList));
         }
@@ -289,15 +332,13 @@ public class AbstractCondition<T> implements Condition<T>, Serializable,Cloneabl
 
     @Override
     public Condition<T> groupBy(String... fields) {
-        for(String field:fields){
-            query.groupByBuilder.append(getQueryColumnNameByFieldName(field) + ",");
-        }
+        groupByList.addAll(Arrays.asList(fields));
         return this;
     }
 
     @Override
     public Condition<T> having(String having, Object... parameterList) {
-        query.havingBuilder.append("(" + having + ") and ");
+        havingList.add(new FieldFragmentEntry(IGNORE,having));
         if(null!=parameterList&&parameterList.length>0){
             query.havingParameterList.addAll(Arrays.asList(parameterList));
         }
@@ -306,10 +347,12 @@ public class AbstractCondition<T> implements Condition<T>, Serializable,Cloneabl
 
     @Override
     public Condition<T> having(String field, String operator, Condition subQuery) {
-        subQuery.execute();
         AbstractCondition abstractCondition = (AbstractCondition) subQuery;
-        String limit = " "+((AbstractCondition) subQuery).query.limit;
-        query.havingBuilder.append(getQueryColumnNameByFieldName(field) + " " + operator + " (" + query.dqlBuilder.getArraySQL(abstractCondition.query) + limit + ") and ");
+        if(null==abstractCondition.query.tableAliasName){
+            subQuery.tableAliasName("t" + (query.joinTableIndex++));
+        }
+        subQuery.execute();
+        havingList.add(new FieldFragmentEntry(field,"{}" + operator + " (" + query.dqlBuilder.getArraySQL(abstractCondition.query) + " " + abstractCondition.query.limit + ")"));
         this.query.parameterList.addAll(abstractCondition.query.parameterList);
         return this;
     }
@@ -318,12 +361,12 @@ public class AbstractCondition<T> implements Condition<T>, Serializable,Cloneabl
     public <E> SubCondition<E,T> crossJoinTable(Class<E> clazz) {
         SubQuery<E,T> subQuery = new SubQuery<E,T>();
         subQuery.entity = query.quickDAOConfig.getEntityByClassName(clazz.getName());
-        subQuery.tableAliasName = query.tableAliasName + (query.joinTableIndex++);
         subQuery.join = "cross join";
         subQuery.query = query;
         subQuery.condition = this;
 
         AbstractSubCondition<E,T> subCondition = (AbstractSubCondition) query.quickDAOConfig.database.getSubConditionInstance(subQuery);
+        subQuery.subCondition = subCondition;
         query.subQueryList.add(subQuery);
         return subCondition;
     }
@@ -340,12 +383,12 @@ public class AbstractCondition<T> implements Condition<T>, Serializable,Cloneabl
         if(null==subQuery.entity){
             throw new IllegalArgumentException("关联表不存在!表名:"+tableName);
         }
-        subQuery.tableAliasName = query.tableAliasName + (query.joinTableIndex++);
         subQuery.join = "cross join";
         subQuery.query = query;
         subQuery.condition = this;
 
         AbstractSubCondition subCondition = (AbstractSubCondition) query.quickDAOConfig.database.getSubConditionInstance(subQuery);
+        subQuery.subCondition = subCondition;
         query.subQueryList.add(subQuery);
         return subCondition;
     }
@@ -359,7 +402,6 @@ public class AbstractCondition<T> implements Condition<T>, Serializable,Cloneabl
     public <E> SubCondition<E,T> joinTable(Class<E> clazz, String primaryField, String joinTableField, String compositField) {
         SubQuery<E,T> subQuery = new SubQuery<E,T>();
         subQuery.entity = query.quickDAOConfig.getEntityByClassName(clazz.getName());
-        subQuery.tableAliasName = query.tableAliasName + (query.joinTableIndex++);
         subQuery.primaryField = query.entity.getColumnNameByFieldName(primaryField);
         for(Property property:subQuery.entity.properties){
             if(property.name.equals(joinTableField)){
@@ -375,6 +417,7 @@ public class AbstractCondition<T> implements Condition<T>, Serializable,Cloneabl
         subQuery.condition = this;
 
         AbstractSubCondition<E,T> subCondition = (AbstractSubCondition<E,T>) query.quickDAOConfig.database.getSubConditionInstance(subQuery);
+        subQuery.subCondition = subCondition;
         query.subQueryList.add(subQuery);
         return subCondition;
     }
@@ -387,7 +430,6 @@ public class AbstractCondition<T> implements Condition<T>, Serializable,Cloneabl
         subQuery.entity = joinQuery.entity;
         subQuery.subQuerySQLBuilder = joinQuery.dqlBuilder.getArraySQL(joinQuery);
 
-        subQuery.tableAliasName = query.tableAliasName + (query.joinTableIndex++);
         subQuery.primaryField = query.entity.getColumnNameByFieldName(primaryField);
         subQuery.joinTableField = joinConditionField;
         subQuery.subQuery = joinQuery;
@@ -395,6 +437,7 @@ public class AbstractCondition<T> implements Condition<T>, Serializable,Cloneabl
         subQuery.query = query;
 
         AbstractSubCondition<E,T> subCondition = (AbstractSubCondition<E,T>) query.quickDAOConfig.database.getSubConditionInstance(subQuery);
+        subQuery.subCondition = subCondition;
         query.subQueryList.add(subQuery);
         return subCondition;
     }
@@ -411,27 +454,27 @@ public class AbstractCondition<T> implements Condition<T>, Serializable,Cloneabl
         if(null==subQuery.entity){
             throw new IllegalArgumentException("关联表不存在!表名:"+tableName);
         }
-        subQuery.tableAliasName = query.tableAliasName + (query.joinTableIndex++);
         subQuery.primaryField = query.entity.getColumnNameByFieldName(primaryField);
         subQuery.joinTableField = joinTableField;
         subQuery.query = query;
         subQuery.condition = this;
 
         AbstractSubCondition subCondition = (AbstractSubCondition) query.quickDAOConfig.database.getSubConditionInstance(subQuery);
+        subQuery.subCondition = subCondition;
         query.subQueryList.add(subQuery);
         return subCondition;
     }
 
     @Override
     public Condition<T> order(String field, String asc) {
-        query.orderByBuilder.append(getQueryColumnNameByFieldName(field)+" " + asc + ",");
+        orderByList.add(new FieldFragmentEntry(field,"{} " + asc));
         return this;
     }
 
     @Override
     public Condition<T> orderBy(String... fields) {
         for(String field:fields){
-            query.orderByBuilder.append(getQueryColumnNameByFieldName(field) + " asc,");
+            orderByList.add(new FieldFragmentEntry(field,"{} asc"));
         }
         return this;
     }
@@ -439,7 +482,7 @@ public class AbstractCondition<T> implements Condition<T>, Serializable,Cloneabl
     @Override
     public Condition<T> orderByDesc(String... fields) {
         for(String field:fields){
-            query.orderByBuilder.append(getQueryColumnNameByFieldName(field) + " desc,");
+            orderByList.add(new FieldFragmentEntry(field,"{} desc"));
         }
         return this;
     }
@@ -477,9 +520,48 @@ public class AbstractCondition<T> implements Condition<T>, Serializable,Cloneabl
         if(hasExecute){
             throw new IllegalArgumentException("该Condition已经执行过,不能再次执行!");
         }
-        if (query.columnBuilder.length() > 0) {
-            query.columnBuilder.deleteCharAt(query.columnBuilder.length() - 1);
+        if(null==query.tableAliasName){
+            query.tableAliasName = "t";
         }
+
+        StringBuilder columnBuilder = new StringBuilder();
+        StringBuilder whereBuilder = new StringBuilder();
+        StringBuilder groupByBuilder = new StringBuilder();
+        StringBuilder havingBuilder = new StringBuilder();
+        StringBuilder orderByBuilder = new StringBuilder();
+        //拼接主表SQL片段
+        {
+            columnBuilder.append(getSQLFragment(columnList,query.entity,query.tableAliasName));
+            whereBuilder.append(getSQLFragment(whereList,query.entity,query.tableAliasName," and "));
+            groupByBuilder.append(getSQLFragment(groupByList,query.entity,query.tableAliasName));
+            havingBuilder.append(getSQLFragment(havingList,query.entity,query.tableAliasName," and "));
+            orderByBuilder.append(getSQLFragment(orderByList,query.entity,query.tableAliasName,","));
+        }
+
+        //拼接子表SQL片段
+        for (SubQuery subQuery : query.subQueryList) {
+            if(null==subQuery.tableAliasName){
+                subQuery.tableAliasName = "t" + (query.joinTableIndex++);
+            }
+
+            columnBuilder.append(getSQLFragment(subQuery.subCondition.columnList,subQuery.entity,subQuery.tableAliasName));
+            whereBuilder.append(getSQLFragment(subQuery.subCondition.whereList,subQuery.entity,subQuery.tableAliasName," and "));
+            query.parameterList.addAll(subQuery.parameterList);
+            groupByBuilder.append(getSQLFragment(subQuery.subCondition.groupByList,subQuery.entity,subQuery.tableAliasName));
+            orderByBuilder.append(getSQLFragment(subQuery.subCondition.orderByList,subQuery.entity,subQuery.tableAliasName,","));
+        }
+
+        //拼接or查询条件
+        for(AbstractCondition orCondition:query.orList){
+            orCondition.execute();
+            if(whereBuilder.charAt(whereBuilder.length()-2)=='d'){
+                whereBuilder.delete(whereBuilder.length()-5,whereBuilder.length());
+                whereBuilder.append(" or ");
+            }
+            whereBuilder.append(getSQLFragment(orCondition.whereList,orCondition.query.entity,orCondition.query.tableAliasName," or "));
+            query.parameterList.addAll(orCondition.query.parameterList);
+        }
+
         if (query.setBuilder.length() > 0) {
             query.setBuilder.deleteCharAt(query.setBuilder.length() - 1);
             query.setBuilder.insert(0, "set ");
@@ -487,32 +569,39 @@ public class AbstractCondition<T> implements Condition<T>, Serializable,Cloneabl
         if (query.insertBuilder.length() > 0) {
             query.insertBuilder.deleteCharAt(query.insertBuilder.length() - 1);
         }
-        if (query.whereBuilder.length() > 0) {
-            query.whereBuilder.delete(query.whereBuilder.length() - 5, query.whereBuilder.length());
+        if(columnBuilder.length()>0){
+            columnBuilder.deleteCharAt(columnBuilder.length()-1);
+            query.column = columnBuilder.toString();
         }
-        if (query.groupByBuilder.length() > 0) {
-            query.groupByBuilder.deleteCharAt(query.groupByBuilder.length()-1);
-            query.groupByBuilder.insert(0, "group by ");
-        }
-        if (query.havingBuilder.length() > 0) {
-            query.havingBuilder.delete(query.havingBuilder.length() - 5, query.havingBuilder.length());
-            query.havingBuilder.insert(0, "having ");
-        }
-        if (query.orderByBuilder.length() > 0) {
-            query.orderByBuilder.deleteCharAt(query.orderByBuilder.length() - 1);
-            query.orderByBuilder.insert(0, "order by ");
-        }
-        //处理所有子查询的where语句
-        for (SubQuery subQuery : query.subQueryList) {
-            if (subQuery.whereBuilder.length() > 0) {
-                subQuery.whereBuilder.delete(subQuery.whereBuilder.length() - 5, subQuery.whereBuilder.length());
+        if(whereBuilder.length()>0){
+            char ch = whereBuilder.charAt(whereBuilder.length()-2);
+            if(ch=='r'){
+                //以 or 结尾
+                whereBuilder.delete(whereBuilder.length()-4,whereBuilder.length());
+            }else if(ch=='d'){
+                //以 and 结尾
+                whereBuilder.delete(whereBuilder.length()-5,whereBuilder.length());
             }
+            whereBuilder.insert(0,"where ");
+            query.where = whereBuilder.toString();
+        }
+        if(groupByBuilder.length()>0){
+            groupByBuilder.deleteCharAt(groupByBuilder.length()-1);
+            groupByBuilder.insert(0,"group by ");
+            query.groupBy = groupByBuilder.toString();
+        }
+        if(havingBuilder.length()>0){
+            havingBuilder.delete(havingBuilder.length()-5,havingBuilder.length());
+            havingBuilder.insert(0,"having ");
+            query.having = havingBuilder.toString();
+        }
+        if(orderByBuilder.length()>0){
+            orderByBuilder.deleteCharAt(orderByBuilder.length()-1);
+            orderByBuilder.insert(0,"order by ");
+            query.orderBy = orderByBuilder.toString();
         }
         //处理所有union
         for(AbstractCondition condition:query.unionList){
-            condition.execute();
-        }
-        for(AbstractCondition condition:query.orList){
             condition.execute();
         }
         hasExecute = true;
@@ -522,13 +611,35 @@ public class AbstractCondition<T> implements Condition<T>, Serializable,Cloneabl
     }
 
     @Override
-    public Condition<T> clone(){
+    public AbstractCondition clone(){
         Query query = this.query.clone();
-        AbstractCondition<T> abstractCondition = new AbstractCondition<T>(query);
-        for(int i=0;i<query.subQueryList.size();i++){
-            query.subQueryList.get(i).condition = abstractCondition;
+        ByteArrayInputStream bais = null;
+        try (ByteArrayOutputStream baos = new ByteArrayOutputStream()){
+            ObjectOutputStream oos = new ObjectOutputStream(baos);
+            oos.writeObject(this);
+            oos.close();
+
+            bais = new ByteArrayInputStream(baos.toByteArray());
+            ObjectInputStream ois = new ObjectInputStream(bais);
+            AbstractCondition abstractCondition = (AbstractCondition) ois.readObject();
+            abstractCondition.query = query;
+            for(int i=0;i<query.subQueryList.size();i++){
+                query.subQueryList.get(i).condition = abstractCondition;
+            }
+            bais.close();
+            return abstractCondition;
+        } catch (IOException | ClassNotFoundException e) {
+            e.printStackTrace();
+        } finally {
+            if(null!=bais){
+                try {
+                    bais.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
         }
-        return abstractCondition;
+        return null;
     }
 
     @Override
@@ -539,40 +650,83 @@ public class AbstractCondition<T> implements Condition<T>, Serializable,Cloneabl
     /**添加in查询*/
     private void addInQuery(String field, Object[] values, String in) {
         if (null == values || values.length == 0) {
-            query.whereBuilder.append("( 1 = 2 ) and ");
+            whereList.add(new FieldFragmentEntry(IGNORE,"1 = 2"));
             return;
         }
-        query.whereBuilder.append("(" + getQueryColumnNameByFieldName(field) + " " + in + " (");
+        StringBuilder builder = new StringBuilder();
+        builder.append(" {} " + in + " (");
         for (int i = 0; i < values.length; i++) {
-            query.whereBuilder.append("?,");
+            builder.append("?,");
         }
-        query.whereBuilder.deleteCharAt(query.whereBuilder.length() - 1);
-        query.whereBuilder.append(") ) and ");
+        builder.deleteCharAt(builder.length() - 1);
+        builder.append(")");
+        whereList.add(new FieldFragmentEntry(field,builder.toString()));
         query.parameterList.addAll(Arrays.asList(values));
     }
 
     /**添加exist查询*/
     private void addExistSubQuery(Condition subQuery, String exist) {
-        subQuery.execute();
         AbstractCondition abstractCondition = (AbstractCondition) subQuery;
-        String limit = ((AbstractCondition) subQuery).query.limit;
-        query.whereBuilder.append(exist +" (" + query.dqlBuilder.getArraySQL(abstractCondition.query) + " " + limit + ") and ");
+        if(null==abstractCondition.query.tableAliasName){
+            subQuery.tableAliasName("t" + (query.joinTableIndex++));
+        }
+        subQuery.execute();
+        whereList.add(new FieldFragmentEntry(IGNORE,exist +" (" + query.dqlBuilder.getArraySQL(abstractCondition.query) + " " + abstractCondition.query.limit + ")"));
         this.query.parameterList.addAll(abstractCondition.query.parameterList);
     }
 
     /**
-     * 根据字段名查询数据库列名,返回表名加列名
+     * 获取SQL片段
+     * @param fields 字段信息
+     * @param entity 实体类信息
+     * @param tableAliasName 表别名
      * */
-    private String getQueryColumnNameByFieldName(String field) {
-        Property property = query.entity.getPropertyByFieldName(field);
-        if(null==property){
-            return field;
+    private String getSQLFragment(List<String> fields, Entity entity, String tableAliasName){
+        builder.setLength(0);
+        for(String field:fields){
+            Property property = entity.getPropertyByFieldName(field);
+            if(null==property){
+                builder.append(field);
+            }else if(!query.unionList.isEmpty()){
+                builder.append(query.quickDAOConfig.database.escape(property.column));
+            }else{
+                builder.append(tableAliasName + "." + query.quickDAOConfig.database.escape(property.column));
+            }
+            builder.append(",");
         }
-        if(query.unionList.isEmpty()){
-            return query.tableAliasName+"."+query.quickDAOConfig.database.escape(property.column);
-        }else{
-            return query.quickDAOConfig.database.escape(property.column);
-        }
+        return builder.toString();
     }
 
+    /**
+     * 获取SQL片段
+     * @param fragmentEntryList 字段pianduan信息
+     * @param entity 实体类信息
+     * @param tableAliasName 表别名
+     * */
+    private String getSQLFragment(List<FieldFragmentEntry> fragmentEntryList, Entity entity, String tableAliasName, String separator){
+        builder.setLength(0);
+        for(FieldFragmentEntry fieldFragmentEntry:fragmentEntryList){
+            if(IGNORE.equals(fieldFragmentEntry.field)){
+                builder.append("( " + fieldFragmentEntry.fragment + " ) " + separator);
+                continue;
+            }else if(OR.equals(fieldFragmentEntry.field)){
+                if(builder.length()>3&&builder.charAt(builder.length()-2)=='d'){
+                    builder.delete(builder.length()-5,builder.length());
+                    builder.append(" or ");
+                }
+                builder.append("( " + fieldFragmentEntry.fragment + " ) or ");
+                continue;
+            }
+            Property property = entity.getPropertyByFieldName(fieldFragmentEntry.field);
+            if(null==property){
+                builder.append(fieldFragmentEntry.fragment.replace("{}", fieldFragmentEntry.field));
+            }else if(!query.unionList.isEmpty()){
+                builder.append(fieldFragmentEntry.fragment.replace("{}", query.quickDAOConfig.database.escape(property.column)));
+            }else{
+                builder.append(fieldFragmentEntry.fragment.replace("{}", tableAliasName + "." + query.quickDAOConfig.database.escape(property.column)));
+            }
+            builder.append(separator);
+        }
+        return builder.toString();
+    }
 }

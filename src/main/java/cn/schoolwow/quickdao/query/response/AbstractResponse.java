@@ -196,7 +196,7 @@ public class AbstractResponse<T> implements Response<T>{
             PreparedStatement ps = query.dqlBuilder.getArray(query);
             array = new JSONArray(query.dqlBuilder.getResultSetRowCount(query));
             ResultSet resultSet = ps.executeQuery();
-            if(query.columnBuilder.length()>0){
+            if(query.column.length()>0){
                 if(null==query.columnTypeMapping){
                     query.columnTypeMapping = query.quickDAOConfig.columnTypeMapping;
                 }
