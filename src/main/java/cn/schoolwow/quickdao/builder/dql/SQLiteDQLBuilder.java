@@ -16,10 +16,7 @@ public class SQLiteDQLBuilder extends AbstractDQLBuilder {
     @Override
     public PreparedStatement update(Query query) throws SQLException {
         StringBuilder builder = new StringBuilder("update " + query.entity.escapeTableName + " ");
-        builder.append(query.setBuilder.toString());
-        if(query.whereBuilder.length()>0){
-            builder.append(" where " + query.whereBuilder.toString());
-        }
+        builder.append(query.setBuilder.toString() + " " + query.where);
         MDC.put("name","批量更新");
         String sql = builder.toString().replace(query.tableAliasName+".","");
         MDC.put("sql",sql);
@@ -36,9 +33,7 @@ public class SQLiteDQLBuilder extends AbstractDQLBuilder {
     @Override
     public PreparedStatement delete(Query query) throws SQLException {
         StringBuilder builder = new StringBuilder("delete from "+query.quickDAOConfig.database.escape(query.entity.tableName));
-        if(query.whereBuilder.length()>0){
-            builder.append(" where " + query.whereBuilder.toString().replace(query.tableAliasName+".",""));
-        }
+        builder.append(" " + query.where.replace(query.tableAliasName+".",""));
         MDC.put("name","批量删除");
         String sql = builder.toString();
         MDC.put("sql",sql);

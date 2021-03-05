@@ -32,7 +32,7 @@ public class Query implements Serializable,Cloneable {
     /**
      * 主表别名
      */
-    public String tableAliasName = "t";
+    public String tableAliasName;
     /**
      * distinct
      */
@@ -40,7 +40,7 @@ public class Query implements Serializable,Cloneable {
     /**
      * 列名
      */
-    public StringBuilder columnBuilder = new StringBuilder();
+    public String column = "";
     /**
      * 列类型转换
      */
@@ -56,19 +56,19 @@ public class Query implements Serializable,Cloneable {
     /**
      * 查询条件
      */
-    public StringBuilder whereBuilder = new StringBuilder();
+    public String where = "";
     /**
      * 分组查询
      */
-    public StringBuilder groupByBuilder = new StringBuilder();
+    public String groupBy = "";
     /**
      * having查询
      */
-    public StringBuilder havingBuilder = new StringBuilder();
+    public String having = "";
     /**
      * 排序
      */
-    public StringBuilder orderByBuilder = new StringBuilder();
+    public String orderBy = "";
     /**
      * 分页
      */

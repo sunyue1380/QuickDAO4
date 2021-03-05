@@ -104,8 +104,8 @@ public class AbstractDQLBuilder extends AbstractSQLBuilder implements DQLBuilder
         query.parameterIndex = 1;
         StringBuilder builder = new StringBuilder("select count(1) from ( select " + query.distinct + " ");
         //如果有指定列,则添加指定列
-        if(query.columnBuilder.length()>0){
-            builder.append(query.columnBuilder.toString());
+        if(query.column.length()>0){
+            builder.append(query.column);
         }else{
             builder.append(columns(query.entity, query.tableAliasName));
         }
@@ -114,8 +114,7 @@ public class AbstractDQLBuilder extends AbstractSQLBuilder implements DQLBuilder
             builder.append(" as " + query.tableAliasName);
         }
         addJoinTableStatement(query,builder);
-        addWhereStatement(query,builder);
-        builder.append(" " + query.groupByBuilder.toString() + " " + query.havingBuilder.toString());
+        builder.append(" " + query.where + " " + query.groupBy + " " + query.having);
         builder.append(" "+query.limit);
         builder.append(") as foo");
 
@@ -138,8 +137,8 @@ public class AbstractDQLBuilder extends AbstractSQLBuilder implements DQLBuilder
     public PreparedStatement count(Query query) throws SQLException {
         StringBuilder builder = new StringBuilder("select count(1) from ( select " + query.distinct + " ");
         //如果有指定列,则添加指定列
-        if(query.columnBuilder.length()>0){
-            builder.append(query.columnBuilder.toString());
+        if(query.column.length()>0){
+            builder.append(query.column);
         }else{
             builder.append(columns(query.entity, query.tableAliasName));
         }
@@ -148,8 +147,7 @@ public class AbstractDQLBuilder extends AbstractSQLBuilder implements DQLBuilder
             builder.append(" as " + query.tableAliasName);
         }
         addJoinTableStatement(query,builder);
-        addWhereStatement(query,builder);
-        builder.append(" " + query.groupByBuilder.toString() + " " + query.havingBuilder.toString());
+        builder.append(" " + query.where + " " + query.groupBy + " " + query.having);
         builder.append(") as foo");
 
         PreparedStatement ps = connection.prepareStatement(builder.toString());
@@ -232,8 +230,7 @@ public class AbstractDQLBuilder extends AbstractSQLBuilder implements DQLBuilder
     public PreparedStatement update(Query query) throws SQLException {
         StringBuilder builder = new StringBuilder("update " + query.entity.escapeTableName + " as t ");
         addJoinTableStatement(query,builder);
-        builder.append(query.setBuilder.toString());
-        addWhereStatement(query,builder);
+        builder.append(query.setBuilder.toString() + " " + query.where);
         MDC.put("name","批量更新");
         String sql = builder.toString();
         MDC.put("sql",sql);
@@ -252,7 +249,8 @@ public class AbstractDQLBuilder extends AbstractSQLBuilder implements DQLBuilder
     public PreparedStatement delete(Query query) throws SQLException {
         StringBuilder builder = new StringBuilder("delete t from " + query.entity.escapeTableName + " as t");
         addJoinTableStatement(query,builder);
-        addWhereStatement(query,builder);
+        builder.append(" " + query.where);
+
         MDC.put("name","批量删除");
         MDC.put("sql",builder.toString());
 
@@ -279,11 +277,12 @@ public class AbstractDQLBuilder extends AbstractSQLBuilder implements DQLBuilder
                 builder.append(getArraySQL(abstractCondition.query));
             }
         }
-        builder.append(" " + query.orderByBuilder.toString() + " " + query.limit);
+        builder.append(" " + query.orderBy + " " + query.limit);
         MDC.put("name","获取列表");
-        MDC.put("sql",builder.toString());
+        String sql = builder.toString();
+        MDC.put("sql",sql);
 
-        PreparedStatement ps = connection.prepareStatement(builder.toString());
+        PreparedStatement ps = connection.prepareStatement(sql);
         builder = new StringBuilder(builder.toString().replace("?",PLACEHOLDER));
         addArraySQLParameters(ps,query,query,builder);
         //添加union语句
@@ -307,8 +306,8 @@ public class AbstractDQLBuilder extends AbstractSQLBuilder implements DQLBuilder
     public StringBuilder getArraySQL(Query query) {
         StringBuilder builder = new StringBuilder("select " + query.distinct + " ");
         //如果有指定列,则添加指定列
-        if(query.columnBuilder.length()>0){
-            builder.append(query.columnBuilder.toString());
+        if(query.column.length()>0){
+            builder.append(query.column);
         }else{
             builder.append(columns(query.entity, query.tableAliasName));
         }
@@ -322,8 +321,7 @@ public class AbstractDQLBuilder extends AbstractSQLBuilder implements DQLBuilder
             builder.append(" as " + query.tableAliasName);
         }
         addJoinTableStatement(query,builder);
-        addWhereStatement(query,builder);
-        builder.append(" " + query.groupByBuilder.toString() + " " + query.havingBuilder.toString());
+        builder.append(" " + query.where + " " + query.groupBy + " " + query.having);
         return builder;
     }
 
@@ -362,34 +360,6 @@ public class AbstractDQLBuilder extends AbstractSQLBuilder implements DQLBuilder
     }
 
     /**
-     * 添加where的SQL语句
-     */
-    private void addWhereStatement(Query query, StringBuilder sqlBuilder) {
-        StringBuilder whereBuilder = new StringBuilder();
-        whereBuilder.append(query.whereBuilder.toString());
-        for (SubQuery subQuery : query.subQueryList) {
-            if(subQuery.whereBuilder.length()>0){
-                whereBuilder.append(" and (" + subQuery.whereBuilder.toString() + ")");
-            }
-        }
-        for(AbstractCondition orCondition:query.orList){
-            if(orCondition.query.whereBuilder.length()>0){
-                whereBuilder.append(" or (" + orCondition.query.whereBuilder.toString() + ")");
-            }
-        }
-        if(query.whereBuilder.length()==0){
-            int index = whereBuilder.indexOf("(");
-            if(index>0){
-                whereBuilder.delete(0,index);
-            }
-        }
-        if(whereBuilder.length()>0){
-            whereBuilder.insert(0," where ");
-        }
-        sqlBuilder.append(whereBuilder.toString());
-    }
-
-    /**
      * 添加Array语句参数
      * @param ps prepareStatment对象
      * @param query 当前query对象
@@ -419,16 +389,6 @@ public class AbstractDQLBuilder extends AbstractSQLBuilder implements DQLBuilder
     protected void addMainTableParameters(PreparedStatement ps, Query query, Query mainQuery, StringBuilder sqlBuilder) throws SQLException {
         for (Object parameter : query.parameterList) {
             setParameter(parameter,ps,mainQuery.parameterIndex++,sqlBuilder);
-        }
-        for (SubQuery subQuery : query.subQueryList) {
-            for (Object parameter : subQuery.parameterList) {
-                setParameter(parameter,ps,mainQuery.parameterIndex++,sqlBuilder);
-            }
-        }
-        for(AbstractCondition orCondition:query.orList){
-            for (Object parameter : orCondition.query.parameterList) {
-                setParameter(parameter,ps,mainQuery.parameterIndex++,sqlBuilder);
-            }
         }
         for (Object parameter : query.havingParameterList) {
             setParameter(parameter,ps,mainQuery.parameterIndex++,sqlBuilder);

@@ -1,14 +1,39 @@
 package cn.schoolwow.quickdao.query.subCondition;
 
-import cn.schoolwow.quickdao.domain.Property;
+import cn.schoolwow.quickdao.domain.FieldFragmentEntry;
 import cn.schoolwow.quickdao.domain.SubQuery;
 import cn.schoolwow.quickdao.query.condition.Condition;
 
+import java.io.Serializable;
 import java.lang.reflect.Proxy;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-public class AbstractSubCondition<T,P> implements SubCondition<T,P>{
+public class AbstractSubCondition<T,P> implements SubCondition<T,P>, Serializable {
+    /**
+     * column字段
+     * */
+    public List<String> columnList = new ArrayList<>();
+
+    /**
+     * where语句
+     * */
+    public List<FieldFragmentEntry> whereList = new ArrayList<>();
+
+    /**
+     * groupBy字段
+     * */
+    public List<String> groupByList = new ArrayList<>();
+
+    /**
+     * orderBy字段
+     * */
+    public List<FieldFragmentEntry> orderByList = new ArrayList<>();
+
+    /**
+     * 查询信息
+     * */
     private SubQuery subQuery;
 
     public AbstractSubCondition(SubQuery subQuery) {
@@ -59,25 +84,25 @@ public class AbstractSubCondition<T,P> implements SubCondition<T,P>{
 
     @Override
     public SubCondition<T,P> addNullQuery(String field) {
-        subQuery.whereBuilder.append("(" + getQueryColumnNameByFieldName(field) + " is null) and ");
+        whereList.add(new FieldFragmentEntry(field,"{} is null"));
         return this;
     }
 
     @Override
     public SubCondition<T,P> addNotNullQuery(String field) {
-        subQuery.whereBuilder.append("(" + getQueryColumnNameByFieldName(field) + " is not null) and ");
+        whereList.add(new FieldFragmentEntry(field,"{} is not null"));
         return this;
     }
 
     @Override
     public SubCondition<T,P> addEmptyQuery(String field) {
-        subQuery.whereBuilder.append("(" + getQueryColumnNameByFieldName(field) + " is not null and " + getQueryColumnNameByFieldName(field) + " = '') and ");
+        whereList.add(new FieldFragmentEntry(field,"{} is not null and {} = ''"));
         return this;
     }
 
     @Override
     public SubCondition<T,P> addNotEmptyQuery(String field) {
-        subQuery.whereBuilder.append("(" + getQueryColumnNameByFieldName(field) + " is not null and " + getQueryColumnNameByFieldName(field) + " != '') and ");
+        whereList.add(new FieldFragmentEntry(field,"{} is not null and {} != ''"));
         return this;
     }
 
@@ -105,7 +130,7 @@ public class AbstractSubCondition<T,P> implements SubCondition<T,P>{
 
     @Override
     public SubCondition<T,P> addBetweenQuery(String field, Object start, Object end) {
-        subQuery.whereBuilder.append("(" + getQueryColumnNameByFieldName(field) + " between ? and ? ) and ");
+        whereList.add(new FieldFragmentEntry(field,"{} between ? and ?"));
         subQuery.parameterList.add(start);
         subQuery.parameterList.add(end);
         return this;
@@ -116,7 +141,7 @@ public class AbstractSubCondition<T,P> implements SubCondition<T,P>{
         if (value == null || value.toString().equals("")) {
             return this;
         }
-        subQuery.whereBuilder.append("(" + getQueryColumnNameByFieldName(field) + " like ?) and ");
+        whereList.add(new FieldFragmentEntry(field,"{} like ?"));
         subQuery.parameterList.add(value);
         return this;
     }
@@ -134,7 +159,7 @@ public class AbstractSubCondition<T,P> implements SubCondition<T,P>{
         }else if(value.toString().isEmpty()){
             addEmptyQuery(field);
         }else {
-            subQuery.whereBuilder.append("(" + getQueryColumnNameByFieldName(field) + " " + operator + " ?) and ");
+            whereList.add(new FieldFragmentEntry(field,"{} " + operator + " ?"));
             subQuery.parameterList.add(value);
         }
         return this;
@@ -142,17 +167,14 @@ public class AbstractSubCondition<T,P> implements SubCondition<T,P>{
 
     @Override
     public SubCondition<T,P> addRawQuery(String query, Object... parameterList) {
-        subQuery.whereBuilder.append("(" + query + ") and ");
-        if(null!=parameterList&&parameterList.length>0){
-            subQuery.parameterList.addAll(Arrays.asList(parameterList));
-        }
+        subQuery.condition.addRawQuery(query,parameterList);
         return this;
     }
 
     @Override
     public SubCondition<T,P> addColumn(String... fields) {
         for(String field:fields){
-            subQuery.query.columnBuilder.append(getQueryColumnNameByFieldName(field)+ ",");
+            columnList.add(field);
         }
         return this;
     }
@@ -181,21 +203,21 @@ public class AbstractSubCondition<T,P> implements SubCondition<T,P>{
     @Override
     public SubCondition<T,P> groupBy(String... fields) {
         for(String field:fields){
-            subQuery.query.groupByBuilder.append(getQueryColumnNameByFieldName(field) + ",");
+            groupByList.add(field);
         }
         return this;
     }
 
     @Override
     public SubCondition<T,P> order(String field, String asc) {
-        subQuery.query.orderByBuilder.append(getQueryColumnNameByFieldName(field) + " " + asc + ",");
+        orderByList.add(new FieldFragmentEntry(field,"{} " + asc));
         return this;
     }
 
     @Override
     public SubCondition<T,P> orderBy(String... fields) {
         for(String field:fields){
-            subQuery.query.orderByBuilder.append(getQueryColumnNameByFieldName(field) + " asc,");
+            orderByList.add(new FieldFragmentEntry(field,"{} asc"));
         }
         return this;
     }
@@ -203,7 +225,7 @@ public class AbstractSubCondition<T,P> implements SubCondition<T,P>{
     @Override
     public SubCondition<T,P> orderByDesc(String... fields) {
         for(String field:fields){
-            subQuery.query.orderByBuilder.append(getQueryColumnNameByFieldName(field) + " desc,");
+            orderByList.add(new FieldFragmentEntry(field,"{} desc"));
         }
         return this;
     }
@@ -228,30 +250,17 @@ public class AbstractSubCondition<T,P> implements SubCondition<T,P>{
     /**添加in查询*/
     private void addInQuery(String field, Object[] values, String in) {
         if (null == values || values.length == 0) {
-            subQuery.whereBuilder.append("( 1 = 2 ) and ");
+            whereList.add(new FieldFragmentEntry(field,"1 = 2"));
             return;
         }
-        subQuery.whereBuilder.append("(" + getQueryColumnNameByFieldName(field) + " " + in + " (");
+        StringBuilder builder = new StringBuilder();
+        builder.append(" {} " + in + " (");
         for (int i = 0; i < values.length; i++) {
-            subQuery.whereBuilder.append("?,");
+            builder.append("?,");
         }
-        subQuery.whereBuilder.deleteCharAt(subQuery.whereBuilder.length() - 1);
-        subQuery.whereBuilder.append(") ) and ");
+        builder.deleteCharAt(builder.length() - 1);
+        builder.append(")");
+        whereList.add(new FieldFragmentEntry(new String(field),builder.toString()));
         subQuery.parameterList.addAll(Arrays.asList(values));
-    }
-
-    /**
-     * 根据字段名查询数据库列名
-     * */
-    private String getQueryColumnNameByFieldName(String field) {
-        Property property = subQuery.entity.getPropertyByFieldName(field);
-        if(null==property){
-            return field;
-        }
-        if(subQuery.query.unionList.isEmpty()){
-            return subQuery.tableAliasName+"."+subQuery.query.quickDAOConfig.database.escape(property.column);
-        }else{
-            return subQuery.query.quickDAOConfig.database.escape(property.column);
-        }
     }
 }

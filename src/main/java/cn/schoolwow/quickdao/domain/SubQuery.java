@@ -1,6 +1,7 @@
 package cn.schoolwow.quickdao.domain;
 
 import cn.schoolwow.quickdao.query.condition.AbstractCondition;
+import cn.schoolwow.quickdao.query.subCondition.AbstractSubCondition;
 import cn.schoolwow.quickdao.query.subCondition.SubCondition;
 
 import java.io.Serializable;
@@ -44,7 +45,7 @@ public class SubQuery<T,P> implements Serializable {
     /**
      * 查询条件
      */
-    public StringBuilder whereBuilder = new StringBuilder();
+    public String where = "";
     /**
      * 查询参数
      */
@@ -57,6 +58,10 @@ public class SubQuery<T,P> implements Serializable {
      * join Condition 关联子查询Query
      * */
     public Query subQuery;
+    /**
+     * 关联SubCondition对象
+     * */
+    public AbstractSubCondition subCondition;
     /**
      * 父表
      */
