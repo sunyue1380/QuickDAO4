@@ -12,6 +12,7 @@
   - [复杂查询](zh-cn/select/complex.md)
   - [关联查询](zh-cn/select/joinTable.md)
   - [特殊查询](zh-cn/select/special.md)
+  - [lambda查询](zh-cn/select/lambda.md)
   - [分页排序](zh-cn/select/page.md)
   - [虚拟查询](zh-cn/select/virtual.md)
   - [子查询](zh-cn/select/subquery.md)
