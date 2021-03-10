@@ -10,6 +10,7 @@ import com.alibaba.fastjson.JSONObject;
 
 import java.io.Serializable;
 import java.util.Collection;
+import java.util.function.Function;
 
 /**
  * 查询接口
@@ -230,6 +231,16 @@ public interface Condition<T> extends Serializable {
      * @see Condition
      */
     Condition<T> addColumn(String... fields);
+
+    /**
+     * 添加指定排除字段外的主表字段
+     *
+     * <p><b>此方法仅能调用一次,请一次性指定所有需要排除的字段</b></p>
+     *
+     * @param excludeFields 指定主表排除字段
+     * @see Condition
+     */
+    Condition<T> addColumnExclude(String... excludeFields);
 
     /**
      * 设置返回列类型转换

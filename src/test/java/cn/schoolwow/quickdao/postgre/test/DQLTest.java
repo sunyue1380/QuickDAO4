@@ -172,6 +172,17 @@ public class DQLTest extends PostgreLTest {
             }
         }
         {
+            List<Person> personList = dao.query(Person.class)
+                    .addColumnExclude("createdAt","updatedAt")
+                    .execute()
+                    .getList();
+            Assert.assertEquals(3,personList.size());
+            for(Person person:personList){
+                Assert.assertNull(person.getCreatedAt());
+                Assert.assertNull(person.getUpdatedAt());
+            }
+        }
+        {
             Response response = dao.query(Person.class)
                     .order("lastName","desc")
                     .addColumn("lastName")
