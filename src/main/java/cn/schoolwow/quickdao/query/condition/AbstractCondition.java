@@ -687,10 +687,15 @@ public class AbstractCondition<T> implements Condition<T>, Serializable,Cloneabl
             Property property = entity.getPropertyByFieldName(field);
             if(null==property){
                 builder.append(field);
-            }else if(!query.unionList.isEmpty()){
-                builder.append(query.quickDAOConfig.database.escape(property.column));
-            }else{
-                builder.append(tableAliasName + "." + query.quickDAOConfig.database.escape(property.column));
+            }else {
+                if(!query.unionList.isEmpty()){
+                    builder.append(query.quickDAOConfig.database.escape(property.column));
+                }else{
+                    builder.append(tableAliasName + "." + query.quickDAOConfig.database.escape(property.column));
+                }
+                if(field.contains(" ")){
+                    builder.append(field.substring(field.indexOf(" ")));
+                }
             }
             builder.append(",");
         }
