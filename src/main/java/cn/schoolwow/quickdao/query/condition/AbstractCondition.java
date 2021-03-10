@@ -236,6 +236,24 @@ public class AbstractCondition<T> implements Condition<T>, Serializable,Cloneabl
     }
 
     @Override
+    public Condition<T> addColumnExclude(String... excludeFields) {
+        List<Property> propertyList = query.entity.properties;
+        for(Property property:propertyList){
+            boolean contains = false;
+            for(String excludeField:excludeFields){
+                if(excludeField.equals(property.column)||excludeField.equals(property.name)){
+                    contains = true;
+                    break;
+                }
+            }
+            if(!contains){
+                addColumn(property.column);
+            }
+        }
+        return this;
+    }
+
+    @Override
     public Condition<T> setColumnTypeMapping(ColumnTypeMapping columnTypeMapping){
         query.columnTypeMapping = columnTypeMapping;
         return this;
