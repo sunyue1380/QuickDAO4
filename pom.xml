@@ -6,7 +6,7 @@
 
   <groupId>cn.schoolwow</groupId>
   <artifactId>QuickDAO</artifactId>
-  <version>4.1.4.1</version>
+  <version>4.1.4.2</version>
 
   <name>QuickDAO</name>
 
@@ -62,7 +62,7 @@
     <dependency>
       <groupId>com.alibaba</groupId>
       <artifactId>fastjson</artifactId>
-      <version>1.2.38</version>
+      <version>1.2.75</version>
     </dependency>
     <dependency>
       <groupId>ch.qos.logback</groupId>
