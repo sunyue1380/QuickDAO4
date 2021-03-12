@@ -1,5 +1,6 @@
 package cn.schoolwow.quickdao.query.subCondition;
 
+import cn.schoolwow.quickdao.domain.Entity;
 import cn.schoolwow.quickdao.domain.FieldFragmentEntry;
 import cn.schoolwow.quickdao.domain.SubQuery;
 import cn.schoolwow.quickdao.query.condition.Condition;
@@ -186,6 +187,13 @@ public class AbstractSubCondition<T,P> implements SubCondition<T,P>, Serializabl
 
     @Override
     public <E> SubCondition<E,T> joinTable(Class<E> clazz, String primaryField, String joinTableField, String compositField) {
+        Entity entity = subQuery.query.quickDAOConfig.getEntityByClassName(clazz.getName());
+        if(null==entity){
+            throw new IllegalArgumentException("未扫描指定类信息!类名:"+clazz.getName());
+        }
+        joinTableField = entity.getColumnNameByFieldName(joinTableField);
+        primaryField = subQuery.entity.getColumnNameByFieldName(primaryField);
+
         AbstractSubCondition abstractSubCondition = (AbstractSubCondition) subQuery.condition.joinTable(clazz, primaryField, joinTableField, compositField);
         abstractSubCondition.subQuery.parentSubQuery = this.subQuery;
         abstractSubCondition.subQuery.parentSubCondition = this;

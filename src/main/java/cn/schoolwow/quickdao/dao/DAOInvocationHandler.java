@@ -71,9 +71,7 @@ public class DAOInvocationHandler implements InvocationHandler {
                     DDLDAO ddldao = (DDLDAO) instance;
                     ddldao.refreshDbEntityList();
                 }
-                if(quickDAOConfig.database.equals(Database.SQLite)){
-                    quickDAOConfig.sqliteLock.unlock();
-                }
+
                 if (null != MDC.get("name")) {
                     if (null == MDC.get("count")) {
                         logger.debug("[{}]耗时:{}ms,执行SQL:{}", MDC.get("name"), endTime - startTime, MDC.get("sql"));
@@ -96,6 +94,9 @@ public class DAOInvocationHandler implements InvocationHandler {
             }finally {
                 if(null!=instance.sqlBuilder.connection){
                     instance.sqlBuilder.connection.close();
+                }
+                if(quickDAOConfig.database.equals(Database.SQLite)){
+                    quickDAOConfig.sqliteLock.unlock();
                 }
                 MDC.clear();
             }
