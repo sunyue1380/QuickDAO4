@@ -49,7 +49,8 @@ public class SubQueryTest extends MySQLTest {
                 .addQuery("type","电器")
                 .groupBy("type")
                 .addColumn("type")
-                .addColumn("avg(price) avgPrice");
+                .addColumn("avg(price) avgPrice")
+                .limit(0,100);
         JSONArray array = dao.query(fromCondition)
                 .addQuery("avgPrice",">=",2000)
                 .addColumn("type","avgPrice")

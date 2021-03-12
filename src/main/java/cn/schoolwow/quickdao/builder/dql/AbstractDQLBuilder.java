@@ -263,8 +263,11 @@ public class AbstractDQLBuilder extends AbstractSQLBuilder implements DQLBuilder
 
     @Override
     public PreparedStatement getArray(Query query) throws SQLException {
-        StringBuilder builder = getArraySQL(query);
-        if(!query.unionList.isEmpty()){
+        StringBuilder builder = null;
+        if(query.unionList.isEmpty()){
+            builder = getArraySQL(query);
+        }else{
+            builder = getUnionArraySQL(query);
             for(AbstractCondition abstractCondition:query.unionList){
                 switch(abstractCondition.query.unionType){
                     case Union:{
@@ -274,10 +277,10 @@ public class AbstractDQLBuilder extends AbstractSQLBuilder implements DQLBuilder
                         builder.append(" union all ");
                     }break;
                 }
-                builder.append(getArraySQL(abstractCondition.query));
+                builder.append(getUnionArraySQL(abstractCondition.query));
             }
+            builder.append(" " + query.orderBy + " " + query.limit);
         }
-        builder.append(" " + query.orderBy + " " + query.limit);
         MDC.put("name","获取列表");
         String sql = builder.toString();
         MDC.put("sql",sql);
@@ -304,6 +307,15 @@ public class AbstractDQLBuilder extends AbstractSQLBuilder implements DQLBuilder
 
     @Override
     public StringBuilder getArraySQL(Query query) {
+        StringBuilder builder = getUnionArraySQL(query);
+        builder.append(" " + query.orderBy + " " + query.limit);
+        return builder;
+    }
+
+    /**
+     * 获取Union查询时的SQL语句
+     * */
+    private StringBuilder getUnionArraySQL(Query query){
         StringBuilder builder = new StringBuilder("select " + query.distinct + " ");
         //如果有指定列,则添加指定列
         if(query.column.length()>0){
