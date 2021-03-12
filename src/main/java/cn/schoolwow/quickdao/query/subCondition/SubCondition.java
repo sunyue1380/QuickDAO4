@@ -232,12 +232,12 @@ public interface SubCondition<T,P> extends Serializable {
      *
      * @see {@link SubCondition#joinTable(Class, String, String)}
      */
-    SubCondition<P,?> doneSubCondition();
+    SubCondition doneSubCondition();
 
     /**
      * 返回<b>主表</b>
      *
      * @see {@link cn.schoolwow.quickdao.query.condition.Condition#joinTable(Class, String, String)}
      */
-    Condition<P> done();
+    Condition done();
 }

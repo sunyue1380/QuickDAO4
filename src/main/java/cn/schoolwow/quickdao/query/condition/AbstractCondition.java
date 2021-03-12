@@ -423,16 +423,11 @@ public class AbstractCondition<T> implements Condition<T>, Serializable,Cloneabl
     public <E> SubCondition<E,T> joinTable(Class<E> clazz, String primaryField, String joinTableField, String compositField) {
         SubQuery<E,T> subQuery = new SubQuery<E,T>();
         subQuery.entity = query.quickDAOConfig.getEntityByClassName(clazz.getName());
+        if(null==subQuery.entity){
+            throw new IllegalArgumentException("未扫描指定类信息!类名:"+clazz.getName());
+        }
         subQuery.primaryField = query.entity.getColumnNameByFieldName(primaryField);
-        for(Property property:subQuery.entity.properties){
-            if(property.name.equals(joinTableField)){
-                subQuery.joinTableField = property.column;
-                break;
-            }
-        }
-        if(null==subQuery.joinTableField){
-            subQuery.joinTableField = joinTableField;
-        }
+        subQuery.joinTableField = subQuery.entity.getColumnNameByFieldName(joinTableField);
         subQuery.compositField = compositField;
         subQuery.query = query;
         subQuery.condition = this;
