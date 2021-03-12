@@ -53,7 +53,9 @@ public class AbstractCompositQuery implements CompositQuery{
         entity.properties = new ArrayList<>();
         AbstractCondition condition1 = (AbstractCondition) query(entity);
         condition1.query.fromQuery = fromQuery;
-        entity.tableName = "( " + condition1.query.dqlBuilder.getArraySQL(fromQuery).toString() +" )";
+        String tableName = condition1.query.dqlBuilder.getArraySQL(fromQuery).toString();
+        entity.tableName = "( " + tableName  + ")";
+
         entity.escapeTableName = entity.tableName;
         return condition1;
     }

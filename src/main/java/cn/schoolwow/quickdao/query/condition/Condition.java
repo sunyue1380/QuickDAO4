@@ -10,7 +10,6 @@ import com.alibaba.fastjson.JSONObject;
 
 import java.io.Serializable;
 import java.util.Collection;
-import java.util.function.Function;
 
 /**
  * 查询接口

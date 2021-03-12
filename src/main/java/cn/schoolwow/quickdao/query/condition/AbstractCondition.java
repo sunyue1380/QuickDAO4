@@ -11,7 +11,10 @@ import com.alibaba.fastjson.JSONObject;
 
 import java.io.*;
 import java.lang.reflect.Proxy;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.List;
 
 public class AbstractCondition<T> implements Condition<T>, Serializable,Cloneable {
     /**
@@ -370,7 +373,7 @@ public class AbstractCondition<T> implements Condition<T>, Serializable,Cloneabl
             subQuery.tableAliasName("t" + (query.joinTableIndex++));
         }
         subQuery.execute();
-        havingList.add(new FieldFragmentEntry(field,"{}" + operator + " (" + query.dqlBuilder.getArraySQL(abstractCondition.query) + " " + abstractCondition.query.limit + ")"));
+        havingList.add(new FieldFragmentEntry(field,"{}" + operator + " (" + query.dqlBuilder.getArraySQL(abstractCondition.query) + ")"));
         this.query.parameterList.addAll(abstractCondition.query.parameterList);
         return this;
     }
