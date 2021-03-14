@@ -137,7 +137,7 @@ public abstract class AbstractDDLBuilder extends AbstractSQLBuilder implements D
         builder.deleteCharAt(builder.length()-1);
         builder.append(")");
         if(null!=indexField.using&&!indexField.using.isEmpty()){
-            builder.append(" "+indexField.using);
+            builder.append(" using "+indexField.using);
         }
         if(null!=indexField.comment&&!indexField.comment.isEmpty()){
             builder.append(" "+quickDAOConfig.database.comment(indexField.comment));
@@ -296,7 +296,7 @@ public abstract class AbstractDDLBuilder extends AbstractSQLBuilder implements D
             builder.deleteCharAt(builder.length()-1);
             builder.append(")");
             if(null!=indexField.using&&!indexField.using.isEmpty()){
-                builder.append(" "+indexField.using);
+                builder.append(" using "+indexField.using);
             }
             if(null!=indexField.comment&&!indexField.comment.isEmpty()){
                 builder.append(" "+quickDAOConfig.database.comment(indexField.comment));
