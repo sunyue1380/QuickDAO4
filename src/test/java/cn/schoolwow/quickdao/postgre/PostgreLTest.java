@@ -1,37 +1,22 @@
 package cn.schoolwow.quickdao.postgre;
 
+import cn.schoolwow.quickdao.DAOUtil;
 import cn.schoolwow.quickdao.DatabaseTest;
-import cn.schoolwow.quickdao.QuickDAO;
+import cn.schoolwow.quickdao.postgre.entity.Order;
+import cn.schoolwow.quickdao.postgre.entity.Person;
 import cn.schoolwow.quickdao.postgre.entity.Product;
 import cn.schoolwow.quickdao.transaction.Transaction;
-import com.zaxxer.hikari.HikariDataSource;
+import org.junit.Assert;
 
-import java.time.LocalDateTime;
 import java.util.Date;
+import java.util.UUID;
 
 public class PostgreLTest extends DatabaseTest {
     static{
-        dataSource = new HikariDataSource();
-        dataSource.setDriverClassName("org.postgresql.Driver");
-        dataSource.setJdbcUrl("jdbc:postgresql://127.0.0.1:5432/quickdao");
-        dataSource.setUsername("postgres");
-        dataSource.setPassword("123456");
-        
-        dao = QuickDAO.newInstance().dataSource(dataSource)
-                .packageName("cn.schoolwow.quickdao.postgre.entity")
-                .charset("utf8")
-                .engine("InnoDB")
-                .columnTypeMapping((property) -> {
-                    if(property.column.equalsIgnoreCase("created_at")||
-                            property.column.equalsIgnoreCase("updated_at")){
-                        return LocalDateTime.class;
-                    }
-                    return null;
-                })
-                .build();
+        dataSource = DAOUtil.getPostgreDataSource();
+        dao = DAOUtil.getPostgreDAO(dataSource);
     }
 
-    /**初始化数据*/
     protected void initializeProduct(){
         dao.rebuild(Product.class);
         Transaction transaction = dao.startTransaction();
@@ -49,5 +34,50 @@ public class PostgreLTest extends DatabaseTest {
         }
         transaction.commit();
         transaction.endTransaction();
+    }
+
+    protected void initializePersonAndOrder(){
+        dao.rebuild(Person.class);
+        dao.rebuild(Order.class);
+        Person[] persons = new Person[3];
+        //初始化数据
+        {
+            Person person = new Person();
+            person.setPassword("123456");
+            person.setFirstName("Bill");
+            person.setLastName("Gates");
+            person.setAddress("Xuanwumen 10");
+            person.setCity("Beijing");
+            persons[0] = person;
+        }
+        {
+            Person person = new Person();
+            person.setPassword("123456");
+            person.setFirstName("Thomas");
+            person.setLastName("Carter");
+            person.setAddress("Changan Street");
+            person.setCity("Beijing");
+            persons[1] = person;
+        }
+        {
+            Person person = new Person();
+            person.setPassword("123456");
+            person.setLastName("Wilson");
+            person.setAddress("Champs-Elysees");
+            persons[2] = person;
+        }
+        {
+            int effect = dao.insert(persons);
+            Assert.assertEquals(3, effect);
+        }
+        {
+            Order order = new Order();
+            order.setId(UUID.randomUUID().toString());
+            order.setPersonId(1);
+            order.setLastName("Gates");
+            order.setOrderNo(1);
+            int effect = dao.insert(order);
+            Assert.assertEquals(1, effect);
+        }
     }
 }

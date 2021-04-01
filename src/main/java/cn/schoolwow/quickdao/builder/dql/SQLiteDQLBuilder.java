@@ -16,7 +16,7 @@ public class SQLiteDQLBuilder extends AbstractDQLBuilder {
     @Override
     public PreparedStatement update(Query query) throws SQLException {
         StringBuilder builder = new StringBuilder("update " + query.entity.escapeTableName + " ");
-        builder.append(query.setBuilder.toString() + " " + query.where);
+        builder.append(query.setBuilder.toString() + " " + query.where.replace(query.tableAliasName + ".",""));
         MDC.put("name","批量更新");
         String sql = builder.toString().replace(query.tableAliasName+".","");
         MDC.put("sql",sql);

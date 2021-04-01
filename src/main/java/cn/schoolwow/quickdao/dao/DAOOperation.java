@@ -79,11 +79,6 @@ public interface DAOOperation {
     List<Property> getPropertyList(String tableName);
 
     /**
-     * 获取字段类型映射信息
-     */
-    Map<String, String> getFieldMapping();
-
-    /**
      * 获取配置信息
      */
     QuickDAOConfig getQuickDAOConfig();
@@ -102,4 +97,30 @@ public interface DAOOperation {
      * @param tableNames 指定需要生成实体类的对应的表名
      */
     void generateEntityFile(String sourcePath, String[] tableNames);
+
+    /**
+     * 从指定数据源迁移
+     * @param source 迁移数据源
+     * */
+    void migrateFrom(DAO source);
+
+    /**
+     * 从指定数据源迁移指定表
+     * @param source 迁移数据源
+     * @param entityClassList 要迁移的实体累
+     * */
+    void migrateFrom(DAO source, Class... entityClassList);
+
+    /**
+     * 迁移到指定数据源
+     * @param target 目标数据源
+     * */
+    void migrateTo(DAO target);
+
+    /**
+     * 迁移指定表到指定数据源
+     * @param target 目标数据源
+     * @param entityClassList 要迁移的表的表名
+     * */
+    void migrateTo(DAO target, Class... entityClassList);
 }

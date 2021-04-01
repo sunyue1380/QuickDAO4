@@ -10,6 +10,7 @@ import cn.schoolwow.quickdao.exception.SQLRuntimeException;
 
 import java.sql.SQLException;
 import java.util.Collection;
+import java.util.Map;
 import java.util.function.Predicate;
 
 public class AbstractDDLDAO extends AbstractSQLDAO implements DDLDAO {
@@ -35,12 +36,12 @@ public class AbstractDDLDAO extends AbstractSQLDAO implements DDLDAO {
     }
 
     @Override
-    public void drop(Class clazz) {
-        drop(this.quickDAOConfig.getEntityByClassName(clazz.getName()).tableName);
+    public void dropTable(Class clazz) {
+        dropTable(this.quickDAOConfig.getEntityByClassName(clazz.getName()).tableName);
     }
 
     @Override
-    public void drop(String tableName) {
+    public void dropTable(String tableName) {
         try {
             ddlBuilder.dropTable(tableName);
         } catch (SQLException e) {
@@ -83,10 +84,11 @@ public class AbstractDDLDAO extends AbstractSQLDAO implements DDLDAO {
             entity.tableName = tableName;
             property.entity = entity;
             if(null!=property.check){
-                property.check = property.check.replace("#{"+property.name+"}",quickDAOConfig.database.escape(property.column));
                 if(!property.check.isEmpty()&&!property.check.contains("(")){
-                    property.check = "("+property.check+")";
+                    property.check = "(" + property.check + ")";
                 }
+                property.check = property.check.replace("#{" + property.name + "}", property.column);
+                property.escapeCheck = property.check.replace(property.column, quickDAOConfig.database.escape(property.column));
             }
             ddlBuilder.createProperty(property);
         } catch (SQLException e) {
@@ -140,6 +142,20 @@ public class AbstractDDLDAO extends AbstractSQLDAO implements DDLDAO {
     }
 
     @Override
+    public void enableForeignConstraintCheck(boolean enable) {
+        try {
+            ddlBuilder.enableForeignConstraintCheck(enable);
+        } catch (SQLException e) {
+            throw new SQLRuntimeException(e);
+        }
+    }
+
+    @Override
+    public Map<String, String> getTypeFieldMapping() {
+        return ddlBuilder.getTypeFieldMapping();
+    }
+
+    @Override
     public void syncEntityList() {
         if(quickDAOConfig.packageNameMap.isEmpty()&&quickDAOConfig.entityClassMap.isEmpty()){
             throw new IllegalArgumentException("请先指定要扫描的实体类包或者实体类!");
@@ -151,7 +167,7 @@ public class AbstractDDLDAO extends AbstractSQLDAO implements DDLDAO {
             for(Entity dbEntity:quickDAOConfig.dbEntityList){
                 Entity entity = entityList.stream().filter(entity1 -> entity1.tableName.equals(dbEntity.tableName)).findFirst().orElse(null);
                 if(null==entity){
-                    drop(dbEntity.tableName);
+                    dropTable(dbEntity.tableName);
                     continue;
                 }
                 for(Property dbProperty:dbEntity.properties){

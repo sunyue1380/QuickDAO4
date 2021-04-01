@@ -90,6 +90,11 @@ public interface DDLBuilder {
     void createForeignKey(Property property) throws SQLException;
 
     /**
+     * 是否开启外键约束检查
+     */
+    void enableForeignConstraintCheck(boolean enable) throws SQLException;
+
+    /**
      * 自动建表和新增字段
      */
     void automaticCreateTableAndColumn() throws SQLException;

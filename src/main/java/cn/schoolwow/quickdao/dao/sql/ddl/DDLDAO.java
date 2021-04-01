@@ -4,6 +4,8 @@ import cn.schoolwow.quickdao.domain.Entity;
 import cn.schoolwow.quickdao.domain.IndexField;
 import cn.schoolwow.quickdao.domain.Property;
 
+import java.util.Map;
+
 /**
  * 负责数据表和字段修改
  */
@@ -21,12 +23,12 @@ public interface DDLDAO {
     /**
      * 删表
      */
-    void drop(Class clazz);
+    void dropTable(Class clazz);
 
     /**
      * 删表
      */
-    void drop(String tableName);
+    void dropTable(String tableName);
 
     /**
      * 重建表
@@ -73,6 +75,16 @@ public interface DDLDAO {
      * @param indexName 索引名称
      */
     void dropIndex(String tableName, String indexName);
+
+    /**
+     * 是否开启外键约束检查
+     */
+    void enableForeignConstraintCheck(boolean enable);
+
+    /**
+     * 获取Java类型到数据库字段类型映射表
+     */
+    Map<String,String> getTypeFieldMapping();
 
     /**
      * 双向同步扫描实体类信息和数据库表信息

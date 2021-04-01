@@ -95,10 +95,6 @@ public class QuickDAOConfig {
      * */
     public List<Entity> visualTableList;
     /**
-     * 字段类型映射
-     * */
-    public Map<String,String> fieldMapping;
-    /**
      * 数据库信息
      * */
     public Database database;
