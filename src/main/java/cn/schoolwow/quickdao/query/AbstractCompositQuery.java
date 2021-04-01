@@ -28,12 +28,12 @@ public class AbstractCompositQuery implements CompositQuery{
     @Override
     public Condition query(String tableName) {
         for(Entity entity:quickDAOConfig.dbEntityList){
-            if(entity.tableName.equals(tableName)){
+            if(entity.tableName.equalsIgnoreCase(tableName)){
                 return query(entity);
             }
         }
         for(Entity entity:quickDAOConfig.visualTableList){
-            if(entity.tableName.equals(tableName)){
+            if(entity.tableName.equalsIgnoreCase(tableName)){
                 return query(entity);
             }
         }

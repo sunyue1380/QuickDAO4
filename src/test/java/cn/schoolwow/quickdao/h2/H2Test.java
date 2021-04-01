@@ -1,33 +1,20 @@
 package cn.schoolwow.quickdao.h2;
 
+import cn.schoolwow.quickdao.DAOUtil;
 import cn.schoolwow.quickdao.DatabaseTest;
-import cn.schoolwow.quickdao.QuickDAO;
+import cn.schoolwow.quickdao.h2.entity.Order;
+import cn.schoolwow.quickdao.h2.entity.Person;
 import cn.schoolwow.quickdao.h2.entity.Product;
 import cn.schoolwow.quickdao.transaction.Transaction;
-import com.zaxxer.hikari.HikariDataSource;
+import org.junit.Assert;
 
-import java.io.File;
-import java.time.LocalDateTime;
 import java.util.Date;
+import java.util.UUID;
 
 public class H2Test extends DatabaseTest {
     static{
-        dataSource = new HikariDataSource();
-        dataSource.setDriverClassName("org.h2.Driver");
-        dataSource.setJdbcUrl("jdbc:h2:" + new File("quickdao_h2.db").getAbsolutePath() + ";mode=MYSQL");
-
-        dao = QuickDAO.newInstance().dataSource(dataSource)
-                .packageName("cn.schoolwow.quickdao.h2.entity")
-                .charset("utf8")
-                .engine("InnoDB")
-                .columnTypeMapping((property) -> {
-                    if(property.column.equalsIgnoreCase("created_at")||
-                            property.column.equalsIgnoreCase("updated_at")){
-                        return LocalDateTime.class;
-                    }
-                    return null;
-                })
-                .build();
+        dataSource = DAOUtil.getH2DataSource();
+        dao = DAOUtil.getH2DAO(dataSource);
     }
 
     /**初始化数据*/
@@ -48,5 +35,50 @@ public class H2Test extends DatabaseTest {
         }
         transaction.commit();
         transaction.endTransaction();
+    }
+
+    public void initializePersonAndOrder(){
+        dao.rebuild(Person.class);
+        dao.rebuild(Order.class);
+        Person[] persons = new Person[3];
+        //初始化数据
+        {
+            Person person = new Person();
+            person.setPassword("123456");
+            person.setFirstName("Bill");
+            person.setLastName("Gates");
+            person.setAddress("Xuanwumen 10");
+            person.setCity("Beijing");
+            persons[0] = person;
+        }
+        {
+            Person person = new Person();
+            person.setPassword("123456");
+            person.setFirstName("Thomas");
+            person.setLastName("Carter");
+            person.setAddress("Changan Street");
+            person.setCity("Beijing");
+            persons[1] = person;
+        }
+        {
+            Person person = new Person();
+            person.setPassword("123456");
+            person.setLastName("Wilson");
+            person.setAddress("Champs-Elysees");
+            persons[2] = person;
+        }
+        {
+            int effect = dao.insert(persons);
+            Assert.assertEquals(3, effect);
+        }
+        {
+            Order order = new Order();
+            order.setId(UUID.randomUUID().toString());
+            order.setPersonId(1);
+            order.setLastName("Gates");
+            order.setOrderNo(1);
+            int effect = dao.insert(order);
+            Assert.assertEquals(1, effect);
+        }
     }
 }

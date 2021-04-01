@@ -49,8 +49,8 @@ public abstract class AbstractDDLBuilder extends AbstractSQLBuilder implements D
         if (null!=property.defaultValue&&!property.defaultValue.isEmpty()) {
             createPropertyBuilder.append(" default " + property.defaultValue);
         }
-        if (null!=property.check&&!property.check.isEmpty()) {
-            createPropertyBuilder.append(" check " + property.check);
+        if (null!=property.escapeCheck&&!property.escapeCheck.isEmpty()) {
+            createPropertyBuilder.append(" check " + property.escapeCheck);
         }
         if (null != property.comment) {
             createPropertyBuilder.append(" "+quickDAOConfig.database.comment(property.comment));
@@ -273,8 +273,8 @@ public abstract class AbstractDDLBuilder extends AbstractSQLBuilder implements D
                 if (null != property.comment) {
                     builder.append(" "+quickDAOConfig.database.comment(property.comment));
                 }
-                if (null!=property.check&&!property.check.isEmpty()) {
-                    builder.append(" check " + property.check);
+                if (null!=property.escapeCheck&&!property.escapeCheck.isEmpty()) {
+                    builder.append(" check " + property.escapeCheck);
                 }
             }
             builder.append(",");

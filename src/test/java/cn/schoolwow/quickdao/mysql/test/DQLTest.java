@@ -13,12 +13,11 @@ import org.junit.Test;
 
 import java.util.Date;
 import java.util.List;
-import java.util.UUID;
 
 public class DQLTest extends MySQLTest {
 
     public DQLTest(){
-        initialize();
+        initializePersonAndOrder();
     }
     
     @Test
@@ -215,48 +214,5 @@ public class DQLTest extends MySQLTest {
         }
     }
 
-    public void initialize(){
-        dao.rebuild(Person.class);
-        dao.rebuild(Order.class);
-        Person[] persons = new Person[3];
-        //初始化数据
-        {
-            Person person = new Person();
-            person.setPassword("123456");
-            person.setFirstName("Bill");
-            person.setLastName("Gates");
-            person.setAddress("Xuanwumen 10");
-            person.setCity("Beijing");
-            persons[0] = person;
-        }
-        {
-            Person person = new Person();
-            person.setPassword("123456");
-            person.setFirstName("Thomas");
-            person.setLastName("Carter");
-            person.setAddress("Changan Street");
-            person.setCity("Beijing");
-            persons[1] = person;
-        }
-        {
-            Person person = new Person();
-            person.setPassword("123456");
-            person.setLastName("Wilson");
-            person.setAddress("Champs-Elysees");
-            persons[2] = person;
-        }
-        {
-            int effect = dao.insert(persons);
-            Assert.assertEquals(3, effect);
-        }
-        {
-            Order order = new Order();
-            order.setId(UUID.randomUUID().toString());
-            order.setPersonId(1);
-            order.setLastName("Gates");
-            order.setOrderNo(1);
-            int effect = dao.insert(order);
-            Assert.assertEquals(1, effect);
-        }
-    }
+
 }

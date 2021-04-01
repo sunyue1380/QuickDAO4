@@ -84,6 +84,10 @@ public class SQLServerDDLBuilder extends AbstractDDLBuilder {
     }
 
     @Override
+    public void enableForeignConstraintCheck(boolean enable) throws SQLException {
+    }
+
+    @Override
     public Map<String, String> getTypeFieldMapping() {
         Map<String,String> fieldTypeMapping = new HashMap<>();
         fieldTypeMapping.put("byte","TINYINT");

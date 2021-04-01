@@ -63,10 +63,11 @@ public class DefaultTablePropertyDefiner implements TablePropertyDefiner{
     @Override
     public TablePropertyDefiner check(String check) {
         if(null!=check){
-            property.check = check.replace("#{"+property.name+"}",property.column);
+            property.check = check;
             if(!property.check.isEmpty()&&!property.check.contains("(")){
-                property.check = "("+property.check+")";
+                property.check = "(" + property.check + ")";
             }
+            property.check = property.check.replace("#{" + property.name + "}", property.column);
         }
         return this;
     }
