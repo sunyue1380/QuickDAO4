@@ -108,9 +108,12 @@ public class DefaultEntityHandler implements EntityHandler{
                 Constraint constraint = field.getDeclaredAnnotation(Constraint.class);
                 if(null!=constraint){
                     property.notNull = constraint.notNull();
-                    property.check = constraint.check().replace("#{"+property.name+"}",quickDAOConfig.database.escape(property.column));
-                    if(!property.check.isEmpty()&&!property.check.contains("(")){
-                        property.check = "("+property.check+")";
+                    if(null!=property.check){
+                        if(!property.check.isEmpty()&&!property.check.contains("(")){
+                            property.check = "(" + property.check + ")";
+                        }
+                        property.check = property.check.replace("#{" + property.name + "}", property.column);
+                        property.escapeCheck = property.check.replace(property.column, quickDAOConfig.database.escape(property.column));
                     }
                     property.defaultValue = constraint.defaultValue();
                 }

@@ -71,8 +71,8 @@ public class MySQLDDLBuilder extends AbstractDDLBuilder {
                 if (null != property.comment) {
                     builder.append(" "+quickDAOConfig.database.comment(property.comment));
                 }
-                if (null!=property.check&&!property.check.isEmpty()) {
-                    builder.append(" check " + property.check);
+                if (null!=property.escapeCheck&&!property.escapeCheck.isEmpty()) {
+                    builder.append(" check " + property.escapeCheck);
                 }
             }
             builder.append(",");
@@ -155,6 +155,14 @@ public class MySQLDDLBuilder extends AbstractDDLBuilder {
         String dropIndexSQL = "drop index "+quickDAOConfig.database.escape(indexName)+" on "+quickDAOConfig.database.escape(tableName);
         MDC.put("name","删除索引");
         MDC.put("sql",dropIndexSQL);
+        connection.prepareStatement(MDC.get("sql")).executeUpdate();
+    }
+
+    @Override
+    public void enableForeignConstraintCheck(boolean enable) throws SQLException {
+        String foreignConstraintCheckSQL = "set foreign_key_checks = " + (enable?1:0);
+        MDC.put("name",enable?"启用外键约束检查":"禁用外键约束检查");
+        MDC.put("sql",foreignConstraintCheckSQL);
         connection.prepareStatement(MDC.get("sql")).executeUpdate();
     }
 

@@ -68,8 +68,8 @@ public class PostgreDDLBuilder extends AbstractDDLBuilder {
                 if (null != property.comment) {
                     builder.append(" "+quickDAOConfig.database.comment(property.comment));
                 }
-                if (null!=property.check&&!property.check.isEmpty()) {
-                    builder.append(" check " + property.check);
+                if (null!=property.escapeCheck&&!property.escapeCheck.isEmpty()) {
+                    builder.append(" check " + property.escapeCheck);
                 }
             }
             builder.append(",");
@@ -118,6 +118,10 @@ public class PostgreDDLBuilder extends AbstractDDLBuilder {
         }
         resultSet.close();
         return result;
+    }
+
+    @Override
+    public void enableForeignConstraintCheck(boolean enable) throws SQLException {
     }
 
     @Override

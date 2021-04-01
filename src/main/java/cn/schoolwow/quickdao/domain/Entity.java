@@ -1,15 +1,16 @@
 package cn.schoolwow.quickdao.domain;
 
+import java.io.*;
 import java.util.*;
 
 /**
  * 实体类信息
  */
-public class Entity {
+public class Entity implements Serializable, Cloneable{
     /**
      * 实体类对象
      */
-    public Class clazz;
+    public transient Class clazz;
     /**
      * 原始表名
      */
@@ -109,5 +110,55 @@ public class Entity {
     @Override
     public int hashCode() {
         return Objects.hash(tableName);
+    }
+
+    /**复制拷贝transient字段*/
+    public void copyTransientField(Entity target){
+        this.clazz = target.clazz;
+        if(null!=id){
+            this.id.copyTransientField(target.id);
+        }
+        for(int i=0;i<indexFieldList.size();i++){
+            this.indexFieldList.get(i).copyTransientField(target.indexFieldList.get(i));
+        }
+        if(null!=this.properties){
+            for(int i=0;i<properties.size();i++){
+                this.properties.get(i).copyTransientField(target.properties.get(i));
+            }
+        }
+        for(int i=0;i<foreignKeyProperties.size();i++){
+            this.foreignKeyProperties.get(i).copyTransientField(target.foreignKeyProperties.get(i));
+        }
+        for(int i=0;i<uniqueProperties.size();i++){
+            this.uniqueProperties.get(i).copyTransientField(target.uniqueProperties.get(i));
+        }
+    }
+
+    @Override
+    public Entity clone(){
+        ByteArrayInputStream bais = null;
+        try (ByteArrayOutputStream baos = new ByteArrayOutputStream()){
+            ObjectOutputStream oos = new ObjectOutputStream(baos);
+            oos.writeObject(this);
+            oos.close();
+
+            bais = new ByteArrayInputStream(baos.toByteArray());
+            ObjectInputStream ois = new ObjectInputStream(bais);
+            Entity entity = (Entity) ois.readObject();
+            entity.copyTransientField(this);
+            bais.close();
+            return entity;
+        } catch (IOException | ClassNotFoundException e) {
+            e.printStackTrace();
+        } finally {
+            if(null!=bais){
+                try {
+                    bais.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+        return null;
     }
 }
