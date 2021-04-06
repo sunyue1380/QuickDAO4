@@ -188,10 +188,29 @@ public class AbstractDAOOperation implements DAOOperation{
                 cloneEntity.escapeTableName = database.escape(cloneEntity.tableName);
                 for(Property property : cloneEntity.properties){
                     if(typeFieldMapping.containsKey(property.className)){
-                        property.columnType = typeFieldMapping.get(property.className);
+                        //处理类型转换
+                        {
+                            String columnType = property.columnType;
+                            String length = null;
+                            if(columnType.contains("(")){
+                                length = columnType.substring(columnType.indexOf("(") + 1,columnType.lastIndexOf(")"));
+                            }
+                            columnType = typeFieldMapping.get(property.className);
+                            //如果数据类型存在括号
+                            if(null!=length){
+                                if(columnType.contains("(")){
+                                    columnType = columnType.substring(0,columnType.indexOf("(")) + "("+length+")";
+                                }else{
+                                    columnType = columnType + "("+length+")";
+                                }
+                            }
+                            property.columnType= columnType;
+                        }
                         if(null!=property.check){
                             property.escapeCheck = property.check.replace(property.column, database.escape(property.column));
                         }
+                        property.createdAt = false;
+                        property.updateAt = false;
                     }
                 }
                 targetEntityMap.put(cloneEntity.clazz.getName(),cloneEntity);
