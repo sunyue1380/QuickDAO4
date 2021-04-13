@@ -3,9 +3,9 @@ package cn.schoolwow.quickdao.builder;
 import cn.schoolwow.quickdao.domain.Entity;
 import cn.schoolwow.quickdao.domain.Property;
 import cn.schoolwow.quickdao.domain.QuickDAOConfig;
+import cn.schoolwow.quickdao.domain.ThreadLocalMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.slf4j.MDC;
 
 import java.io.InputStream;
 import java.io.Reader;
@@ -52,14 +52,14 @@ public class AbstractSQLBuilder implements SQLBuilder{
             quickDAOConfig.sqlCache.put(key, builder.toString());
         }
         String sql = quickDAOConfig.sqlCache.get(key);
-        MDC.put("name","根据id查询");
-        MDC.put("sql",sql);
+        ThreadLocalMap.put("name","根据id查询");
+        ThreadLocalMap.put("sql",sql);
         PreparedStatement ps = connection.prepareStatement(sql);
         Field field = instance.getClass().getDeclaredField(entity.id.name);
         field.setAccessible(true);
         Object value = field.get(instance);
         ps.setObject(1,value);
-        MDC.put("sql",sql.replace("?",value==null?"":value.toString()));
+        ThreadLocalMap.put("sql",sql.replace("?",value==null?"":value.toString()));
         return ps;
     }
 
@@ -77,8 +77,8 @@ public class AbstractSQLBuilder implements SQLBuilder{
             quickDAOConfig.sqlCache.put(key, builder.toString());
         }
         String sql = quickDAOConfig.sqlCache.get(key);
-        MDC.put("name","根据唯一性约束查询");
-        MDC.put("sql",sql);
+        ThreadLocalMap.put("name","根据唯一性约束查询");
+        ThreadLocalMap.put("sql",sql);
         StringBuilder builder = new StringBuilder(sql.replace("?", PLACEHOLDER));
         PreparedStatement ps = connection.prepareStatement(sql);
         int parameterIndex = 1;
@@ -86,7 +86,7 @@ public class AbstractSQLBuilder implements SQLBuilder{
             setParameter(instance,property,ps,parameterIndex, builder);
             parameterIndex++;
         }
-        MDC.put("sql",builder.toString());
+        ThreadLocalMap.put("sql",builder.toString());
         return ps;
     }
 

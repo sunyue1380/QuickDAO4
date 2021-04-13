@@ -3,10 +3,10 @@ package cn.schoolwow.quickdao.dao.sql;
 import cn.schoolwow.quickdao.builder.AbstractSQLBuilder;
 import cn.schoolwow.quickdao.domain.Entity;
 import cn.schoolwow.quickdao.domain.QuickDAOConfig;
+import cn.schoolwow.quickdao.domain.ThreadLocalMap;
 import cn.schoolwow.quickdao.exception.SQLRuntimeException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.slf4j.MDC;
 
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -42,11 +42,11 @@ public class AbstractSQLDAO implements SQLDAO {
             }else{
                 throw new IllegalArgumentException("该实例无唯一性约束又无id值,无法判断!类名:"+instance.getClass().getName());
             }
-            MDC.put("count","0");
+            ThreadLocalMap.put("count","0");
             ResultSet resultSet = ps.executeQuery();
             if (resultSet.next()) {
                 result = resultSet.getLong(1)>0;
-                MDC.put("count","1");
+                ThreadLocalMap.put("count","1");
             }
             resultSet.close();
             ps.close();

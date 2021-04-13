@@ -2,11 +2,7 @@ package cn.schoolwow.quickdao.builder.ddl;
 
 import cn.schoolwow.quickdao.annotation.IdStrategy;
 import cn.schoolwow.quickdao.annotation.IndexType;
-import cn.schoolwow.quickdao.domain.Entity;
-import cn.schoolwow.quickdao.domain.IndexField;
-import cn.schoolwow.quickdao.domain.Property;
-import cn.schoolwow.quickdao.domain.QuickDAOConfig;
-import org.slf4j.MDC;
+import cn.schoolwow.quickdao.domain.*;
 
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -130,17 +126,17 @@ public class MySQLDDLBuilder extends AbstractDDLBuilder {
         if(null!=charset&&!charset.isEmpty()){
             builder.append(" DEFAULT CHARSET="+charset);
         }
-        MDC.put("name","生成新表");
-        MDC.put("sql",builder.toString());
-        connection.prepareStatement(MDC.get("sql")).executeUpdate();
+        ThreadLocalMap.put("name","生成新表");
+        ThreadLocalMap.put("sql",builder.toString());
+        connection.prepareStatement(ThreadLocalMap.get("sql")).executeUpdate();
     }
 
     @Override
     public boolean hasIndexExists(String tableName, String indexName) throws SQLException {
         String sql = "show index from "+quickDAOConfig.database.escape(tableName)+" where key_name = '"+indexName+"'";
 
-        MDC.put("name","查看索引是否存在");
-        MDC.put("sql",sql);
+        ThreadLocalMap.put("name","查看索引是否存在");
+        ThreadLocalMap.put("sql",sql);
         ResultSet resultSet = connection.prepareStatement(sql).executeQuery();
         boolean result = false;
         if (resultSet.next()) {
@@ -153,17 +149,17 @@ public class MySQLDDLBuilder extends AbstractDDLBuilder {
     @Override
     public void dropIndex(String tableName, String indexName) throws SQLException{
         String dropIndexSQL = "drop index "+quickDAOConfig.database.escape(indexName)+" on "+quickDAOConfig.database.escape(tableName);
-        MDC.put("name","删除索引");
-        MDC.put("sql",dropIndexSQL);
-        connection.prepareStatement(MDC.get("sql")).executeUpdate();
+        ThreadLocalMap.put("name","删除索引");
+        ThreadLocalMap.put("sql",dropIndexSQL);
+        connection.prepareStatement(ThreadLocalMap.get("sql")).executeUpdate();
     }
 
     @Override
     public void enableForeignConstraintCheck(boolean enable) throws SQLException {
         String foreignConstraintCheckSQL = "set foreign_key_checks = " + (enable?1:0);
-        MDC.put("name",enable?"启用外键约束检查":"禁用外键约束检查");
-        MDC.put("sql",foreignConstraintCheckSQL);
-        connection.prepareStatement(MDC.get("sql")).executeUpdate();
+        ThreadLocalMap.put("name",enable?"启用外键约束检查":"禁用外键约束检查");
+        ThreadLocalMap.put("sql",foreignConstraintCheckSQL);
+        connection.prepareStatement(ThreadLocalMap.get("sql")).executeUpdate();
     }
 
     @Override

@@ -1,15 +1,11 @@
 package cn.schoolwow.quickdao.query.response;
 
-import cn.schoolwow.quickdao.domain.PageVo;
-import cn.schoolwow.quickdao.domain.Property;
-import cn.schoolwow.quickdao.domain.Query;
-import cn.schoolwow.quickdao.domain.SubQuery;
+import cn.schoolwow.quickdao.domain.*;
 import cn.schoolwow.quickdao.exception.SQLRuntimeException;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.slf4j.MDC;
 
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -79,7 +75,7 @@ public class AbstractResponse<T> implements Response<T>{
         } catch (SQLException e) {
             throw new SQLRuntimeException(e);
         }
-        MDC.put("count",count+"");
+        ThreadLocalMap.put("count",count+"");
         return count;
     }
 
@@ -93,7 +89,7 @@ public class AbstractResponse<T> implements Response<T>{
         } catch (SQLException e) {
             throw new SQLRuntimeException(e);
         }
-        MDC.put("count",count+"");
+        ThreadLocalMap.put("count",count+"");
         return count;
     }
 
@@ -107,7 +103,7 @@ public class AbstractResponse<T> implements Response<T>{
         } catch (SQLException e) {
             throw new SQLRuntimeException(e);
         }
-        MDC.put("count",count+"");
+        ThreadLocalMap.put("count",count+"");
         return count;
     }
 
@@ -237,7 +233,7 @@ public class AbstractResponse<T> implements Response<T>{
                     array.add(o);
                 }
             }
-            MDC.put("count",array.size()+"");
+            ThreadLocalMap.put("count",array.size()+"");
             resultSet.close();
             ps.close();
         } catch (SQLException e) {

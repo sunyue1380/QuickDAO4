@@ -1,9 +1,9 @@
 package cn.schoolwow.quickdao.query.response;
 
 import cn.schoolwow.quickdao.domain.Interceptor;
+import cn.schoolwow.quickdao.domain.ThreadLocalMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.slf4j.MDC;
 
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.InvocationTargetException;
@@ -26,23 +26,23 @@ public class ResponseInvocationHandler implements InvocationHandler {
             long startTime = System.currentTimeMillis();
             Object result = method.invoke(abstractResponse, args);
             long endTime = System.currentTimeMillis();
-            if(null!=MDC.get("name")){
-                if(null==MDC.get("count")){
-                    logger.debug("[{}]耗时:{}ms,执行SQL:{}",MDC.get("name"), endTime-startTime,MDC.get("sql"));
+            if(null!=ThreadLocalMap.get("name")){
+                if(null==ThreadLocalMap.get("count")){
+                    logger.debug("[{}]耗时:{}ms,执行SQL:{}",ThreadLocalMap.get("name"), endTime-startTime,ThreadLocalMap.get("sql"));
                 }else{
-                    logger.debug("[{}]行数:{},耗时:{}ms,执行SQL:{}",MDC.get("name"), MDC.get("count"),endTime-startTime,MDC.get("sql"));
+                    logger.debug("[{}]行数:{},耗时:{}ms,执行SQL:{}",ThreadLocalMap.get("name"), ThreadLocalMap.get("count"),endTime-startTime,ThreadLocalMap.get("sql"));
                 }
             }
             for(Interceptor interceptor:abstractResponse.query.quickDAOConfig.interceptorList){
-                interceptor.afterExecuteConnection(MDC.get("name"),MDC.get("sql"));
+                interceptor.afterExecuteConnection(ThreadLocalMap.get("name"),ThreadLocalMap.get("sql"));
             }
             return result;
         }catch (InvocationTargetException e){
-            if(null!=MDC.get("name")){
-                logger.warn("[{}]原始SQL:{}",MDC.get("name"),MDC.get("sql"));
+            if(null!=ThreadLocalMap.get("name")){
+                logger.warn("[{}]原始SQL:{}",ThreadLocalMap.get("name"),ThreadLocalMap.get("sql"));
             }
             for(Interceptor interceptor:abstractResponse.query.quickDAOConfig.interceptorList){
-                interceptor.afterExecuteConnection(MDC.get("name"),MDC.get("sql"));
+                interceptor.afterExecuteConnection(ThreadLocalMap.get("name"),ThreadLocalMap.get("sql"));
             }
             throw e.getTargetException();
         }finally {
@@ -50,7 +50,7 @@ public class ResponseInvocationHandler implements InvocationHandler {
             if(!abstractResponse.query.transaction&&null!=abstractResponse.query.dqlBuilder.connection){
                 abstractResponse.query.dqlBuilder.connection.close();
             }
-            MDC.clear();
+            ThreadLocalMap.clear();
         }
     }
 }

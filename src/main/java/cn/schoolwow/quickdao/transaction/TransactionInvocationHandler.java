@@ -4,12 +4,12 @@ import cn.schoolwow.quickdao.dao.sql.ddl.AbstractDDLDAO;
 import cn.schoolwow.quickdao.dao.sql.dml.AbstractDMLDAO;
 import cn.schoolwow.quickdao.domain.Interceptor;
 import cn.schoolwow.quickdao.domain.QuickDAOConfig;
+import cn.schoolwow.quickdao.domain.ThreadLocalMap;
 import cn.schoolwow.quickdao.query.AbstractCompositQuery;
 import cn.schoolwow.quickdao.query.CompositQuery;
 import cn.schoolwow.quickdao.query.condition.AbstractCondition;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.slf4j.MDC;
 
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.InvocationTargetException;
@@ -67,27 +67,27 @@ public class TransactionInvocationHandler implements InvocationHandler {
                 break;
             }
             long endTime = System.currentTimeMillis();
-            if (null != MDC.get("name")) {
-                if (null == MDC.get("count")) {
-                    logger.debug("[{}]耗时:{}ms,执行SQL:{}", MDC.get("name"), endTime - startTime, MDC.get("sql"));
+            if (null != ThreadLocalMap.get("name")) {
+                if (null == ThreadLocalMap.get("count")) {
+                    logger.debug("[{}]耗时:{}ms,执行SQL:{}", ThreadLocalMap.get("name"), endTime - startTime, ThreadLocalMap.get("sql"));
                 } else {
-                    logger.debug("[{}]行数:{},耗时:{}ms,执行SQL:{}", MDC.get("name"), MDC.get("count"), endTime - startTime, MDC.get("sql"));
+                    logger.debug("[{}]行数:{},耗时:{}ms,执行SQL:{}", ThreadLocalMap.get("name"), ThreadLocalMap.get("count"), endTime - startTime, ThreadLocalMap.get("sql"));
                 }
             }
             for(Interceptor interceptor:quickDAOConfig.interceptorList){
-                interceptor.afterExecuteConnection(MDC.get("name"),MDC.get("sql"));
+                interceptor.afterExecuteConnection(ThreadLocalMap.get("name"),ThreadLocalMap.get("sql"));
             }
             return result;
         } catch (InvocationTargetException e) {
-            if (null != MDC.get("name")) {
-                logger.warn("[{}]原始SQL:{}", MDC.get("name"), MDC.get("sql"));
+            if (null != ThreadLocalMap.get("name")) {
+                logger.warn("[{}]原始SQL:{}", ThreadLocalMap.get("name"), ThreadLocalMap.get("sql"));
             }
             for(Interceptor interceptor:quickDAOConfig.interceptorList){
-                interceptor.afterExecuteConnection(MDC.get("name"),MDC.get("sql"));
+                interceptor.afterExecuteConnection(ThreadLocalMap.get("name"),ThreadLocalMap.get("sql"));
             }
             throw e.getTargetException();
         } finally {
-            MDC.clear();
+            ThreadLocalMap.clear();
         }
     }
 }

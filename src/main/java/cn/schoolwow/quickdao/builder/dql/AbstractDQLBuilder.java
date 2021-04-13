@@ -6,7 +6,6 @@ import cn.schoolwow.quickdao.domain.*;
 import cn.schoolwow.quickdao.query.condition.AbstractCondition;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
-import org.slf4j.MDC;
 
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -31,8 +30,8 @@ public class AbstractDQLBuilder extends AbstractSQLBuilder implements DQLBuilder
             quickDAOConfig.sqlCache.put(key, builder.toString());
         }
         String sql = quickDAOConfig.sqlCache.get(key);
-        MDC.put("name","Null查询");
-        MDC.put("sql",sql);
+        ThreadLocalMap.put("name","Null查询");
+        ThreadLocalMap.put("sql",sql);
         PreparedStatement ps = connection.prepareStatement(sql);
         return ps;
     }
@@ -55,11 +54,11 @@ public class AbstractDQLBuilder extends AbstractSQLBuilder implements DQLBuilder
             quickDAOConfig.sqlCache.put(key, builder.toString());
         }
         String sql = quickDAOConfig.sqlCache.get(key);
-        MDC.put("name","字段查询");
-        MDC.put("sql",sql);
+        ThreadLocalMap.put("name","字段查询");
+        ThreadLocalMap.put("sql",sql);
         PreparedStatement ps = connection.prepareStatement(sql);
         ps.setObject(1,value);
-        MDC.put("sql",sql.replace("?",(value instanceof String)?"'"+value.toString()+"'":value.toString()));
+        ThreadLocalMap.put("sql",sql.replace("?",(value instanceof String)?"'"+value.toString()+"'":value.toString()));
         return ps;
     }
 
@@ -74,8 +73,8 @@ public class AbstractDQLBuilder extends AbstractSQLBuilder implements DQLBuilder
             quickDAOConfig.sqlCache.put(key, builder.toString());
         }
         String sql = quickDAOConfig.sqlCache.get(key);
-        MDC.put("name","Null查询");
-        MDC.put("sql",sql);
+        ThreadLocalMap.put("name","Null查询");
+        ThreadLocalMap.put("sql",sql);
         PreparedStatement ps = connection.prepareStatement(sql);
         return ps;
     }
@@ -91,11 +90,11 @@ public class AbstractDQLBuilder extends AbstractSQLBuilder implements DQLBuilder
             quickDAOConfig.sqlCache.put(key, builder.toString());
         }
         String sql = quickDAOConfig.sqlCache.get(key);
-        MDC.put("name","字段查询");
-        MDC.put("sql",sql);
+        ThreadLocalMap.put("name","字段查询");
+        ThreadLocalMap.put("sql",sql);
         PreparedStatement ps = connection.prepareStatement(sql);
         ps.setObject(1,value);
-        MDC.put("sql",sql.replace("?",(value instanceof String)?"'"+value.toString()+"'":value.toString()));
+        ThreadLocalMap.put("sql",sql.replace("?",(value instanceof String)?"'"+value.toString()+"'":value.toString()));
         return ps;
     }
 
@@ -128,7 +127,7 @@ public class AbstractDQLBuilder extends AbstractSQLBuilder implements DQLBuilder
         }
         resultSet.close();
         ps.close();
-        MDC.put("count",count+"");
+        ThreadLocalMap.put("count",count+"");
         query.parameterIndex = 1;
         return count;
     }
@@ -165,16 +164,16 @@ public class AbstractDQLBuilder extends AbstractSQLBuilder implements DQLBuilder
         }
         builder.deleteCharAt(builder.length()-1);
         builder.append(")");
-        MDC.put("name","插入记录");
+        ThreadLocalMap.put("name","插入记录");
         String sql = builder.toString();
-        MDC.put("sql",sql);
+        ThreadLocalMap.put("sql",sql);
 
         PreparedStatement ps = connection.prepareStatement(sql,PreparedStatement.RETURN_GENERATED_KEYS);
         builder = new StringBuilder(sql.replace("?",PLACEHOLDER));
         for (Object parameter : query.insertParameterList) {
             setParameter(parameter,ps,query.parameterIndex++,builder);
         }
-        MDC.put("sql",builder.toString());
+        ThreadLocalMap.put("sql",builder.toString());
         return ps;
     }
 
@@ -198,9 +197,9 @@ public class AbstractDQLBuilder extends AbstractSQLBuilder implements DQLBuilder
         }
         builder.deleteCharAt(builder.length()-1);
         builder.append(")");
-        MDC.put("name","插入记录");
+        ThreadLocalMap.put("name","插入记录");
         String sql = builder.toString();
-        MDC.put("sql",sql);
+        ThreadLocalMap.put("sql",sql);
 
         connection.setAutoCommit(false);
         JSONArray array = query.insertArray;
@@ -222,7 +221,7 @@ public class AbstractDQLBuilder extends AbstractSQLBuilder implements DQLBuilder
             builder.append(sqlBuilder.toString()+";");
             preparedStatements[i] = ps;
         }
-        MDC.put("sql",builder.toString());
+        ThreadLocalMap.put("sql",builder.toString());
         return preparedStatements;
     }
 
@@ -231,9 +230,9 @@ public class AbstractDQLBuilder extends AbstractSQLBuilder implements DQLBuilder
         StringBuilder builder = new StringBuilder("update " + query.entity.escapeTableName + " as t ");
         addJoinTableStatement(query,builder);
         builder.append(query.setBuilder.toString() + " " + query.where);
-        MDC.put("name","批量更新");
+        ThreadLocalMap.put("name","批量更新");
         String sql = builder.toString();
-        MDC.put("sql",sql);
+        ThreadLocalMap.put("sql",sql);
 
         PreparedStatement ps = connection.prepareStatement(sql);
         builder = new StringBuilder(sql.replace("?",PLACEHOLDER));
@@ -241,7 +240,7 @@ public class AbstractDQLBuilder extends AbstractSQLBuilder implements DQLBuilder
             setParameter(parameter,ps,query.parameterIndex++,builder);
         }
         addMainTableParameters(ps,query,query,builder);
-        MDC.put("sql",builder.toString());
+        ThreadLocalMap.put("sql",builder.toString());
         return ps;
     }
 
@@ -251,13 +250,13 @@ public class AbstractDQLBuilder extends AbstractSQLBuilder implements DQLBuilder
         addJoinTableStatement(query,builder);
         builder.append(" " + query.where);
 
-        MDC.put("name","批量删除");
-        MDC.put("sql",builder.toString());
+        ThreadLocalMap.put("name","批量删除");
+        ThreadLocalMap.put("sql",builder.toString());
 
         PreparedStatement ps = connection.prepareStatement(builder.toString());
         builder = new StringBuilder(builder.toString().replace("?",PLACEHOLDER));
         addMainTableParameters(ps,query,query,builder);
-        MDC.put("sql",builder.toString());
+        ThreadLocalMap.put("sql",builder.toString());
         return ps;
     }
 
@@ -281,9 +280,9 @@ public class AbstractDQLBuilder extends AbstractSQLBuilder implements DQLBuilder
             }
             builder.append(" " + query.orderBy + " " + query.limit);
         }
-        MDC.put("name","获取列表");
+        ThreadLocalMap.put("name","获取列表");
         String sql = builder.toString();
-        MDC.put("sql",sql);
+        ThreadLocalMap.put("sql",sql);
 
         PreparedStatement ps = connection.prepareStatement(sql);
         builder = new StringBuilder(builder.toString().replace("?",PLACEHOLDER));
@@ -301,7 +300,7 @@ public class AbstractDQLBuilder extends AbstractSQLBuilder implements DQLBuilder
                 setParameter(parameter,ps,query.parameterIndex++,builder);
             }
         }
-        MDC.put("sql",builder.toString());
+        ThreadLocalMap.put("sql",builder.toString());
         return ps;
     }
 

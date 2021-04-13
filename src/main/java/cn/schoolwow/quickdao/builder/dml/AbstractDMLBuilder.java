@@ -5,7 +5,7 @@ import cn.schoolwow.quickdao.builder.AbstractSQLBuilder;
 import cn.schoolwow.quickdao.domain.Entity;
 import cn.schoolwow.quickdao.domain.Property;
 import cn.schoolwow.quickdao.domain.QuickDAOConfig;
-import org.slf4j.MDC;
+import cn.schoolwow.quickdao.domain.ThreadLocalMap;
 
 import java.lang.reflect.Field;
 import java.sql.PreparedStatement;
@@ -25,20 +25,20 @@ public class  AbstractDMLBuilder extends AbstractSQLBuilder implements DMLBuilde
     @Override
     public PreparedStatement insert(Object instance) throws Exception {
         String sql = insert(instance.getClass());
-        MDC.put("name","插入对象");
-        MDC.put("sql",sql);
+        ThreadLocalMap.put("name","插入对象");
+        ThreadLocalMap.put("sql",sql);
         StringBuilder builder = new StringBuilder(sql.replace("?", PLACEHOLDER));
         PreparedStatement ps = connection.prepareStatement(sql,PreparedStatement.RETURN_GENERATED_KEYS);
         insert(ps,instance, builder);
-        MDC.put("sql",builder.toString());
+        ThreadLocalMap.put("sql",builder.toString());
         return ps;
     }
 
     @Override
     public PreparedStatement[] insert(Object[] instances) throws Exception {
         String sql = insert(instances[0].getClass());
-        MDC.put("name","批量插入对象");
-        MDC.put("sql",sql);
+        ThreadLocalMap.put("name","批量插入对象");
+        ThreadLocalMap.put("sql",sql);
         connection.setAutoCommit(false);
         PreparedStatement[] preparedStatements = new PreparedStatement[instances.length];
         StringBuilder builder = new StringBuilder();
@@ -49,15 +49,15 @@ public class  AbstractDMLBuilder extends AbstractSQLBuilder implements DMLBuilde
             builder.append(sqlBuilder.toString()+";");
             preparedStatements[i] = ps;
         }
-        MDC.put("sql",builder.toString());
+        ThreadLocalMap.put("sql",builder.toString());
         return preparedStatements;
     }
 
     @Override
     public PreparedStatement insertBatch(Object[] instances) throws Exception {
         String sql = insert(instances[0].getClass());
-        MDC.put("name","批量插入对象");
-        MDC.put("sql",sql);
+        ThreadLocalMap.put("name","批量插入对象");
+        ThreadLocalMap.put("sql",sql);
         connection.setAutoCommit(false);
         PreparedStatement ps = connection.prepareStatement(sql);
         StringBuilder builder = new StringBuilder();
@@ -67,27 +67,27 @@ public class  AbstractDMLBuilder extends AbstractSQLBuilder implements DMLBuilde
             builder.append(sqlBuilder.toString()+";");
             ps.addBatch();
         }
-        MDC.put("sql",builder.toString());
+        ThreadLocalMap.put("sql",builder.toString());
         return ps;
     }
 
     @Override
     public PreparedStatement updateByUniqueKey(Object instance) throws Exception{
         String sql = updateByUniqueKey(instance.getClass());
-        MDC.put("name","根据唯一性约束更新对象");
-        MDC.put("sql",sql);
+        ThreadLocalMap.put("name","根据唯一性约束更新对象");
+        ThreadLocalMap.put("sql",sql);
         StringBuilder builder = new StringBuilder(sql.replace("?", PLACEHOLDER));
         PreparedStatement ps = connection.prepareStatement(sql);
         updateByUniqueKey(ps,instance, builder);
-        MDC.put("sql",builder.toString());
+        ThreadLocalMap.put("sql",builder.toString());
         return ps;
     }
 
     @Override
     public PreparedStatement updateByUniqueKey(Object[] instances) throws Exception {
         String sql = updateByUniqueKey(instances[0].getClass());
-        MDC.put("name","根据唯一性约束批量更新对象");
-        MDC.put("sql",sql);
+        ThreadLocalMap.put("name","根据唯一性约束批量更新对象");
+        ThreadLocalMap.put("sql",sql);
         connection.setAutoCommit(false);
         PreparedStatement ps = connection.prepareStatement(sql);
         StringBuilder builder = new StringBuilder();
@@ -97,27 +97,27 @@ public class  AbstractDMLBuilder extends AbstractSQLBuilder implements DMLBuilde
             builder.append(sqlBuilder.toString()+";");
             ps.addBatch();
         }
-        MDC.put("sql",builder.toString());
+        ThreadLocalMap.put("sql",builder.toString());
         return ps;
     }
 
     @Override
     public PreparedStatement updateById(Object instance) throws Exception {
         String sql = updateById(instance.getClass());
-        MDC.put("name","根据ID更新对象");
-        MDC.put("sql",sql);
+        ThreadLocalMap.put("name","根据ID更新对象");
+        ThreadLocalMap.put("sql",sql);
         StringBuilder builder = new StringBuilder(sql.replace("?", PLACEHOLDER));
         PreparedStatement ps = connection.prepareStatement(sql);
         updateById(ps,instance, builder);
-        MDC.put("sql",builder.toString());
+        ThreadLocalMap.put("sql",builder.toString());
         return ps;
     }
 
     @Override
     public PreparedStatement updateById(Object[] instances) throws Exception {
         String sql = updateById(instances[0].getClass());
-        MDC.put("name","根据ID批量更新对象");
-        MDC.put("sql",sql);
+        ThreadLocalMap.put("name","根据ID批量更新对象");
+        ThreadLocalMap.put("sql",sql);
         connection.setAutoCommit(false);
         PreparedStatement ps = connection.prepareStatement(sql);
         StringBuilder builder = new StringBuilder();
@@ -127,7 +127,7 @@ public class  AbstractDMLBuilder extends AbstractSQLBuilder implements DMLBuilde
             builder.append(sqlBuilder.toString()+";");
             ps.addBatch();
         }
-        MDC.put("sql",builder.toString());
+        ThreadLocalMap.put("sql",builder.toString());
         return ps;
     }
 
@@ -141,22 +141,22 @@ public class  AbstractDMLBuilder extends AbstractSQLBuilder implements DMLBuilde
             quickDAOConfig.sqlCache.put(key, builder.toString());
         }
         String sql = quickDAOConfig.sqlCache.get(key);
-        MDC.put("name","根据单个字段删除");
-        MDC.put("sql",sql);
+        ThreadLocalMap.put("name","根据单个字段删除");
+        ThreadLocalMap.put("sql",sql);
         PreparedStatement ps = connection.prepareStatement(sql);
         ps.setObject(1, value);
-        MDC.put("sql",sql.replace("?",(value instanceof String)?"'"+value.toString()+"'":value.toString()));
+        ThreadLocalMap.put("sql",sql.replace("?",(value instanceof String)?"'"+value.toString()+"'":value.toString()));
         return ps;
     }
 
     @Override
     public PreparedStatement deleteByProperty(String tableName, String property, Object value) throws SQLException {
         String sql = "delete from " + quickDAOConfig.database.escape(tableName) + " where " + quickDAOConfig.database.escape(property) + " = ?";
-        MDC.put("name","根据单个字段删除");
-        MDC.put("sql",sql);
+        ThreadLocalMap.put("name","根据单个字段删除");
+        ThreadLocalMap.put("sql",sql);
         PreparedStatement ps = connection.prepareStatement(sql);
         ps.setObject(1, value);
-        MDC.put("sql",sql.replace("?",(value instanceof String)?"'"+value.toString()+"'":value.toString()));
+        ThreadLocalMap.put("sql",sql.replace("?",(value instanceof String)?"'"+value.toString()+"'":value.toString()));
         return ps;
     }
 
