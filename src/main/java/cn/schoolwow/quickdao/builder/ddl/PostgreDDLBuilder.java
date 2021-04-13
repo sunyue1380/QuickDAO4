@@ -2,11 +2,7 @@ package cn.schoolwow.quickdao.builder.ddl;
 
 import cn.schoolwow.quickdao.annotation.IdStrategy;
 import cn.schoolwow.quickdao.annotation.IndexType;
-import cn.schoolwow.quickdao.domain.Entity;
-import cn.schoolwow.quickdao.domain.IndexField;
-import cn.schoolwow.quickdao.domain.Property;
-import cn.schoolwow.quickdao.domain.QuickDAOConfig;
-import org.slf4j.MDC;
+import cn.schoolwow.quickdao.domain.*;
 
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -87,9 +83,9 @@ public class PostgreDDLBuilder extends AbstractDDLBuilder {
         if (null != entity.comment) {
             builder.append(" "+quickDAOConfig.database.comment(entity.comment));
         }
-        MDC.put("name","生成新表");
-        MDC.put("sql",builder.toString());
-        connection.prepareStatement(MDC.get("sql")).executeUpdate();
+        ThreadLocalMap.put("name","生成新表");
+        ThreadLocalMap.put("sql",builder.toString());
+        connection.prepareStatement(ThreadLocalMap.get("sql")).executeUpdate();
         //创建索引
         for(IndexField indexField:entity.indexFieldList){
             createIndex(indexField);
@@ -109,8 +105,8 @@ public class PostgreDDLBuilder extends AbstractDDLBuilder {
     @Override
     public boolean hasIndexExists(String tableName, String indexName) throws SQLException {
         String sql = "select count(1) from pg_indexes where tablename = '"+tableName+"' and indexname = '"+indexName+"'";
-        MDC.put("name","查看索引是否存在");
-        MDC.put("sql",sql);
+        ThreadLocalMap.put("name","查看索引是否存在");
+        ThreadLocalMap.put("sql",sql);
         ResultSet resultSet = connection.prepareStatement(sql).executeQuery();
         boolean result = false;
         if (resultSet.next()) {

@@ -5,11 +5,11 @@ import cn.schoolwow.quickdao.dao.sql.AbstractSQLDAO;
 import cn.schoolwow.quickdao.domain.Entity;
 import cn.schoolwow.quickdao.domain.QuickDAOConfig;
 import cn.schoolwow.quickdao.domain.SFunction;
+import cn.schoolwow.quickdao.domain.ThreadLocalMap;
 import cn.schoolwow.quickdao.exception.SQLRuntimeException;
 import cn.schoolwow.quickdao.util.LambdaUtils;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
-import org.slf4j.MDC;
 
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -56,7 +56,7 @@ public class AbstractDQLDAO extends AbstractSQLDAO implements DQLDAO {
             }
             resultSet.close();
             ps.close();
-            MDC.put("count",array.size()+"");
+            ThreadLocalMap.put("count",array.size()+"");
             return array.toJavaList(clazz);
         } catch (SQLException e) {
             throw new SQLRuntimeException(e);
@@ -109,7 +109,7 @@ public class AbstractDQLDAO extends AbstractSQLDAO implements DQLDAO {
             }
             resultSet.close();
             ps.close();
-            MDC.put("count",array.size()+"");
+            ThreadLocalMap.put("count",array.size()+"");
             return array;
         } catch (SQLException e) {
             throw new SQLRuntimeException(e);

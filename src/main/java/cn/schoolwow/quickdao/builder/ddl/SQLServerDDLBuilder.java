@@ -3,7 +3,7 @@ package cn.schoolwow.quickdao.builder.ddl;
 import cn.schoolwow.quickdao.domain.Entity;
 import cn.schoolwow.quickdao.domain.Property;
 import cn.schoolwow.quickdao.domain.QuickDAOConfig;
-import org.slf4j.MDC;
+import cn.schoolwow.quickdao.domain.ThreadLocalMap;
 
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -67,9 +67,9 @@ public class SQLServerDDLBuilder extends AbstractDDLBuilder {
     @Override
     public boolean hasIndexExists(String tableName, String indexName) throws SQLException {
         String sql = "EXEC Sp_helpindex '"+tableName+"'";
-        MDC.put("name","查看索引是否存在");
-        MDC.put("sql",sql);
-        connection.prepareStatement(MDC.get("sql")).executeUpdate();
+        ThreadLocalMap.put("name","查看索引是否存在");
+        ThreadLocalMap.put("sql",sql);
+        connection.prepareStatement(ThreadLocalMap.get("sql")).executeUpdate();
 
         ResultSet resultSet = connection.prepareStatement(sql).executeQuery();
         boolean result = false;

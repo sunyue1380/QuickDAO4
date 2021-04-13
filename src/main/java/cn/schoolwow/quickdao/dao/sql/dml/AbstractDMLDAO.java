@@ -6,9 +6,9 @@ import cn.schoolwow.quickdao.dao.sql.AbstractSQLDAO;
 import cn.schoolwow.quickdao.domain.Entity;
 import cn.schoolwow.quickdao.domain.QuickDAOConfig;
 import cn.schoolwow.quickdao.domain.SFunction;
+import cn.schoolwow.quickdao.domain.ThreadLocalMap;
 import cn.schoolwow.quickdao.exception.SQLRuntimeException;
 import cn.schoolwow.quickdao.util.LambdaUtils;
-import org.slf4j.MDC;
 
 import java.lang.reflect.Field;
 import java.sql.PreparedStatement;
@@ -69,7 +69,7 @@ public class AbstractDMLDAO extends AbstractSQLDAO implements DMLDAO{
         } catch (Exception e) {
             throw new SQLRuntimeException(e);
         }
-        MDC.put("count",effect+"");
+        ThreadLocalMap.put("count",effect+"");
         return effect;
     }
 
@@ -121,7 +121,7 @@ public class AbstractDMLDAO extends AbstractSQLDAO implements DMLDAO{
         } catch (Exception e) {
             throw new SQLRuntimeException(e);
         }
-        MDC.put("count",effect+"");
+        ThreadLocalMap.put("count",effect+"");
         return effect;
     }
 
@@ -177,7 +177,7 @@ public class AbstractDMLDAO extends AbstractSQLDAO implements DMLDAO{
         } catch (Exception e) {
             throw new SQLRuntimeException(e);
         }
-        MDC.put("count",effect+"");
+        ThreadLocalMap.put("count",effect+"");
         return effect;
     }
 
@@ -210,7 +210,7 @@ public class AbstractDMLDAO extends AbstractSQLDAO implements DMLDAO{
         } catch (Exception e) {
             throw new SQLRuntimeException(e);
         }
-        MDC.put("count",effect+"");
+        ThreadLocalMap.put("count",effect+"");
         return effect;
     }
 
@@ -239,7 +239,7 @@ public class AbstractDMLDAO extends AbstractSQLDAO implements DMLDAO{
         } catch (Exception e) {
             throw new SQLRuntimeException(e);
         }
-        MDC.put("count",effect+"");
+        ThreadLocalMap.put("count",effect+"");
         return effect;
     }
 
@@ -277,7 +277,7 @@ public class AbstractDMLDAO extends AbstractSQLDAO implements DMLDAO{
         }
         effect += update(updateList);
         effect += insert(insertList);
-        MDC.put("count",effect+"");
+        ThreadLocalMap.put("count",effect+"");
         return effect;
     }
 
@@ -308,7 +308,7 @@ public class AbstractDMLDAO extends AbstractSQLDAO implements DMLDAO{
         } catch (SQLException e) {
             throw new SQLRuntimeException(e);
         }
-        MDC.put("count",effect+"");
+        ThreadLocalMap.put("count",effect+"");
         return effect;
     }
 
@@ -332,7 +332,7 @@ public class AbstractDMLDAO extends AbstractSQLDAO implements DMLDAO{
         } catch (SQLException e) {
             throw new SQLRuntimeException(e);
         }
-        MDC.put("count",effect+"");
+        ThreadLocalMap.put("count",effect+"");
         return effect;
     }
 
@@ -346,7 +346,7 @@ public class AbstractDMLDAO extends AbstractSQLDAO implements DMLDAO{
         } catch (SQLException e) {
             throw new SQLRuntimeException(e);
         }
-        MDC.put("count",effect+"");
+        ThreadLocalMap.put("count",effect+"");
         return effect;
     }
 }
