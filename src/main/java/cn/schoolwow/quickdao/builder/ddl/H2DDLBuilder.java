@@ -2,11 +2,7 @@ package cn.schoolwow.quickdao.builder.ddl;
 
 import cn.schoolwow.quickdao.annotation.IdStrategy;
 import cn.schoolwow.quickdao.annotation.IndexType;
-import cn.schoolwow.quickdao.domain.Entity;
-import cn.schoolwow.quickdao.domain.IndexField;
-import cn.schoolwow.quickdao.domain.Property;
-import cn.schoolwow.quickdao.domain.QuickDAOConfig;
-import org.slf4j.MDC;
+import cn.schoolwow.quickdao.domain.*;
 
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -46,8 +42,8 @@ public class H2DDLBuilder extends MySQLDDLBuilder {
     @Override
     public boolean hasIndexExists(String tableName, String indexName) throws SQLException {
         String sql = "select count(1) from information_schema.indexes where index_name = '"+indexName.toUpperCase()+"'";
-        MDC.put("name","查看索引是否存在");
-        MDC.put("sql",sql);
+        ThreadLocalMap.put("name","查看索引是否存在");
+        ThreadLocalMap.put("sql",sql);
 
         ResultSet resultSet = connection.prepareStatement(sql).executeQuery();
         boolean result = false;

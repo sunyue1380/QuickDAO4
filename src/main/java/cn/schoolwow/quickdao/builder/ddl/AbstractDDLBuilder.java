@@ -2,14 +2,10 @@ package cn.schoolwow.quickdao.builder.ddl;
 
 import cn.schoolwow.quickdao.annotation.IdStrategy;
 import cn.schoolwow.quickdao.builder.AbstractSQLBuilder;
-import cn.schoolwow.quickdao.domain.Entity;
-import cn.schoolwow.quickdao.domain.IndexField;
-import cn.schoolwow.quickdao.domain.Property;
-import cn.schoolwow.quickdao.domain.QuickDAOConfig;
+import cn.schoolwow.quickdao.domain.*;
 import com.alibaba.fastjson.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.slf4j.MDC;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -35,9 +31,9 @@ public abstract class AbstractDDLBuilder extends AbstractSQLBuilder implements D
     @Override
     public void createTable(Entity entity) throws SQLException {
         StringBuilder builder = getCreateTableBuilder(entity);
-        MDC.put("name","生成新表");
-        MDC.put("sql",builder.toString());
-        connection.prepareStatement(MDC.get("sql")).executeUpdate();
+        ThreadLocalMap.put("name","生成新表");
+        ThreadLocalMap.put("sql",builder.toString());
+        connection.prepareStatement(ThreadLocalMap.get("sql")).executeUpdate();
     }
 
     @Override
@@ -60,9 +56,9 @@ public abstract class AbstractDDLBuilder extends AbstractSQLBuilder implements D
         }
         createPropertyBuilder.append(";");
 
-        MDC.put("name","添加新列");
-        MDC.put("sql",createPropertyBuilder.toString());
-        connection.prepareStatement(MDC.get("sql")).executeUpdate();
+        ThreadLocalMap.put("name","添加新列");
+        ThreadLocalMap.put("sql",createPropertyBuilder.toString());
+        connection.prepareStatement(ThreadLocalMap.get("sql")).executeUpdate();
     }
 
     @Override
@@ -70,9 +66,9 @@ public abstract class AbstractDDLBuilder extends AbstractSQLBuilder implements D
         StringBuilder builder = new StringBuilder("alter table " + quickDAOConfig.database.escape(property.entity.tableName));
         builder.append(" alter column "+quickDAOConfig.database.escape(property.column)+" "+property.columnType);
 
-        MDC.put("name","修改数据类型");
-        MDC.put("sql",builder.toString());
-        connection.prepareStatement(MDC.get("sql")).executeUpdate();
+        ThreadLocalMap.put("name","修改数据类型");
+        ThreadLocalMap.put("sql",builder.toString());
+        connection.prepareStatement(ThreadLocalMap.get("sql")).executeUpdate();
     }
 
     @Override
@@ -84,17 +80,17 @@ public abstract class AbstractDDLBuilder extends AbstractSQLBuilder implements D
         builder.append(quickDAOConfig.database.escape(property.entity.tableName));
         builder.append(" drop column "+quickDAOConfig.database.escape(property.column)+";");
 
-        MDC.put("name","删除列");
-        MDC.put("sql",builder.toString());
-        connection.prepareStatement(MDC.get("sql")).executeUpdate();
+        ThreadLocalMap.put("name","删除列");
+        ThreadLocalMap.put("sql",builder.toString());
+        connection.prepareStatement(ThreadLocalMap.get("sql")).executeUpdate();
     }
 
     @Override
     public void dropTable(String tableName) throws SQLException {
         String sql = "drop table "+quickDAOConfig.database.escape(tableName);
-        MDC.put("name","删除表");
-        MDC.put("sql",sql);
-        connection.prepareStatement(MDC.get("sql")).executeUpdate();
+        ThreadLocalMap.put("name","删除表");
+        ThreadLocalMap.put("sql",sql);
+        connection.prepareStatement(ThreadLocalMap.get("sql")).executeUpdate();
     }
 
     @Override
@@ -143,17 +139,17 @@ public abstract class AbstractDDLBuilder extends AbstractSQLBuilder implements D
             builder.append(" "+quickDAOConfig.database.comment(indexField.comment));
         }
         builder.append(";");
-        MDC.put("name","添加索引");
-        MDC.put("sql",builder.toString());
-        connection.prepareStatement(MDC.get("sql")).executeUpdate();
+        ThreadLocalMap.put("name","添加索引");
+        ThreadLocalMap.put("sql",builder.toString());
+        connection.prepareStatement(ThreadLocalMap.get("sql")).executeUpdate();
     }
 
     @Override
     public void dropIndex(String tableName, String indexName) throws SQLException{
         String dropIndexSQL = "drop index "+quickDAOConfig.database.escape(indexName);
-        MDC.put("name","删除索引");
-        MDC.put("sql",dropIndexSQL);
-        connection.prepareStatement(MDC.get("sql")).executeUpdate();
+        ThreadLocalMap.put("name","删除索引");
+        ThreadLocalMap.put("sql",dropIndexSQL);
+        connection.prepareStatement(ThreadLocalMap.get("sql")).executeUpdate();
     }
 
     @Override
@@ -168,9 +164,9 @@ public abstract class AbstractDDLBuilder extends AbstractSQLBuilder implements D
             return;
         }
         String foreignKeySQL = "alter table " + quickDAOConfig.database.escape(property.entity.tableName) + " add constraint " + quickDAOConfig.database.escape(foreignKeyName) + " foreign key(" + quickDAOConfig.database.escape(property.column) + ") references " + reference;
-        MDC.put("name","生成外键约束");
-        MDC.put("sql",foreignKeySQL);
-        connection.prepareStatement(MDC.get("sql")).executeUpdate();
+        ThreadLocalMap.put("name","生成外键约束");
+        ThreadLocalMap.put("sql",foreignKeySQL);
+        connection.prepareStatement(ThreadLocalMap.get("sql")).executeUpdate();
     }
 
     @Override
