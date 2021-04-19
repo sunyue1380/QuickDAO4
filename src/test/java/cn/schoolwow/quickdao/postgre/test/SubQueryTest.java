@@ -23,6 +23,7 @@ public class SubQueryTest extends PostgreLTest {
                         dao.query(Product.class)
                                 .addQuery("price",">=",5000)
                                 .addColumn("id")
+                                .limit(0,1)
                 )
                 .addColumn("name")
                 .execute()
