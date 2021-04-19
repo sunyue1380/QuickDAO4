@@ -213,7 +213,7 @@ public class AbstractCondition<T> implements Condition<T>, Serializable,Cloneabl
             subQuery.tableAliasName("t" + (query.joinTableIndex++));
         }
         subQuery.execute();
-        whereList.add(new FieldFragmentEntry(field," {} " + operator + " (" + query.dqlBuilder.getArraySQL(abstractCondition.query) + abstractCondition.query.limit +")"));
+        whereList.add(new FieldFragmentEntry(field," {} " + operator + " (" + query.dqlBuilder.getArraySQL(abstractCondition.query) + ")"));
         this.query.parameterList.addAll(abstractCondition.query.parameterList);
         return this;
     }
@@ -266,7 +266,7 @@ public class AbstractCondition<T> implements Condition<T>, Serializable,Cloneabl
     public Condition<T> addColumn(Condition subQuery) {
         subQuery.execute();
         Query selectQuery = ((AbstractCondition)subQuery).query;
-        columnList.add("( " + query.dqlBuilder.getArraySQL(selectQuery) + " " + ((AbstractCondition) subQuery).query.limit + ")");
+        columnList.add("( " + query.dqlBuilder.getArraySQL(selectQuery) + ")");
         query.parameterList.addAll(selectQuery.parameterList);
         return this;
     }
@@ -278,7 +278,7 @@ public class AbstractCondition<T> implements Condition<T>, Serializable,Cloneabl
         if(null==selectQuery.tableAliasName){
             subQuery.tableAliasName("t" + (query.joinTableIndex++));
         }
-        columnList.add("( " + query.dqlBuilder.getArraySQL(selectQuery) + " " + ((AbstractCondition) subQuery).query.limit + ") " + columnNameAlias);
+        columnList.add("( " + query.dqlBuilder.getArraySQL(selectQuery) + ") " + columnNameAlias);
         query.selectQueryList.add(selectQuery);
         return this;
     }
@@ -687,7 +687,7 @@ public class AbstractCondition<T> implements Condition<T>, Serializable,Cloneabl
             subQuery.tableAliasName("t" + (query.joinTableIndex++));
         }
         subQuery.execute();
-        whereList.add(new FieldFragmentEntry(IGNORE,exist +" (" + query.dqlBuilder.getArraySQL(abstractCondition.query) + " " + abstractCondition.query.limit + ")"));
+        whereList.add(new FieldFragmentEntry(IGNORE,exist +" (" + query.dqlBuilder.getArraySQL(abstractCondition.query) + ")"));
         this.query.parameterList.addAll(abstractCondition.query.parameterList);
     }
 
