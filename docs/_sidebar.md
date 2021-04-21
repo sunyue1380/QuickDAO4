@@ -27,6 +27,7 @@
 
   - [事务操作](zh-cn/transaction/transaction.md)
 
-- 实体类生成
+- 其他
 
   - [实体类生成](zh-cn/generate/generateEntity.md)
+  - [数据源迁移](zh-cn/generate/migrate.md)
