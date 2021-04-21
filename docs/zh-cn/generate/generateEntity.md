@@ -10,7 +10,7 @@ dataSource.setUsername("root");
 dataSource.setPassword("123456");
 DAO dao = QuickDAO.newInstance()
         //指定实体类的包名,该包名作为生成实体类的包名
-        .packageName("com.mtq.entity")
+        .packageName("cn.schoolwow")
         //指定DataSource        
         .dataSource(dataSource)
         .autoCreateTable(false)
