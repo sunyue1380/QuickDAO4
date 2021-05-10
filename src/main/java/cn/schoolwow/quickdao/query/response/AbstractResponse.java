@@ -84,7 +84,7 @@ public class AbstractResponse<T> implements Response<T>{
         int count = 0;
         try {
             PreparedStatement ps = query.dqlBuilder.update(query);
-            count= ps.executeUpdate();
+            count = ps.executeUpdate();
             ps.close();
         } catch (SQLException e) {
             throw new SQLRuntimeException(e);

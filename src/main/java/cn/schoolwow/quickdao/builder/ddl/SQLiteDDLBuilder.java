@@ -18,16 +18,6 @@ public class SQLiteDDLBuilder extends AbstractDDLBuilder {
     }
 
     @Override
-    public List<Entity> getDatabaseEntity() throws SQLException {
-        List<Entity> entityList = getEntityList();
-        for(Entity entity:entityList){
-            getEntityPropertyList(entity);
-            getIndex(entity);
-        }
-        return entityList;
-    }
-
-    @Override
     public boolean hasTableExists(Entity entity) throws SQLException {
         ResultSet resultSet = connection.prepareStatement("select name from sqlite_master where type='table' and name = '"+entity.tableName+"';").executeQuery();
         boolean result = false;
@@ -164,7 +154,8 @@ public class SQLiteDDLBuilder extends AbstractDDLBuilder {
     /**
      * 提取索引信息
      * */
-    private void getIndex(Entity entity) throws SQLException {
+    @Override
+    protected void getIndex(Entity entity) throws SQLException {
         PreparedStatement preparedStatement = connection.prepareStatement("select sql from sqlite_master where type='index' and sql is not null and tbl_name = '" + entity.tableName+"'");
         ResultSet resultSet = preparedStatement.executeQuery();
         while (resultSet.next()) {
@@ -190,7 +181,8 @@ public class SQLiteDDLBuilder extends AbstractDDLBuilder {
     /**
      * 提取表字段信息
      * */
-    private void getEntityPropertyList(Entity entity) throws SQLException {
+    @Override
+    protected void getEntityPropertyList(Entity entity) throws SQLException {
         PreparedStatement preparedStatement = connection.prepareStatement("PRAGMA table_info(`" + entity.tableName + "`)");
         ResultSet resultSet = preparedStatement.executeQuery();
         List<Property> propertyList = new ArrayList<>();
@@ -216,7 +208,8 @@ public class SQLiteDDLBuilder extends AbstractDDLBuilder {
     /**
      * 从数据库提取表信息
      * */
-    private List<Entity> getEntityList() throws SQLException {
+    @Override
+    protected List<Entity> getEntityList() throws SQLException {
         List<Entity> entityList = new ArrayList<>();
         PreparedStatement preparedStatement = connection.prepareStatement("select name from sqlite_master where type='table' and name != 'sqlite_sequence';");
         ResultSet resultSet = preparedStatement.executeQuery();

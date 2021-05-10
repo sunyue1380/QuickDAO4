@@ -19,16 +19,6 @@ public class H2DDLBuilder extends MySQLDDLBuilder {
     }
 
     @Override
-    public List<Entity> getDatabaseEntity() throws SQLException {
-        List<Entity> entityList = getEntityList();
-        for(Entity entity:entityList){
-            getEntityPropertyList(entity);
-            getIndex(entity);
-        }
-        return entityList;
-    }
-
-    @Override
     public boolean hasTableExists(Entity entity) throws SQLException {
         ResultSet resultSet = connection.prepareStatement("select table_name from information_schema.tables where table_name = '"+entity.tableName.toUpperCase()+"'").executeQuery();
         boolean result = false;
@@ -98,7 +88,8 @@ public class H2DDLBuilder extends MySQLDDLBuilder {
     /**
      * 提取索引信息
      * */
-    private void getIndex(Entity entity) throws SQLException {
+    @Override
+    protected void getIndex(Entity entity) throws SQLException {
         PreparedStatement preparedStatement = connection.prepareStatement("select sql from information_schema.indexes where table_name ='" + entity.tableName+"'");
         ResultSet resultSet = preparedStatement.executeQuery();
         while (resultSet.next()) {
@@ -124,7 +115,8 @@ public class H2DDLBuilder extends MySQLDDLBuilder {
     /**
      * 提取表字段信息
      * */
-    private void getEntityPropertyList(Entity entity) throws SQLException {
+    @Override
+    protected void getEntityPropertyList(Entity entity) throws SQLException {
         PreparedStatement preparedStatement = connection.prepareStatement("show columns from " + quickDAOConfig.database.escape(entity.tableName));
         ResultSet resultSet = preparedStatement.executeQuery();
         List<Property> propertyList = new ArrayList<>();
@@ -155,7 +147,8 @@ public class H2DDLBuilder extends MySQLDDLBuilder {
     /**
      * 从数据库提取表信息
      * */
-    private List<Entity> getEntityList() throws SQLException {
+    @Override
+    protected List<Entity> getEntityList() throws SQLException {
         List<Entity> entityList = new ArrayList<>();
         PreparedStatement preparedStatement = connection.prepareStatement("show tables;");
         ResultSet resultSet = preparedStatement.executeQuery();

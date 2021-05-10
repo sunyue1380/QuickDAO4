@@ -18,16 +18,6 @@ public class PostgreDDLBuilder extends AbstractDDLBuilder {
     }
 
     @Override
-    public List<Entity> getDatabaseEntity() throws SQLException {
-        List<Entity> entityList = getEntityList();
-        for(Entity entity:entityList){
-            getEntityPropertyList(entity);
-            getIndex(entity);
-        }
-        return entityList;
-    }
-
-    @Override
     protected String getAutoIncrementSQL(Property property) {
         return property.column + " SERIAL UNIQUE PRIMARY KEY";
     }
@@ -164,7 +154,8 @@ public class PostgreDDLBuilder extends AbstractDDLBuilder {
     /**
      * 提取索引信息
      * */
-    private void getIndex(Entity entity) throws SQLException {
+    @Override
+    protected void getIndex(Entity entity) throws SQLException {
         PreparedStatement preparedStatement = connection.prepareStatement("select tablename,indexname,indexdef from pg_indexes where tablename = '"+entity.tableName+"'");
         ResultSet resultSet = preparedStatement.executeQuery();
         while (resultSet.next()) {
@@ -192,7 +183,8 @@ public class PostgreDDLBuilder extends AbstractDDLBuilder {
     /**
      * 提取表字段信息
      * */
-    private void getEntityPropertyList(Entity entity) throws SQLException {
+    @Override
+    protected void getEntityPropertyList(Entity entity) throws SQLException {
         List<Property> propertyList = new ArrayList<>();
         {
             PreparedStatement preparedStatement = connection.prepareStatement("select attname as column_name , attnum as oridinal_position, attnotnull as notnull, format_type(atttypid,atttypmod) as type, col_description(attrelid, attnum) as comment from pg_attribute join pg_class on pg_attribute.attrelid = pg_class.oid where attnum > 0 and atttypid > 0 and pg_class.relname='"+entity.tableName+"'");
@@ -258,7 +250,8 @@ public class PostgreDDLBuilder extends AbstractDDLBuilder {
     /**
      * 从数据库提取表信息
      * */
-    private List<Entity> getEntityList() throws SQLException {
+    @Override
+    protected List<Entity> getEntityList() throws SQLException {
         List<Entity> entityList = new ArrayList<>();
         PreparedStatement preparedStatement = connection.prepareStatement("select relname as name,cast(obj_description(relfilenode,'pg_class') as varchar) as comment from pg_class c where  relkind = 'r' and relname not like 'pg_%' and relname not like 'sql_%' order by relname");
         ResultSet resultSet = preparedStatement.executeQuery();

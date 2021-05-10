@@ -14,6 +14,7 @@ public class MySQLDDLBuilder extends AbstractDDLBuilder {
         super(quickDAOConfig);
     }
 
+    @Override
     public String getDatabaseName() throws SQLException{
         ResultSet resultSet = connection.prepareStatement("select database();").executeQuery();
         String databaseName = null;
@@ -22,16 +23,6 @@ public class MySQLDDLBuilder extends AbstractDDLBuilder {
         }
         resultSet.close();
         return databaseName;
-    }
-
-    @Override
-    public List<Entity> getDatabaseEntity() throws SQLException {
-        List<Entity> entityList = getEntityList();
-        for(Entity entity:entityList){
-            getEntityPropertyList(entity);
-            getIndex(entity);
-        }
-        return entityList;
     }
 
     @Override
@@ -204,6 +195,7 @@ public class MySQLDDLBuilder extends AbstractDDLBuilder {
     }
 
     /**获取虚拟表信息*/
+    @Override
     protected List<Entity> getVirtualEntity(){
         Entity entity = new Entity();
         entity.tableName = "dual";
@@ -215,7 +207,8 @@ public class MySQLDDLBuilder extends AbstractDDLBuilder {
     /**
      * 提取索引信息
      * */
-    private void getIndex(Entity entity) throws SQLException {
+    @Override
+    protected void getIndex(Entity entity) throws SQLException {
         PreparedStatement preparedStatement = connection.prepareStatement("show index from " + quickDAOConfig.database.escape(entity.tableName));
         ResultSet resultSet = preparedStatement.executeQuery();
         while (resultSet.next()) {
@@ -246,7 +239,8 @@ public class MySQLDDLBuilder extends AbstractDDLBuilder {
     /**
      * 提取表字段信息
      * */
-    private void getEntityPropertyList(Entity entity) throws SQLException {
+    @Override
+    protected void getEntityPropertyList(Entity entity) throws SQLException {
         PreparedStatement preparedStatement = connection.prepareStatement("show full columns from " + quickDAOConfig.database.escape(entity.tableName));
         ResultSet resultSet = preparedStatement.executeQuery();
         List<Property> propertyList = new ArrayList<>();
@@ -283,7 +277,8 @@ public class MySQLDDLBuilder extends AbstractDDLBuilder {
     /**
      * 从数据库提取表信息
      * */
-    private List<Entity> getEntityList() throws SQLException {
+    @Override
+    protected List<Entity> getEntityList() throws SQLException {
         List<Entity> entityList = new ArrayList<>();
         PreparedStatement preparedStatement = connection.prepareStatement("show table status;");
         ResultSet resultSet = preparedStatement.executeQuery();

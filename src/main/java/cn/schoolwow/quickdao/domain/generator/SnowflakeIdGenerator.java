@@ -6,7 +6,7 @@ package cn.schoolwow.quickdao.domain.generator;
  */
 public class SnowflakeIdGenerator implements IDGenerator {
     //时间起始标记点 (2020-01-01)
-    private final static long twepoch = 1577808000000l;
+    private final static long twepoch = 1577808000000L;
     //毫秒内自增位(js最大支持53位整型)
     private final static long sequenceBits = 12L;
     //时间毫秒数需要左移22位
