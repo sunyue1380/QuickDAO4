@@ -109,10 +109,10 @@ public enum Database {
     public AbstractDQLBuilder getDQLBuilderInstance(QuickDAOConfig quickDAOConfig){
         switch(this){
             case SQLite:
+            case SQLServer:
             case Postgre:{return new SQLiteDQLBuilder(quickDAOConfig);}
             case Mysql:
-            case H2:{};
-            case SQLServer:{return new AbstractDQLBuilder(quickDAOConfig);}
+            case H2:{return new AbstractDQLBuilder(quickDAOConfig);}
             default:{
                 throw new IllegalArgumentException("不支持的数据库类型!");
             }

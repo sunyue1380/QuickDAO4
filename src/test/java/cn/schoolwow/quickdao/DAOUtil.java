@@ -173,4 +173,45 @@ public class DAOUtil {
                 .build();
         return dao;
     }
+
+    /**
+     * 获取mysql接口对象
+     */
+    public static HikariDataSource getSQLServerDataSource() {
+        HikariDataSource hikariDataSource = new HikariDataSource();
+        hikariDataSource.setDriverClassName("com.microsoft.sqlserver.jdbc.SQLServerDriver");
+        hikariDataSource.setJdbcUrl("jdbc:sqlserver://127.0.0.1:1433; DatabaseName=quickdao");
+        hikariDataSource.setUsername("sa");
+        hikariDataSource.setPassword("123456");
+        return hikariDataSource;
+    }
+
+    /**
+     * 获取mysql接口对象
+     */
+    public static DAO getSQLServerDAO() {
+        return getSQLServerDAO(null);
+    }
+
+    /**
+     * 获取mysql接口对象
+     */
+    public static DAO getSQLServerDAO(HikariDataSource hikariDataSource) {
+        if(hikariDataSource==null){
+            hikariDataSource = getSQLiteDataSource();
+        }
+        DAO dao = QuickDAO.newInstance()
+                .dataSource(hikariDataSource)
+                .packageName("cn.schoolwow.quickdao.sqlserver.entity")
+                .foreignKey(false)
+                .columnTypeMapping((property) -> {
+                    if (property.column.equalsIgnoreCase("created_at") ||
+                            property.column.equalsIgnoreCase("updated_at")) {
+                        return LocalDateTime.class;
+                    }
+                    return null;
+                })
+                .build();
+        return dao;
+    }
 }

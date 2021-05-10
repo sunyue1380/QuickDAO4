@@ -113,7 +113,7 @@ public class AbstractDQLBuilder extends AbstractSQLBuilder implements DQLBuilder
             builder.append(" as " + query.tableAliasName);
         }
         addJoinTableStatement(query,builder);
-        builder.append(" " + query.where + " " + query.groupBy + " " + query.having);
+        builder.append(" " + query.where + " " + query.orderBy + " " + query.groupBy + " " + query.having);
         builder.append(" "+query.limit);
         builder.append(") as foo");
 
