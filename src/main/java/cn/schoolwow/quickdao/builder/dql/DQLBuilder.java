@@ -1,8 +1,8 @@
 package cn.schoolwow.quickdao.builder.dql;
 
+import cn.schoolwow.quickdao.domain.ConnectionExecutorItem;
 import cn.schoolwow.quickdao.domain.Query;
 
-import java.sql.PreparedStatement;
 import java.sql.SQLException;
 
 /**
@@ -12,27 +12,27 @@ public interface DQLBuilder {
     /**
      * is null查询
      */
-    PreparedStatement fetchNull(Class clazz, String field) throws SQLException;
+    ConnectionExecutorItem fetchNull(Class clazz, String field) throws SQLException;
 
     /**
      * 根据id查询
      */
-    PreparedStatement fetch(Class clazz, long id) throws SQLException;
+    ConnectionExecutorItem fetch(Class clazz, long id) throws SQLException;
 
     /**
      * 根据字段值查询
      */
-    PreparedStatement fetch(Class clazz, String field, Object value) throws SQLException;
+    ConnectionExecutorItem fetch(Class clazz, String field, Object value) throws SQLException;
 
     /**
      * is null查询
      */
-    PreparedStatement fetchNull(String tableName, String field) throws SQLException;
+    ConnectionExecutorItem fetchNull(String tableName, String field) throws SQLException;
 
     /**
      * 根据字段值查询
      */
-    PreparedStatement fetch(String tableName, String field, Object value) throws SQLException;
+    ConnectionExecutorItem fetch(String tableName, String field, Object value) throws SQLException;
 
     /**
      * 获取结果集行数
@@ -42,32 +42,32 @@ public interface DQLBuilder {
     /**
      * 获取符合条件的总数目
      */
-    PreparedStatement count(Query query) throws SQLException;
+    ConnectionExecutorItem count(Query query) throws SQLException;
 
     /**
      * 插入记录
      */
-    PreparedStatement insert(Query query) throws SQLException;
+    ConnectionExecutorItem insert(Query query) throws SQLException;
 
     /**
      * 批量插入记录
      */
-    PreparedStatement[] insertArray(Query query) throws SQLException;
+    ConnectionExecutorItem[] insertArray(Query query) throws SQLException;
 
     /**
      * 更新符合条件的记录
      */
-    PreparedStatement update(Query query) throws SQLException;
+    ConnectionExecutorItem update(Query query) throws SQLException;
 
     /**
      * 删除符合条件的数据库记录
      */
-    PreparedStatement delete(Query query) throws SQLException;
+    ConnectionExecutorItem delete(Query query) throws SQLException;
 
     /**
      * 返回符合条件的数据库记录
      */
-    PreparedStatement getArray(Query query) throws SQLException;
+    ConnectionExecutorItem getArray(Query query) throws SQLException;
 
     /**
      * 获取query对应的SQL语句

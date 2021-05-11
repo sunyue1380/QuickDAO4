@@ -1,10 +1,9 @@
 package cn.schoolwow.quickdao.builder.dql;
 
+import cn.schoolwow.quickdao.domain.ConnectionExecutorItem;
 import cn.schoolwow.quickdao.domain.Query;
 import cn.schoolwow.quickdao.domain.QuickDAOConfig;
-import cn.schoolwow.quickdao.domain.ThreadLocalMap;
 
-import java.sql.PreparedStatement;
 import java.sql.SQLException;
 
 public class SQLiteDQLBuilder extends AbstractDQLBuilder {
@@ -14,34 +13,31 @@ public class SQLiteDQLBuilder extends AbstractDQLBuilder {
     }
 
     @Override
-    public PreparedStatement update(Query query) throws SQLException {
+    public ConnectionExecutorItem update(Query query) throws SQLException {
         StringBuilder builder = new StringBuilder("update " + query.entity.escapeTableName + " ");
         builder.append(query.setBuilder.toString() + " " + query.where.replace(query.tableAliasName + ".",""));
-        ThreadLocalMap.put("name","批量更新");
-        String sql = builder.toString().replace(query.tableAliasName+".","");
-        ThreadLocalMap.put("sql",sql);
-        PreparedStatement ps = connection.prepareStatement(sql);
-        builder = new StringBuilder(builder.toString().replace("?",PLACEHOLDER));
+
+        String sql = builder.toString();
+        ConnectionExecutorItem connectionExecutorItem = connectionExecutor.newConnectionExecutorItem("批量更新",sql);
+        builder = new StringBuilder(sql.replace("?",PLACEHOLDER));
         for (Object parameter : query.updateParameterList) {
-            setParameter(parameter,ps,query.parameterIndex++,builder);
+            setParameter(parameter,connectionExecutorItem.preparedStatement,query.parameterIndex++,builder);
         }
-        addMainTableParameters(ps,query,query,builder);
-        ThreadLocalMap.put("sql",builder.toString());
-        return ps;
+        addMainTableParameters(connectionExecutorItem.preparedStatement,query,query,builder);
+        connectionExecutorItem.sql = builder.toString();
+        return connectionExecutorItem;
     }
 
     @Override
-    public PreparedStatement delete(Query query) throws SQLException {
+    public ConnectionExecutorItem delete(Query query) throws SQLException {
         StringBuilder builder = new StringBuilder("delete from "+query.quickDAOConfig.database.escape(query.entity.tableName));
         builder.append(" " + query.where.replace(query.tableAliasName+".",""));
-        ThreadLocalMap.put("name","批量删除");
-        String sql = builder.toString();
-        ThreadLocalMap.put("sql",sql);
 
-        PreparedStatement ps = connection.prepareStatement(sql);
+        String sql = builder.toString();
+        ConnectionExecutorItem connectionExecutorItem = connectionExecutor.newConnectionExecutorItem("批量删除",sql);
         builder = new StringBuilder(sql.replace("?",PLACEHOLDER));
-        addMainTableParameters(ps,query,query,builder);
-        ThreadLocalMap.put("sql",builder.toString());
-        return ps;
+        addMainTableParameters(connectionExecutorItem.preparedStatement,query,query,builder);
+        connectionExecutorItem.sql = builder.toString();
+        return connectionExecutorItem;
     }
 }

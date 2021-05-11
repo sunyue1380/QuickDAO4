@@ -2,10 +2,10 @@ package cn.schoolwow.quickdao.builder.dml;
 
 import cn.schoolwow.quickdao.annotation.IdStrategy;
 import cn.schoolwow.quickdao.builder.AbstractSQLBuilder;
+import cn.schoolwow.quickdao.domain.ConnectionExecutorItem;
 import cn.schoolwow.quickdao.domain.Entity;
 import cn.schoolwow.quickdao.domain.Property;
 import cn.schoolwow.quickdao.domain.QuickDAOConfig;
-import cn.schoolwow.quickdao.domain.ThreadLocalMap;
 
 import java.lang.reflect.Field;
 import java.sql.PreparedStatement;
@@ -23,116 +23,100 @@ public class  AbstractDMLBuilder extends AbstractSQLBuilder implements DMLBuilde
     }
 
     @Override
-    public PreparedStatement insert(Object instance) throws Exception {
+    public ConnectionExecutorItem insert(Object instance) throws Exception {
         String sql = insert(instance.getClass());
-        ThreadLocalMap.put("name","插入对象");
-        ThreadLocalMap.put("sql",sql);
+        ConnectionExecutorItem connectionExecutorItem = connectionExecutor.newConnectionExecutorItem("插入对象",sql);
         StringBuilder builder = new StringBuilder(sql.replace("?", PLACEHOLDER));
-        PreparedStatement ps = connection.prepareStatement(sql,PreparedStatement.RETURN_GENERATED_KEYS);
-        insert(ps,instance, builder);
-        ThreadLocalMap.put("sql",builder.toString());
-        return ps;
+        insert(connectionExecutorItem.preparedStatement,instance, builder);
+        connectionExecutorItem.sql = builder.toString();
+        return connectionExecutorItem;
     }
 
     @Override
-    public PreparedStatement[] insert(Object[] instances) throws Exception {
+    public ConnectionExecutorItem[] insert(Object[] instances) throws Exception {
         String sql = insert(instances[0].getClass());
-        ThreadLocalMap.put("name","批量插入对象");
-        ThreadLocalMap.put("sql",sql);
-        connection.setAutoCommit(false);
-        PreparedStatement[] preparedStatements = new PreparedStatement[instances.length];
-        StringBuilder builder = new StringBuilder();
+        ConnectionExecutorItem[] connectionExecutorItems = new ConnectionExecutorItem[instances.length];
+        connectionExecutor.connection.setAutoCommit(false);
         for(int i=0;i<instances.length;i++){
-            PreparedStatement ps = connection.prepareStatement(sql,PreparedStatement.RETURN_GENERATED_KEYS);
+            ConnectionExecutorItem connectionExecutorItem = connectionExecutor.newConnectionExecutorItem("批量插入对象",sql);
             StringBuilder sqlBuilder = new StringBuilder(sql.replace("?", PLACEHOLDER));
-            insert(ps,instances[i],sqlBuilder);
-            builder.append(sqlBuilder.toString()+";");
-            preparedStatements[i] = ps;
+            insert(connectionExecutorItem.preparedStatement,instances[i],sqlBuilder);
+            connectionExecutorItem.sql = sqlBuilder.toString();
+            connectionExecutorItems[i] = connectionExecutorItem;
         }
-        ThreadLocalMap.put("sql",builder.toString());
-        return preparedStatements;
+        return connectionExecutorItems;
     }
 
     @Override
-    public PreparedStatement insertBatch(Object[] instances) throws Exception {
+    public ConnectionExecutorItem insertBatch(Object[] instances) throws Exception {
         String sql = insert(instances[0].getClass());
-        ThreadLocalMap.put("name","批量插入对象");
-        ThreadLocalMap.put("sql",sql);
-        connection.setAutoCommit(false);
-        PreparedStatement ps = connection.prepareStatement(sql);
+        ConnectionExecutorItem connectionExecutorItem = connectionExecutor.newConnectionExecutorItem("批量插入对象",sql);
+        connectionExecutor.connection.setAutoCommit(false);
         StringBuilder builder = new StringBuilder();
         for(Object instance : instances){
             StringBuilder sqlBuilder = new StringBuilder(sql.replace("?", PLACEHOLDER));
-            insert(ps,instance,sqlBuilder);
+            insert(connectionExecutorItem.preparedStatement,instance,sqlBuilder);
             builder.append(sqlBuilder.toString()+";");
-            ps.addBatch();
+            connectionExecutorItem.preparedStatement.addBatch();
         }
-        ThreadLocalMap.put("sql",builder.toString());
-        return ps;
+        connectionExecutorItem.sql = builder.toString();
+        return connectionExecutorItem;
     }
 
     @Override
-    public PreparedStatement updateByUniqueKey(Object instance) throws Exception{
+    public ConnectionExecutorItem updateByUniqueKey(Object instance) throws Exception{
         String sql = updateByUniqueKey(instance.getClass());
-        ThreadLocalMap.put("name","根据唯一性约束更新对象");
-        ThreadLocalMap.put("sql",sql);
+        ConnectionExecutorItem connectionExecutorItem = connectionExecutor.newConnectionExecutorItem("根据唯一性约束更新对象",sql);
         StringBuilder builder = new StringBuilder(sql.replace("?", PLACEHOLDER));
-        PreparedStatement ps = connection.prepareStatement(sql);
-        updateByUniqueKey(ps,instance, builder);
-        ThreadLocalMap.put("sql",builder.toString());
-        return ps;
+        updateByUniqueKey(connectionExecutorItem.preparedStatement,instance, builder);
+        connectionExecutorItem.sql = builder.toString();
+        return connectionExecutorItem;
     }
 
     @Override
-    public PreparedStatement updateByUniqueKey(Object[] instances) throws Exception {
+    public ConnectionExecutorItem updateByUniqueKey(Object[] instances) throws Exception {
         String sql = updateByUniqueKey(instances[0].getClass());
-        ThreadLocalMap.put("name","根据唯一性约束批量更新对象");
-        ThreadLocalMap.put("sql",sql);
-        connection.setAutoCommit(false);
-        PreparedStatement ps = connection.prepareStatement(sql);
+        ConnectionExecutorItem connectionExecutorItem = connectionExecutor.newConnectionExecutorItem("根据唯一性约束批量更新对象",sql);
+        connectionExecutor.connection.setAutoCommit(false);
         StringBuilder builder = new StringBuilder();
         for(Object instance : instances){
             StringBuilder sqlBuilder = new StringBuilder(sql.replace("?", PLACEHOLDER));
-            updateByUniqueKey(ps,instance,sqlBuilder);
+            updateByUniqueKey(connectionExecutorItem.preparedStatement,instance,sqlBuilder);
             builder.append(sqlBuilder.toString()+";");
-            ps.addBatch();
+            connectionExecutorItem.preparedStatement.addBatch();
         }
-        ThreadLocalMap.put("sql",builder.toString());
-        return ps;
+        connectionExecutorItem.sql = builder.toString();
+        return connectionExecutorItem;
     }
 
     @Override
-    public PreparedStatement updateById(Object instance) throws Exception {
+    public ConnectionExecutorItem updateById(Object instance) throws Exception {
         String sql = updateById(instance.getClass());
-        ThreadLocalMap.put("name","根据ID更新对象");
-        ThreadLocalMap.put("sql",sql);
+        ConnectionExecutorItem connectionExecutorItem = connectionExecutor.newConnectionExecutorItem("根据ID更新对象",sql);
         StringBuilder builder = new StringBuilder(sql.replace("?", PLACEHOLDER));
-        PreparedStatement ps = connection.prepareStatement(sql);
-        updateById(ps,instance, builder);
-        ThreadLocalMap.put("sql",builder.toString());
-        return ps;
+        updateById(connectionExecutorItem.preparedStatement,instance, builder);
+        connectionExecutorItem.sql = builder.toString();
+        return connectionExecutorItem;
     }
 
     @Override
-    public PreparedStatement updateById(Object[] instances) throws Exception {
+    public ConnectionExecutorItem updateById(Object[] instances) throws Exception {
         String sql = updateById(instances[0].getClass());
-        ThreadLocalMap.put("name","根据ID批量更新对象");
-        ThreadLocalMap.put("sql",sql);
-        connection.setAutoCommit(false);
-        PreparedStatement ps = connection.prepareStatement(sql);
+        ConnectionExecutorItem connectionExecutorItem = connectionExecutor.newConnectionExecutorItem("根据ID批量更新对象",sql);
+        connectionExecutor.connection.setAutoCommit(false);
         StringBuilder builder = new StringBuilder();
         for(Object instance : instances){
             StringBuilder sqlBuilder = new StringBuilder(sql.replace("?", PLACEHOLDER));
-            updateById(ps,instance,sqlBuilder);
+            updateById(connectionExecutorItem.preparedStatement,instance,sqlBuilder);
             builder.append(sqlBuilder.toString()+";");
-            ps.addBatch();
+            connectionExecutorItem.preparedStatement.addBatch();
         }
-        ThreadLocalMap.put("sql",builder.toString());
-        return ps;
+        connectionExecutorItem.sql = builder.toString();
+        return connectionExecutorItem;
     }
 
     @Override
-    public PreparedStatement deleteByProperty(Class clazz, String property, Object value) throws SQLException {
+    public ConnectionExecutorItem deleteByProperty(Class clazz, String property, Object value) throws SQLException {
         String key = "deleteByProperty_" + clazz.getName()+"_"+property+"_"+quickDAOConfig.database.getClass().getSimpleName();
         if (!quickDAOConfig.sqlCache.containsKey(key)) {
             Entity entity = quickDAOConfig.getEntityByClassName(clazz.getName());
@@ -141,34 +125,30 @@ public class  AbstractDMLBuilder extends AbstractSQLBuilder implements DMLBuilde
             quickDAOConfig.sqlCache.put(key, builder.toString());
         }
         String sql = quickDAOConfig.sqlCache.get(key);
-        ThreadLocalMap.put("name","根据单个字段删除");
-        ThreadLocalMap.put("sql",sql);
-        PreparedStatement ps = connection.prepareStatement(sql);
-        ps.setObject(1, value);
-        ThreadLocalMap.put("sql",sql.replace("?",(value instanceof String)?"'"+value.toString()+"'":value.toString()));
-        return ps;
+        ConnectionExecutorItem connectionExecutorItem = connectionExecutor.newConnectionExecutorItem("根据单个字段删除",sql);
+        connectionExecutorItem.preparedStatement.setObject(1, value);
+        connectionExecutorItem.sql = sql.replace("?",(value instanceof String)?"'"+value.toString()+"'":value.toString());
+        return connectionExecutorItem;
     }
 
     @Override
-    public PreparedStatement deleteByProperty(String tableName, String property, Object value) throws SQLException {
+    public ConnectionExecutorItem deleteByProperty(String tableName, String property, Object value) throws SQLException {
         String sql = "delete from " + quickDAOConfig.database.escape(tableName) + " where " + quickDAOConfig.database.escape(property) + " = ?";
-        ThreadLocalMap.put("name","根据单个字段删除");
-        ThreadLocalMap.put("sql",sql);
-        PreparedStatement ps = connection.prepareStatement(sql);
-        ps.setObject(1, value);
-        ThreadLocalMap.put("sql",sql.replace("?",(value instanceof String)?"'"+value.toString()+"'":value.toString()));
-        return ps;
+        ConnectionExecutorItem connectionExecutorItem = connectionExecutor.newConnectionExecutorItem("根据单个字段删除",sql);
+        connectionExecutorItem.preparedStatement.setObject(1, value);
+        connectionExecutorItem.sql = sql.replace("?",(value instanceof String)?"'"+value.toString()+"'":value.toString());
+        return connectionExecutorItem;
     }
 
     @Override
-    public PreparedStatement clear(Class clazz) throws SQLException {
+    public ConnectionExecutorItem clear(Class clazz) throws SQLException {
         String key = "clear_" + clazz.getName()+"_"+quickDAOConfig.database.getClass().getSimpleName();
         if (!quickDAOConfig.sqlCache.containsKey(key)) {
             Entity entity = quickDAOConfig.getEntityByClassName(clazz.getName());
             quickDAOConfig.sqlCache.put(key, "delete from "+entity.escapeTableName);
         }
-        PreparedStatement preparedStatement = connection.prepareStatement(quickDAOConfig.sqlCache.get(key));
-        return preparedStatement;
+        ConnectionExecutorItem connectionExecutorItem = connectionExecutor.newConnectionExecutorItem("清空表",quickDAOConfig.sqlCache.get(key));
+        return connectionExecutorItem;
     }
 
     /**

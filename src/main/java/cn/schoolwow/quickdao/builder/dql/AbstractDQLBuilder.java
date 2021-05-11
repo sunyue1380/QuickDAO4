@@ -4,7 +4,6 @@ import cn.schoolwow.quickdao.annotation.IdStrategy;
 import cn.schoolwow.quickdao.builder.AbstractSQLBuilder;
 import cn.schoolwow.quickdao.domain.*;
 import cn.schoolwow.quickdao.query.condition.AbstractCondition;
-import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 
 import java.sql.PreparedStatement;
@@ -20,7 +19,7 @@ public class AbstractDQLBuilder extends AbstractSQLBuilder implements DQLBuilder
     }
 
     @Override
-    public PreparedStatement fetchNull(Class clazz, String field) throws SQLException {
+    public ConnectionExecutorItem fetchNull(Class clazz, String field) throws SQLException {
         String key = "fetchNull_" + clazz.getName()+"_"+field+"_"+quickDAOConfig.database.getClass().getSimpleName();
         if (!quickDAOConfig.sqlCache.containsKey(key)) {
             Entity entity = quickDAOConfig.getEntityByClassName(clazz.getName());
@@ -30,20 +29,18 @@ public class AbstractDQLBuilder extends AbstractSQLBuilder implements DQLBuilder
             quickDAOConfig.sqlCache.put(key, builder.toString());
         }
         String sql = quickDAOConfig.sqlCache.get(key);
-        ThreadLocalMap.put("name","Null查询");
-        ThreadLocalMap.put("sql",sql);
-        PreparedStatement ps = connection.prepareStatement(sql);
-        return ps;
+        ConnectionExecutorItem connectionExecutorItem = connectionExecutor.newConnectionExecutorItem("Null查询",sql);
+        return connectionExecutorItem;
     }
 
     @Override
-    public PreparedStatement fetch(Class clazz, long id) throws SQLException {
+    public ConnectionExecutorItem fetch(Class clazz, long id) throws SQLException {
         Entity entity = quickDAOConfig.getEntityByClassName(clazz.getName());
         return fetch(clazz,entity.id.column,id+"");
     }
 
     @Override
-    public PreparedStatement fetch(Class clazz, String field, Object value) throws SQLException {
+    public ConnectionExecutorItem fetch(Class clazz, String field, Object value) throws SQLException {
         String key = "fetch_" + clazz.getName()+"_"+field+"_"+quickDAOConfig.database.getClass().getSimpleName();
         if (!quickDAOConfig.sqlCache.containsKey(key)) {
             Entity entity = quickDAOConfig.getEntityByClassName(clazz.getName());
@@ -54,16 +51,14 @@ public class AbstractDQLBuilder extends AbstractSQLBuilder implements DQLBuilder
             quickDAOConfig.sqlCache.put(key, builder.toString());
         }
         String sql = quickDAOConfig.sqlCache.get(key);
-        ThreadLocalMap.put("name","字段查询");
-        ThreadLocalMap.put("sql",sql);
-        PreparedStatement ps = connection.prepareStatement(sql);
-        ps.setObject(1,value);
-        ThreadLocalMap.put("sql",sql.replace("?",(value instanceof String)?"'"+value.toString()+"'":value.toString()));
-        return ps;
+        ConnectionExecutorItem connectionExecutorItem = connectionExecutor.newConnectionExecutorItem("根据单个字段查询",sql);
+        connectionExecutorItem.preparedStatement.setObject(1,value);
+        connectionExecutorItem.sql = sql.replace("?",(value instanceof String)?"'"+value.toString()+"'":value.toString());
+        return connectionExecutorItem;
     }
 
     @Override
-    public PreparedStatement fetchNull(String tableName, String field) throws SQLException {
+    public ConnectionExecutorItem fetchNull(String tableName, String field) throws SQLException {
         String key = "fetchNull_" + tableName+"_"+field+"_"+quickDAOConfig.database.getClass().getSimpleName();
         if (!quickDAOConfig.sqlCache.containsKey(key)) {
             Entity dbEntity = quickDAOConfig.getDbEntityByTableName(tableName);
@@ -73,14 +68,12 @@ public class AbstractDQLBuilder extends AbstractSQLBuilder implements DQLBuilder
             quickDAOConfig.sqlCache.put(key, builder.toString());
         }
         String sql = quickDAOConfig.sqlCache.get(key);
-        ThreadLocalMap.put("name","Null查询");
-        ThreadLocalMap.put("sql",sql);
-        PreparedStatement ps = connection.prepareStatement(sql);
-        return ps;
+        ConnectionExecutorItem connectionExecutorItem = connectionExecutor.newConnectionExecutorItem("Null查询",sql);
+        return connectionExecutorItem;
     }
 
     @Override
-    public PreparedStatement fetch(String tableName, String field, Object value) throws SQLException {
+    public ConnectionExecutorItem fetch(String tableName, String field, Object value) throws SQLException {
         String key = "fetch_" + tableName+"_"+field+"_"+quickDAOConfig.database.getClass().getSimpleName();
         if (!quickDAOConfig.sqlCache.containsKey(key)) {
             Entity dbEntity = quickDAOConfig.getDbEntityByTableName(tableName);
@@ -90,12 +83,10 @@ public class AbstractDQLBuilder extends AbstractSQLBuilder implements DQLBuilder
             quickDAOConfig.sqlCache.put(key, builder.toString());
         }
         String sql = quickDAOConfig.sqlCache.get(key);
-        ThreadLocalMap.put("name","字段查询");
-        ThreadLocalMap.put("sql",sql);
-        PreparedStatement ps = connection.prepareStatement(sql);
-        ps.setObject(1,value);
-        ThreadLocalMap.put("sql",sql.replace("?",(value instanceof String)?"'"+value.toString()+"'":value.toString()));
-        return ps;
+        ConnectionExecutorItem connectionExecutorItem = connectionExecutor.newConnectionExecutorItem("根据单个字段查询",sql);
+        connectionExecutorItem.preparedStatement.setObject(1,value);
+        connectionExecutorItem.sql = sql.replace("?",(value instanceof String)?"'"+value.toString()+"'":value.toString());
+        return connectionExecutorItem;
     }
 
     @Override
@@ -113,27 +104,25 @@ public class AbstractDQLBuilder extends AbstractSQLBuilder implements DQLBuilder
             builder.append(" as " + query.tableAliasName);
         }
         addJoinTableStatement(query,builder);
-        builder.append(" " + query.where + " " + query.orderBy + " " + query.groupBy + " " + query.having);
-        builder.append(" "+query.limit);
-        builder.append(") as foo");
-
-        PreparedStatement ps = connection.prepareStatement(builder.toString());
-        builder = new StringBuilder(builder.toString().replace("?",PLACEHOLDER));
-        addArraySQLParameters(ps,query,query,builder);
-        ResultSet resultSet = ps.executeQuery();
+        builder.append(" " + query.where + " " + query.groupBy + " " + query.having + " ) as foo");
+        String sql = builder.toString();
+        ConnectionExecutorItem connectionExecutorItem = connectionExecutor.newConnectionExecutorItem("获取行数",sql);
+        builder = new StringBuilder(sql.replace("?",PLACEHOLDER));
+        addArraySQLParameters(connectionExecutorItem.preparedStatement,query,query,builder);
+        connectionExecutorItem.sql = builder.toString();
+        ResultSet resultSet = connectionExecutor.executeQuery(connectionExecutorItem);
         int count = -1;
         if (resultSet.next()) {
             count = resultSet.getInt(1);
         }
+        connectionExecutor.count = count;
         resultSet.close();
-        ps.close();
-        ThreadLocalMap.put("count",count+"");
         query.parameterIndex = 1;
         return count;
     }
 
     @Override
-    public PreparedStatement count(Query query) throws SQLException {
+    public ConnectionExecutorItem count(Query query) throws SQLException {
         StringBuilder builder = new StringBuilder("select count(1) from ( select " + query.distinct + " ");
         //如果有指定列,则添加指定列
         if(query.column.length()>0){
@@ -146,17 +135,18 @@ public class AbstractDQLBuilder extends AbstractSQLBuilder implements DQLBuilder
             builder.append(" as " + query.tableAliasName);
         }
         addJoinTableStatement(query,builder);
-        builder.append(" " + query.where + " " + query.groupBy + " " + query.having);
-        builder.append(") as foo");
+        builder.append(" " + query.where + " " + query.groupBy + " " + query.having + " ) as foo");
+        String sql = builder.toString();
 
-        PreparedStatement ps = connection.prepareStatement(builder.toString());
-        builder = new StringBuilder(builder.toString().replace("?",PLACEHOLDER));
-        addArraySQLParameters(ps,query,query,builder);
-        return ps;
+        ConnectionExecutorItem connectionExecutorItem = connectionExecutor.newConnectionExecutorItem("获取总行数",sql);
+        builder = new StringBuilder(sql.replace("?",PLACEHOLDER));
+        addArraySQLParameters(connectionExecutorItem.preparedStatement,query,query,builder);
+        connectionExecutorItem.sql = builder.toString();
+        return connectionExecutorItem;
     }
 
     @Override
-    public PreparedStatement insert(Query query) throws SQLException {
+    public ConnectionExecutorItem insert(Query query) throws SQLException {
         StringBuilder builder = new StringBuilder("insert into " + query.entity.escapeTableName + "(");
         builder.append(query.insertBuilder.toString()+") values(");
         for(int i=0;i<query.insertParameterList.size();i++){
@@ -164,21 +154,18 @@ public class AbstractDQLBuilder extends AbstractSQLBuilder implements DQLBuilder
         }
         builder.deleteCharAt(builder.length()-1);
         builder.append(")");
-        ThreadLocalMap.put("name","插入记录");
         String sql = builder.toString();
-        ThreadLocalMap.put("sql",sql);
-
-        PreparedStatement ps = connection.prepareStatement(sql,PreparedStatement.RETURN_GENERATED_KEYS);
+        ConnectionExecutorItem connectionExecutorItem = connectionExecutor.newConnectionExecutorItem("插入记录",sql);
         builder = new StringBuilder(sql.replace("?",PLACEHOLDER));
         for (Object parameter : query.insertParameterList) {
-            setParameter(parameter,ps,query.parameterIndex++,builder);
+            setParameter(parameter,connectionExecutorItem.preparedStatement,query.parameterIndex++,builder);
         }
-        ThreadLocalMap.put("sql",builder.toString());
-        return ps;
+        connectionExecutorItem.sql = builder.toString();
+        return connectionExecutorItem;
     }
 
     @Override
-    public PreparedStatement[] insertArray(Query query) throws SQLException {
+    public ConnectionExecutorItem[] insertArray(Query query) throws SQLException {
         StringBuilder builder = new StringBuilder("insert into " + query.entity.escapeTableName + "(");
         List<Property> properties = query.entity.properties;
         for(Property property:properties){
@@ -197,71 +184,63 @@ public class AbstractDQLBuilder extends AbstractSQLBuilder implements DQLBuilder
         }
         builder.deleteCharAt(builder.length()-1);
         builder.append(")");
-        ThreadLocalMap.put("name","插入记录");
+
         String sql = builder.toString();
-        ThreadLocalMap.put("sql",sql);
-
-        connection.setAutoCommit(false);
-        JSONArray array = query.insertArray;
-        PreparedStatement[] preparedStatements = new PreparedStatement[array.size()];
-
+        connectionExecutor.connection.setAutoCommit(false);
+        ConnectionExecutorItem[] connectionExecutorItems = new ConnectionExecutorItem[query.insertArray.size()];
         builder.setLength(0);
-        for(int i=0;i<array.size();i++){
-            PreparedStatement ps = connection.prepareStatement(sql,PreparedStatement.RETURN_GENERATED_KEYS);
+        for(int i=0;i<connectionExecutorItems.length;i++){
+            ConnectionExecutorItem connectionExecutorItem = connectionExecutor.newConnectionExecutorItem("插入记录",sql);
             StringBuilder sqlBuilder = new StringBuilder(sql.replace("?",PLACEHOLDER));
-            JSONObject o = array.getJSONObject(i);
+            JSONObject o = query.insertArray.getJSONObject(i);
             int parameterIndex = 1;
             for(int j=0;j<properties.size();j++){
                 Property property = properties.get(j);
                 if(property.id&&property.strategy.equals(IdStrategy.AutoIncrement)){
                     continue;
                 }
-                setParameter(o.get(property.column),ps,parameterIndex++,sqlBuilder);
+                setParameter(o.get(property.column),connectionExecutorItem.preparedStatement,parameterIndex++,sqlBuilder);
             }
             builder.append(sqlBuilder.toString()+";");
-            preparedStatements[i] = ps;
+            connectionExecutorItem.sql = sqlBuilder.toString();
+            connectionExecutorItems[i] = connectionExecutorItem;
         }
-        ThreadLocalMap.put("sql",builder.toString());
-        return preparedStatements;
+        return connectionExecutorItems;
     }
 
     @Override
-    public PreparedStatement update(Query query) throws SQLException {
+    public ConnectionExecutorItem update(Query query) throws SQLException {
         StringBuilder builder = new StringBuilder("update " + query.entity.escapeTableName + " as t ");
         addJoinTableStatement(query,builder);
         builder.append(query.setBuilder.toString() + " " + query.where);
-        ThreadLocalMap.put("name","批量更新");
-        String sql = builder.toString();
-        ThreadLocalMap.put("sql",sql);
 
-        PreparedStatement ps = connection.prepareStatement(sql);
+        String sql = builder.toString();
+        ConnectionExecutorItem connectionExecutorItem = connectionExecutor.newConnectionExecutorItem("批量更新",sql);
         builder = new StringBuilder(sql.replace("?",PLACEHOLDER));
         for (Object parameter : query.updateParameterList) {
-            setParameter(parameter,ps,query.parameterIndex++,builder);
+            setParameter(parameter,connectionExecutorItem.preparedStatement,query.parameterIndex++,builder);
         }
-        addMainTableParameters(ps,query,query,builder);
-        ThreadLocalMap.put("sql",builder.toString());
-        return ps;
+        addMainTableParameters(connectionExecutorItem.preparedStatement,query,query,builder);
+        connectionExecutorItem.sql = builder.toString();
+        return connectionExecutorItem;
     }
 
     @Override
-    public PreparedStatement delete(Query query) throws SQLException {
+    public ConnectionExecutorItem delete(Query query) throws SQLException {
         StringBuilder builder = new StringBuilder("delete t from " + query.entity.escapeTableName + " as t");
         addJoinTableStatement(query,builder);
         builder.append(" " + query.where);
 
-        ThreadLocalMap.put("name","批量删除");
-        ThreadLocalMap.put("sql",builder.toString());
-
-        PreparedStatement ps = connection.prepareStatement(builder.toString());
-        builder = new StringBuilder(builder.toString().replace("?",PLACEHOLDER));
-        addMainTableParameters(ps,query,query,builder);
-        ThreadLocalMap.put("sql",builder.toString());
-        return ps;
+        String sql = builder.toString();
+        ConnectionExecutorItem connectionExecutorItem = connectionExecutor.newConnectionExecutorItem("批量删除",sql);
+        builder = new StringBuilder(sql.replace("?",PLACEHOLDER));
+        addMainTableParameters(connectionExecutorItem.preparedStatement,query,query,builder);
+        connectionExecutorItem.sql = builder.toString();
+        return connectionExecutorItem;
     }
 
     @Override
-    public PreparedStatement getArray(Query query) throws SQLException {
+    public ConnectionExecutorItem getArray(Query query) throws SQLException {
         StringBuilder builder = null;
         if(query.unionList.isEmpty()){
             builder = getArraySQL(query);
@@ -280,28 +259,26 @@ public class AbstractDQLBuilder extends AbstractSQLBuilder implements DQLBuilder
             }
             builder.append(" " + query.orderBy + " " + query.limit);
         }
-        ThreadLocalMap.put("name","获取列表");
         String sql = builder.toString();
-        ThreadLocalMap.put("sql",sql);
 
-        PreparedStatement ps = connection.prepareStatement(sql);
-        builder = new StringBuilder(builder.toString().replace("?",PLACEHOLDER));
-        addArraySQLParameters(ps,query,query,builder);
+        ConnectionExecutorItem connectionExecutorItem = connectionExecutor.newConnectionExecutorItem("获取列表",sql);
+        builder = new StringBuilder(sql.replace("?",PLACEHOLDER));
+        addArraySQLParameters(connectionExecutorItem.preparedStatement,query,query,builder);
         //添加union语句
         for(AbstractCondition abstractCondition:query.unionList){
             Query unionQuery = abstractCondition.query;
             for(SubQuery subQuery:unionQuery.subQueryList){
                 if(null!=subQuery.subQuery){
-                    addMainTableParameters(ps,subQuery.subQuery,query,builder);
+                    addMainTableParameters(connectionExecutorItem.preparedStatement,subQuery.subQuery,query,builder);
                 }
             }
-            addMainTableParameters(ps,unionQuery,query,builder);
+            addMainTableParameters(connectionExecutorItem.preparedStatement,unionQuery,query,builder);
             for (Object parameter : unionQuery.havingParameterList) {
-                setParameter(parameter,ps,query.parameterIndex++,builder);
+                setParameter(parameter,connectionExecutorItem.preparedStatement,query.parameterIndex++,builder);
             }
         }
-        ThreadLocalMap.put("sql",builder.toString());
-        return ps;
+        connectionExecutorItem.sql = builder.toString();
+        return connectionExecutorItem;
     }
 
     @Override

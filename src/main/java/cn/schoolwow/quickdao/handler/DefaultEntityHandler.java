@@ -35,6 +35,7 @@ public class DefaultEntityHandler implements EntityHandler{
     /**
      * 获取实体类信息
      */
+    @Override
     public synchronized void getEntityMap() throws Exception {
         List<Class> classList = new ArrayList<>();
         //扫描实体类包

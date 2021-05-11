@@ -2,9 +2,11 @@ package cn.schoolwow.quickdao.builder.ddl;
 
 import cn.schoolwow.quickdao.annotation.IdStrategy;
 import cn.schoolwow.quickdao.annotation.IndexType;
-import cn.schoolwow.quickdao.domain.*;
+import cn.schoolwow.quickdao.domain.Entity;
+import cn.schoolwow.quickdao.domain.IndexField;
+import cn.schoolwow.quickdao.domain.Property;
+import cn.schoolwow.quickdao.domain.QuickDAOConfig;
 
-import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -25,7 +27,8 @@ public class SQLServerDDLBuilder extends AbstractDDLBuilder {
 
     @Override
     public boolean hasTableExists(Entity entity) throws SQLException {
-        ResultSet resultSet = connection.prepareStatement("select name from sysobjects where xtype='u' and name = '"+entity.tableName+"';").executeQuery();
+        String hasTableExistsSQL = "select name from sysobjects where xtype='u' and name = '"+entity.tableName+"';";
+        ResultSet resultSet = connectionExecutor.executeQuery("判断表是否存在",hasTableExistsSQL);
         boolean result = false;
         if(resultSet.next()){
             result = true;
@@ -67,18 +70,16 @@ public class SQLServerDDLBuilder extends AbstractDDLBuilder {
         }
         builder.deleteCharAt(builder.length() - 1);
         builder.append(")");
-        ThreadLocalMap.put("name","生成新表");
-        ThreadLocalMap.put("sql",builder.toString());
-        connection.prepareStatement(ThreadLocalMap.get("sql")).executeUpdate();
+        connectionExecutor.executeUpdate("生成新表", builder.toString());
         //添加注释
         if (null != entity.comment) {
-            ThreadLocalMap.put("sql","EXEC sp_addextendedproperty 'MS_Description',N'"+entity.comment+"','SCHEMA','dbo','table',N'"+entity.tableName+"';");
-            connection.prepareStatement(ThreadLocalMap.get("sql")).executeUpdate();
+            String entityCommentSQL = "EXEC sp_addextendedproperty 'MS_Description',N'"+entity.comment+"','SCHEMA','dbo','table',N'"+entity.tableName+"';";
+            connectionExecutor.executeUpdate("创建表注释", entityCommentSQL);
         }
         for(Property property:entity.properties){
             if(null != property.comment){
-                ThreadLocalMap.put("sql","EXEC sp_addextendedproperty 'MS_Description',N'"+property.comment+"','SCHEMA','dbo','table',N'"+entity.tableName+"','column',N'"+property.column+"';");
-                connection.prepareStatement(ThreadLocalMap.get("sql")).executeUpdate();
+                String columnCommentSQL = "EXEC sp_addextendedproperty 'MS_Description',N'"+property.comment+"','SCHEMA','dbo','table',N'"+entity.tableName+"','column',N'"+property.column+"';";
+                connectionExecutor.executeUpdate("创建表字段注释", columnCommentSQL);
             }
         }
         //创建索引
@@ -89,10 +90,8 @@ public class SQLServerDDLBuilder extends AbstractDDLBuilder {
 
     @Override
     public boolean hasIndexExists(String tableName, String indexName) throws SQLException {
-        String sql = "select count(1) from sys.indexes WHERE object_id=OBJECT_ID('"+tableName+"', N'U') and name = '"+indexName+"'";
-        ThreadLocalMap.put("name","查看索引是否存在");
-        ThreadLocalMap.put("sql",sql);
-        ResultSet resultSet = connection.prepareStatement(sql).executeQuery();
+        String hasIndexExistsSQL = "select count(1) from sys.indexes WHERE object_id=OBJECT_ID('"+tableName+"', N'U') and name = '"+indexName+"'";
+        ResultSet resultSet = connectionExecutor.executeQuery("查看索引是否存在",hasIndexExistsSQL);
         boolean result = false;
         if (resultSet.next()) {
             result = resultSet.getInt(1) > 0;
@@ -104,9 +103,7 @@ public class SQLServerDDLBuilder extends AbstractDDLBuilder {
     @Override
     public void dropIndex(String tableName, String indexName) throws SQLException{
         String dropIndexSQL = "drop index " + quickDAOConfig.database.escape(tableName) + "." + quickDAOConfig.database.escape(indexName);
-        ThreadLocalMap.put("name","删除索引");
-        ThreadLocalMap.put("sql",dropIndexSQL);
-        connection.prepareStatement(ThreadLocalMap.get("sql")).executeUpdate();
+        connectionExecutor.executeUpdate("删除索引",dropIndexSQL);
     }
 
     @Override
@@ -159,9 +156,8 @@ public class SQLServerDDLBuilder extends AbstractDDLBuilder {
      * */
     @Override
     protected void getIndex(Entity entity) throws SQLException {
-        ThreadLocalMap.put("sql","select i.is_unique,i.name,col.name col_name from sys.indexes i left join sys.index_columns ic on ic.object_id = i.object_id and ic.index_id = i.index_id left join (select * from sys.all_columns where object_id = object_id( '"+entity.tableName+"', N'U' )) col on ic.column_id = col.column_id where i.object_id = object_id('"+entity.tableName+"', N'U' ) and i.index_id > 0");
-        PreparedStatement preparedStatement = connection.prepareStatement(ThreadLocalMap.get("sql"));
-        ResultSet resultSet = preparedStatement.executeQuery();
+        String getIndexSQL = "select i.is_unique,i.name,col.name col_name from sys.indexes i left join sys.index_columns ic on ic.object_id = i.object_id and ic.index_id = i.index_id left join (select * from sys.all_columns where object_id = object_id( '"+entity.tableName+"', N'U' )) col on ic.column_id = col.column_id where i.object_id = object_id('"+entity.tableName+"', N'U' ) and i.index_id > 0";
+        ResultSet resultSet = connectionExecutor.executeQuery("获取索引信息",getIndexSQL);
         while (resultSet.next()) {
             IndexField indexField = new IndexField();
             if(resultSet.getBoolean("is_unique")){
@@ -180,7 +176,6 @@ public class SQLServerDDLBuilder extends AbstractDDLBuilder {
             }
         }
         resultSet.close();
-        preparedStatement.close();
     }
 
     /**
@@ -188,21 +183,19 @@ public class SQLServerDDLBuilder extends AbstractDDLBuilder {
      * */
     @Override
     protected void getEntityPropertyList(Entity entity) throws SQLException {
-        //获取表注释
         {
-            ThreadLocalMap.put("sql","select isnull(convert(varchar(255),value),'') comment from sys.extended_properties ex_p where ex_p.minor_id=0 and ex_p.major_id in (select id from sys.sysobjects a where a.name='"+entity.tableName+"')");
-            PreparedStatement preparedStatement = connection.prepareStatement(ThreadLocalMap.get("sql"));
-            ResultSet resultSet = preparedStatement.executeQuery();
+            //获取表注释
+            String getEntityCommentSQL = "select isnull(convert(varchar(255),value),'') comment from sys.extended_properties ex_p where ex_p.minor_id=0 and ex_p.major_id in (select id from sys.sysobjects a where a.name='"+entity.tableName+"')";
+            ResultSet resultSet = connectionExecutor.executeQuery("获取表注释",getEntityCommentSQL);
             if(resultSet.next()){
                 entity.comment = resultSet.getString("comment");
             }
             resultSet.close();
         }
-        //获取字段信息
         {
-            ThreadLocalMap.put("sql","select ordinal_position,column_name,data_type,is_nullable from information_schema.columns where table_name = '" + entity.tableName + "'");
-            PreparedStatement preparedStatement = connection.prepareStatement(ThreadLocalMap.get("sql"));
-            ResultSet resultSet = preparedStatement.executeQuery();
+            //获取字段信息
+            String getEntityPropertyTypeListSQL = "select ordinal_position,column_name,data_type,is_nullable from information_schema.columns where table_name = '" + entity.tableName + "'";
+            ResultSet resultSet = connectionExecutor.executeQuery("获取表字段类型信息", getEntityPropertyTypeListSQL);
             List<Property> propertyList = new ArrayList<>();
             while (resultSet.next()) {
                 Property property = new Property();
@@ -216,14 +209,12 @@ public class SQLServerDDLBuilder extends AbstractDDLBuilder {
                 propertyList.add(property);
             }
             resultSet.close();
-            preparedStatement.close();
             entity.properties = propertyList;
         }
-        //获取字段注释
         {
-            ThreadLocalMap.put("sql","select c.name ,convert(varchar(255),a.value) value from sys.extended_properties a, sysobjects b, sys.columns c where a.major_id = b.id and c.object_id = b.id and c.column_id = a.minor_id and b.name = '"+entity.tableName+"'");
-            PreparedStatement preparedStatement = connection.prepareStatement(ThreadLocalMap.get("sql"));
-            ResultSet resultSet = preparedStatement.executeQuery();
+            //获取字段注释
+            String getPropertyCommentList = "select c.name ,convert(varchar(255),a.value) value from sys.extended_properties a, sysobjects b, sys.columns c where a.major_id = b.id and c.object_id = b.id and c.column_id = a.minor_id and b.name = '"+entity.tableName+"'";
+            ResultSet resultSet = connectionExecutor.executeQuery("获取字段注释", getPropertyCommentList);
             while(resultSet.next()){
                 String name = resultSet.getString("name");
                 for(Property property:entity.properties){
@@ -242,16 +233,16 @@ public class SQLServerDDLBuilder extends AbstractDDLBuilder {
      * */
     @Override
     protected List<Entity> getEntityList() throws SQLException {
+        String getEntityListSQL = "select name from sysobjects where xtype='u' order by name;";
+        ResultSet resultSet = connectionExecutor.executeQuery("获取表列表",getEntityListSQL);
+
         List<Entity> entityList = new ArrayList<>();
-        PreparedStatement preparedStatement = connection.prepareStatement("select name from sysobjects where xtype='u' order by name;");
-        ResultSet resultSet = preparedStatement.executeQuery();
         while (resultSet.next()) {
             Entity entity = new Entity();
             entity.tableName = resultSet.getString("name");
             entityList.add(entity);
         }
         resultSet.close();
-        preparedStatement.close();
         return entityList;
     }
 }
