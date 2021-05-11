@@ -107,12 +107,23 @@ public class ConnectionExecutor {
             ResultSet resultSet = preparedStatement.executeQuery();
             long endTime = System.currentTimeMillis();
             if(!"获取行数".equals(name)){
-                if(count>=0){
-                    logger.debug("[{}]行数:{},耗时:{}ms,执行SQL:{}", name, count, endTime - startTime, sql);
-                    count = -1;
+                StackTraceElement[] stackTraceElements = Thread.currentThread().getStackTrace();
+                if(stackTraceElements[2].getClassName().startsWith("cn.schoolwow.quickdao.builder.ddl")){
+                    if(count>=0){
+                        logger.trace("[{}]行数:{},耗时:{}ms,执行SQL:{}", name, count, endTime - startTime, sql);
+                        count = -1;
+                    }else{
+                        logger.trace("[{}]耗时:{}ms,执行SQL:{}", name, endTime - startTime, sql);
+                    }
                 }else{
-                    logger.debug("[{}]耗时:{}ms,执行SQL:{}", name, endTime - startTime, sql);
+                    if(count>=0){
+                        logger.debug("[{}]行数:{},耗时:{}ms,执行SQL:{}", name, count, endTime - startTime, sql);
+                        count = -1;
+                    }else{
+                        logger.debug("[{}]耗时:{}ms,执行SQL:{}", name, endTime - startTime, sql);
+                    }
                 }
+
                 for(Interceptor interceptor:quickDAOConfig.interceptorList){
                     interceptor.afterExecuteConnection(SQLStatementType.SELECT, name, sql);
                 }
@@ -135,7 +146,12 @@ public class ConnectionExecutor {
             long startTime = System.currentTimeMillis();
             int effect = preparedStatement.executeUpdate();
             long endTime = System.currentTimeMillis();
-            logger.debug("[{}]耗时:{}ms,执行SQL:{}", name, endTime - startTime, sql);
+            StackTraceElement[] stackTraceElements = Thread.currentThread().getStackTrace();
+            if(stackTraceElements[2].getClassName().startsWith("cn.schoolwow.quickdao.builder.ddl")){
+                logger.trace("[{}]耗时:{}ms,执行SQL:{}", name, endTime - startTime, sql);
+            }else{
+                logger.debug("[{}]耗时:{}ms,执行SQL:{}", name, endTime - startTime, sql);
+            }
             for(Interceptor interceptor:quickDAOConfig.interceptorList){
                 interceptor.afterExecuteConnection(SQLStatementType.UPDATE, name, sql);
             }
