@@ -6,7 +6,7 @@
 
   <groupId>cn.schoolwow</groupId>
   <artifactId>QuickDAO</artifactId>
-  <version>4.1.5.1</version>
+  <version>4.1.5.2-SNAPSHOT</version>
 
   <name>QuickDAO</name>
 
