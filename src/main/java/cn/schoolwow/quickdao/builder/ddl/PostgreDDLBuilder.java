@@ -2,9 +2,11 @@ package cn.schoolwow.quickdao.builder.ddl;
 
 import cn.schoolwow.quickdao.annotation.IdStrategy;
 import cn.schoolwow.quickdao.annotation.IndexType;
-import cn.schoolwow.quickdao.domain.*;
+import cn.schoolwow.quickdao.domain.Entity;
+import cn.schoolwow.quickdao.domain.IndexField;
+import cn.schoolwow.quickdao.domain.Property;
+import cn.schoolwow.quickdao.domain.QuickDAOConfig;
 
-import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -24,7 +26,8 @@ public class PostgreDDLBuilder extends AbstractDDLBuilder {
 
     @Override
     public boolean hasTableExists(Entity entity) throws SQLException {
-        ResultSet resultSet = connection.prepareStatement("select tablename from pg_tables where schemaname='public' and tablename = '"+entity.tableName+"';").executeQuery();
+        String hasTableExistsSQL = "select tablename from pg_tables where schemaname='public' and tablename = '"+entity.tableName+"';";
+        ResultSet resultSet = connectionExecutor.executeQuery("判断表是否存在",hasTableExistsSQL);
         boolean result = false;
         if(resultSet.next()){
             result = true;
@@ -37,7 +40,8 @@ public class PostgreDDLBuilder extends AbstractDDLBuilder {
     public void createTable(Entity entity) throws SQLException {
         if (quickDAOConfig.openForeignKey&&null!=entity.foreignKeyProperties&&entity.foreignKeyProperties.size()>0) {
             //手动开启外键约束
-            connection.prepareStatement("PRAGMA foreign_keys = ON;").executeUpdate();
+            String openForeignKeyCheck = "PRAGMA foreign_keys = ON;";
+            connectionExecutor.executeUpdate("开启外键约束",openForeignKeyCheck);
         }
         StringBuilder builder = new StringBuilder("create table " + entity.escapeTableName + "(");
         for (Property property : entity.properties) {
@@ -73,31 +77,29 @@ public class PostgreDDLBuilder extends AbstractDDLBuilder {
         if (null != entity.comment) {
             builder.append(" "+quickDAOConfig.database.comment(entity.comment));
         }
-        ThreadLocalMap.put("name","生成新表");
-        ThreadLocalMap.put("sql",builder.toString());
-        connection.prepareStatement(ThreadLocalMap.get("sql")).executeUpdate();
+        connectionExecutor.executeUpdate("生成新表", builder.toString());
         //创建索引
         for(IndexField indexField:entity.indexFieldList){
             createIndex(indexField);
         }
         //创建注释
-        String entityCommentSQL = "comment on table \"" + entity.tableName + "\" is '" + entity.comment + "'";
-        connection.prepareStatement(entityCommentSQL).executeUpdate();
+        if(null!=entity.comment){
+            String entityCommentSQL = "comment on table \"" + entity.tableName + "\" is '" + entity.comment + "'";
+            connectionExecutor.executeUpdate("创建表注释", entityCommentSQL);
+        }
         for (Property property : entity.properties) {
             if (property.comment == null) {
                 continue;
             }
             String columnCommentSQL = "comment on column \"" + entity.tableName + "\".\"" + property.column + "\" is '" + property.comment + "'";
-            connection.prepareStatement(columnCommentSQL).executeUpdate();
+            connectionExecutor.executeUpdate("创建表字段注释", columnCommentSQL);
         }
     }
 
     @Override
     public boolean hasIndexExists(String tableName, String indexName) throws SQLException {
-        String sql = "select count(1) from pg_indexes where tablename = '"+tableName+"' and indexname = '"+indexName+"'";
-        ThreadLocalMap.put("name","查看索引是否存在");
-        ThreadLocalMap.put("sql",sql);
-        ResultSet resultSet = connection.prepareStatement(sql).executeQuery();
+        String hasIndexExistsSQL = "select count(1) from pg_indexes where tablename = '"+tableName+"' and indexname = '"+indexName+"'";
+        ResultSet resultSet = connectionExecutor.executeQuery("查看索引是否存在",hasIndexExistsSQL);
         boolean result = false;
         if (resultSet.next()) {
             result = resultSet.getInt(1) > 0;
@@ -156,8 +158,8 @@ public class PostgreDDLBuilder extends AbstractDDLBuilder {
      * */
     @Override
     protected void getIndex(Entity entity) throws SQLException {
-        PreparedStatement preparedStatement = connection.prepareStatement("select tablename,indexname,indexdef from pg_indexes where tablename = '"+entity.tableName+"'");
-        ResultSet resultSet = preparedStatement.executeQuery();
+        String getIndexSQL = "select tablename,indexname,indexdef from pg_indexes where tablename = '"+entity.tableName+"'";
+        ResultSet resultSet = connectionExecutor.executeQuery("获取索引信息",getIndexSQL);
         while (resultSet.next()) {
             IndexField indexField = new IndexField();
             indexField.tableName = resultSet.getString("tablename");
@@ -177,7 +179,6 @@ public class PostgreDDLBuilder extends AbstractDDLBuilder {
             entity.indexFieldList.add(indexField);
         }
         resultSet.close();
-        preparedStatement.close();
     }
 
     /**
@@ -187,8 +188,9 @@ public class PostgreDDLBuilder extends AbstractDDLBuilder {
     protected void getEntityPropertyList(Entity entity) throws SQLException {
         List<Property> propertyList = new ArrayList<>();
         {
-            PreparedStatement preparedStatement = connection.prepareStatement("select attname as column_name , attnum as oridinal_position, attnotnull as notnull, format_type(atttypid,atttypmod) as type, col_description(attrelid, attnum) as comment from pg_attribute join pg_class on pg_attribute.attrelid = pg_class.oid where attnum > 0 and atttypid > 0 and pg_class.relname='"+entity.tableName+"'");
-            ResultSet resultSet = preparedStatement.executeQuery();
+            //获取表字段信息
+            String getEntityPropertyListSQL = "select attname as column_name , attnum as oridinal_position, attnotnull as notnull, format_type(atttypid,atttypmod) as type, col_description(attrelid, attnum) as comment from pg_attribute join pg_class on pg_attribute.attrelid = pg_class.oid where attnum > 0 and atttypid > 0 and pg_class.relname='" + entity.tableName+"'";
+            ResultSet resultSet = connectionExecutor.executeQuery("获取表字段信息",getEntityPropertyListSQL);
             while (resultSet.next()) {
                 Property property = new Property();
                 property.column = resultSet.getString("column_name");
@@ -199,12 +201,11 @@ public class PostgreDDLBuilder extends AbstractDDLBuilder {
                 propertyList.add(property);
             }
             resultSet.close();
-            preparedStatement.close();
         }
         {
             //提取默认值和主键信息
-            PreparedStatement preparedStatement = connection.prepareStatement("select ordinal_position,column_name,column_default,is_nullable,udt_name,character_maximum_length,column_default from information_schema.columns where table_name = '" + entity.tableName + "'");
-            final ResultSet resultSet = preparedStatement.executeQuery();
+            String getEntityPropertyTypeListSQL = "select ordinal_position,column_name,column_default,is_nullable,udt_name,character_maximum_length,column_default from information_schema.columns where table_name = '" + entity.tableName + "'";
+            ResultSet resultSet = connectionExecutor.executeQuery("获取表字段类型信息", getEntityPropertyTypeListSQL);
             while (resultSet.next()) {
                 Property property = propertyList.stream().filter(property1 -> {
                     try {
@@ -226,12 +227,11 @@ public class PostgreDDLBuilder extends AbstractDDLBuilder {
                 }
             }
             resultSet.close();
-            preparedStatement.close();
         }
-        //获取主键约束
         {
-            PreparedStatement preparedStatement = connection.prepareStatement("select conkey from pg_constraint join pg_class on pg_class.oid = pg_constraint.conrelid where contype = 'p' and relname = '" + entity.tableName + "'");
-            ResultSet resultSet = preparedStatement.executeQuery();
+            //获取主键约束
+            String getPrimaryKeySQL = "select conkey from pg_constraint join pg_class on pg_class.oid = pg_constraint.conrelid where contype = 'p' and relname = '" + entity.tableName + "'";
+            ResultSet resultSet = connectionExecutor.executeQuery("获取主键约束", getPrimaryKeySQL);
             while (resultSet.next()) {
                 String conkey = resultSet.getString("conkey");
                 for(Property property:propertyList){
@@ -242,7 +242,6 @@ public class PostgreDDLBuilder extends AbstractDDLBuilder {
                 }
             }
             resultSet.close();
-            preparedStatement.close();
         }
         entity.properties = propertyList;
     }
@@ -252,9 +251,10 @@ public class PostgreDDLBuilder extends AbstractDDLBuilder {
      * */
     @Override
     protected List<Entity> getEntityList() throws SQLException {
+        String getEntityListSQL = "select relname as name,cast(obj_description(relfilenode,'pg_class') as varchar) as comment from pg_class c where  relkind = 'r' and relname not like 'pg_%' and relname not like 'sql_%' order by relname";
+        ResultSet resultSet = connectionExecutor.executeQuery("获取表列表",getEntityListSQL);
+
         List<Entity> entityList = new ArrayList<>();
-        PreparedStatement preparedStatement = connection.prepareStatement("select relname as name,cast(obj_description(relfilenode,'pg_class') as varchar) as comment from pg_class c where  relkind = 'r' and relname not like 'pg_%' and relname not like 'sql_%' order by relname");
-        ResultSet resultSet = preparedStatement.executeQuery();
         while (resultSet.next()) {
             Entity entity = new Entity();
             entity.tableName = resultSet.getString("name");
@@ -262,7 +262,6 @@ public class PostgreDDLBuilder extends AbstractDDLBuilder {
             entityList.add(entity);
         }
         resultSet.close();
-        preparedStatement.close();
         return entityList;
     }
 }

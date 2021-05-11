@@ -2,9 +2,11 @@ package cn.schoolwow.quickdao.builder.ddl;
 
 import cn.schoolwow.quickdao.annotation.IdStrategy;
 import cn.schoolwow.quickdao.annotation.IndexType;
-import cn.schoolwow.quickdao.domain.*;
+import cn.schoolwow.quickdao.domain.Entity;
+import cn.schoolwow.quickdao.domain.IndexField;
+import cn.schoolwow.quickdao.domain.Property;
+import cn.schoolwow.quickdao.domain.QuickDAOConfig;
 
-import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -19,7 +21,8 @@ public class SQLiteDDLBuilder extends AbstractDDLBuilder {
 
     @Override
     public boolean hasTableExists(Entity entity) throws SQLException {
-        ResultSet resultSet = connection.prepareStatement("select name from sqlite_master where type='table' and name = '"+entity.tableName+"';").executeQuery();
+        String hasTableExistsSQL = "select name from sqlite_master where type='table' and name = '"+entity.tableName+"';";
+        ResultSet resultSet = connectionExecutor.executeQuery("判断表是否存在",hasTableExistsSQL);
         boolean result = false;
         if(resultSet.next()){
             result = true;
@@ -32,7 +35,8 @@ public class SQLiteDDLBuilder extends AbstractDDLBuilder {
     public void createTable(Entity entity) throws SQLException {
         if (quickDAOConfig.openForeignKey&&null!=entity.foreignKeyProperties&&entity.foreignKeyProperties.size()>0) {
             //手动开启外键约束
-            connection.prepareStatement("PRAGMA foreign_keys = ON;").executeUpdate();
+            String openForeignKeyCheck = "PRAGMA foreign_keys = ON;";
+            connectionExecutor.executeUpdate("开启外键约束",openForeignKeyCheck);
         }
         StringBuilder builder = new StringBuilder("create table " + entity.escapeTableName + "(");
         for (Property property : entity.properties) {
@@ -68,9 +72,7 @@ public class SQLiteDDLBuilder extends AbstractDDLBuilder {
         if (null != entity.comment) {
             builder.append(" "+quickDAOConfig.database.comment(entity.comment));
         }
-        ThreadLocalMap.put("name","生成新表");
-        ThreadLocalMap.put("sql",builder.toString());
-        connection.prepareStatement(ThreadLocalMap.get("sql")).executeUpdate();
+        connectionExecutor.executeUpdate("生成新表", builder.toString());
         //创建索引
         for(IndexField indexField:entity.indexFieldList){
             createIndex(indexField);
@@ -89,11 +91,8 @@ public class SQLiteDDLBuilder extends AbstractDDLBuilder {
 
     @Override
     public boolean hasIndexExists(String tableName, String indexName) throws SQLException {
-        String sql = "select count(1) from sqlite_master where type = 'index' and name = '"+indexName+"'";
-        ThreadLocalMap.put("name","查看索引是否存在");
-        ThreadLocalMap.put("sql",sql);
-
-        ResultSet resultSet = connection.prepareStatement(sql).executeQuery();
+        String hasIndexExistsSQL = "select count(1) from sqlite_master where type = 'index' and name = '"+indexName+"'";
+        ResultSet resultSet = connectionExecutor.executeQuery("查看索引是否存在",hasIndexExistsSQL);
         boolean result = false;
         if (resultSet.next()) {
             result = resultSet.getInt(1) > 0;
@@ -105,9 +104,7 @@ public class SQLiteDDLBuilder extends AbstractDDLBuilder {
     @Override
     public void enableForeignConstraintCheck(boolean enable) throws SQLException {
         String foreignConstraintCheckSQL = "PRAGMA foreign_keys = " + enable;
-        ThreadLocalMap.put("name",enable?"启用外键约束检查":"禁用外键约束检查");
-        ThreadLocalMap.put("sql",foreignConstraintCheckSQL);
-        connection.prepareStatement(ThreadLocalMap.get("sql")).executeUpdate();
+        connectionExecutor.executeUpdate(enable?"启用外键约束检查":"禁用外键约束检查", foreignConstraintCheckSQL);
     }
 
     @Override
@@ -156,8 +153,8 @@ public class SQLiteDDLBuilder extends AbstractDDLBuilder {
      * */
     @Override
     protected void getIndex(Entity entity) throws SQLException {
-        PreparedStatement preparedStatement = connection.prepareStatement("select sql from sqlite_master where type='index' and sql is not null and tbl_name = '" + entity.tableName+"'");
-        ResultSet resultSet = preparedStatement.executeQuery();
+        String getIndexSQL = "select sql from sqlite_master where type='index' and sql is not null and tbl_name = '" + entity.tableName+"'";
+        ResultSet resultSet = connectionExecutor.executeQuery("获取索引信息",getIndexSQL);
         while (resultSet.next()) {
             String sql = resultSet.getString("sql");
             String[] tokens = sql.split("`");
@@ -175,7 +172,6 @@ public class SQLiteDDLBuilder extends AbstractDDLBuilder {
             entity.indexFieldList.add(indexField);
         }
         resultSet.close();
-        preparedStatement.close();
     }
 
     /**
@@ -183,8 +179,8 @@ public class SQLiteDDLBuilder extends AbstractDDLBuilder {
      * */
     @Override
     protected void getEntityPropertyList(Entity entity) throws SQLException {
-        PreparedStatement preparedStatement = connection.prepareStatement("PRAGMA table_info(`" + entity.tableName + "`)");
-        ResultSet resultSet = preparedStatement.executeQuery();
+        String getEntityPropertyListSQL = "PRAGMA table_info(`" + entity.tableName + "`)";
+        ResultSet resultSet = connectionExecutor.executeQuery("获取表字段信息",getEntityPropertyListSQL);
         List<Property> propertyList = new ArrayList<>();
         while (resultSet.next()) {
             Property property = new Property();
@@ -201,7 +197,6 @@ public class SQLiteDDLBuilder extends AbstractDDLBuilder {
             propertyList.add(property);
         }
         resultSet.close();
-        preparedStatement.close();
         entity.properties = propertyList;
     }
 
@@ -210,16 +205,16 @@ public class SQLiteDDLBuilder extends AbstractDDLBuilder {
      * */
     @Override
     protected List<Entity> getEntityList() throws SQLException {
+        String getEntityListSQL = "select name from sqlite_master where type='table' and name != 'sqlite_sequence';";
+        ResultSet resultSet = connectionExecutor.executeQuery("获取表列表",getEntityListSQL);
+
         List<Entity> entityList = new ArrayList<>();
-        PreparedStatement preparedStatement = connection.prepareStatement("select name from sqlite_master where type='table' and name != 'sqlite_sequence';");
-        ResultSet resultSet = preparedStatement.executeQuery();
         while (resultSet.next()) {
             Entity entity = new Entity();
             entity.tableName = resultSet.getString("name");
             entityList.add(entity);
         }
         resultSet.close();
-        preparedStatement.close();
         return entityList;
     }
 }

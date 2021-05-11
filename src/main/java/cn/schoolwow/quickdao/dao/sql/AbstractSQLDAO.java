@@ -1,14 +1,13 @@
 package cn.schoolwow.quickdao.dao.sql;
 
 import cn.schoolwow.quickdao.builder.AbstractSQLBuilder;
+import cn.schoolwow.quickdao.domain.ConnectionExecutorItem;
 import cn.schoolwow.quickdao.domain.Entity;
 import cn.schoolwow.quickdao.domain.QuickDAOConfig;
-import cn.schoolwow.quickdao.domain.ThreadLocalMap;
 import cn.schoolwow.quickdao.exception.SQLRuntimeException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.util.Collection;
 
@@ -34,22 +33,19 @@ public class AbstractSQLDAO implements SQLDAO {
         boolean result = false;
         try {
             Entity entity = quickDAOConfig.getEntityByClassName(instance.getClass().getName());
-            PreparedStatement ps = null;
+            ConnectionExecutorItem connectionExecutorItem = null;
             if(!entity.uniqueProperties.isEmpty()){
-                ps = sqlBuilder.selectCountByUniqueKey(instance);
+                connectionExecutorItem = sqlBuilder.selectCountByUniqueKey(instance);
             }else if(null!=entity.id){
-                ps = sqlBuilder.selectCountById(instance);
+                connectionExecutorItem = sqlBuilder.selectCountById(instance);
             }else{
                 throw new IllegalArgumentException("该实例无唯一性约束又无id值,无法判断!类名:"+instance.getClass().getName());
             }
-            ThreadLocalMap.put("count","0");
-            ResultSet resultSet = ps.executeQuery();
+            ResultSet resultSet = sqlBuilder.connectionExecutor.executeQuery(connectionExecutorItem);
             if (resultSet.next()) {
                 result = resultSet.getLong(1)>0;
-                ThreadLocalMap.put("count","1");
             }
             resultSet.close();
-            ps.close();
         } catch (Exception e) {
             throw new SQLRuntimeException(e);
         }

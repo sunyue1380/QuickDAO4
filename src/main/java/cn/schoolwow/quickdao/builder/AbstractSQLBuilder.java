@@ -1,9 +1,6 @@
 package cn.schoolwow.quickdao.builder;
 
-import cn.schoolwow.quickdao.domain.Entity;
-import cn.schoolwow.quickdao.domain.Property;
-import cn.schoolwow.quickdao.domain.QuickDAOConfig;
-import cn.schoolwow.quickdao.domain.ThreadLocalMap;
+import cn.schoolwow.quickdao.domain.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -34,15 +31,15 @@ public class AbstractSQLBuilder implements SQLBuilder{
     private final static DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
     /**数据库信息对象*/
     public QuickDAOConfig quickDAOConfig;
-    /**数据库连接对象*/
-    public volatile Connection connection;
+    /**SQL语句执行器*/
+    public volatile ConnectionExecutor connectionExecutor;
 
     public AbstractSQLBuilder(QuickDAOConfig quickDAOConfig) {
         this.quickDAOConfig = quickDAOConfig;
     }
 
     @Override
-    public PreparedStatement selectCountById(Object instance) throws Exception {
+    public ConnectionExecutorItem selectCountById(Object instance) throws Exception {
         String key = "selectCountById_" + instance.getClass().getName()+"_"+quickDAOConfig.database.getClass().getName();
         Entity entity = quickDAOConfig.getEntityByClassName(instance.getClass().getName());
         if (!quickDAOConfig.sqlCache.containsKey(key)) {
@@ -51,20 +48,19 @@ public class AbstractSQLBuilder implements SQLBuilder{
             builder.append(entity.id.column+" = "+(null==entity.id.function?"?":entity.id.function)+" ");
             quickDAOConfig.sqlCache.put(key, builder.toString());
         }
+
         String sql = quickDAOConfig.sqlCache.get(key);
-        ThreadLocalMap.put("name","根据id查询");
-        ThreadLocalMap.put("sql",sql);
-        PreparedStatement ps = connection.prepareStatement(sql);
+        ConnectionExecutorItem connectionExecutorItem = connectionExecutor.newConnectionExecutorItem("根据id查询",sql);
         Field field = instance.getClass().getDeclaredField(entity.id.name);
         field.setAccessible(true);
         Object value = field.get(instance);
-        ps.setObject(1,value);
-        ThreadLocalMap.put("sql",sql.replace("?",value==null?"":value.toString()));
-        return ps;
+        connectionExecutorItem.preparedStatement.setObject(1,value);
+        connectionExecutorItem.sql = sql.replace("?",value==null?"":value.toString());
+        return connectionExecutorItem;
     }
 
     @Override
-    public PreparedStatement selectCountByUniqueKey(Object instance) throws Exception {
+    public ConnectionExecutorItem selectCountByUniqueKey(Object instance) throws Exception {
         String key = "selectCountByUniqueKey_" + instance.getClass().getName()+"_"+quickDAOConfig.database.getClass().getName();
         Entity entity = quickDAOConfig.getEntityByClassName(instance.getClass().getName());
         if (!quickDAOConfig.sqlCache.containsKey(key)) {
@@ -76,18 +72,17 @@ public class AbstractSQLBuilder implements SQLBuilder{
             builder.delete(builder.length()-5,builder.length());
             quickDAOConfig.sqlCache.put(key, builder.toString());
         }
+
         String sql = quickDAOConfig.sqlCache.get(key);
-        ThreadLocalMap.put("name","根据唯一性约束查询");
-        ThreadLocalMap.put("sql",sql);
+        ConnectionExecutorItem connectionExecutorItem = connectionExecutor.newConnectionExecutorItem("根据唯一性约束查询",sql);
         StringBuilder builder = new StringBuilder(sql.replace("?", PLACEHOLDER));
-        PreparedStatement ps = connection.prepareStatement(sql);
         int parameterIndex = 1;
         for(Property property:entity.uniqueProperties){
-            setParameter(instance,property,ps,parameterIndex, builder);
+            setParameter(instance,property,connectionExecutorItem.preparedStatement,parameterIndex, builder);
             parameterIndex++;
         }
-        ThreadLocalMap.put("sql",builder.toString());
-        return ps;
+        connectionExecutorItem.sql = builder.toString();
+        return connectionExecutorItem;
     }
 
     /**

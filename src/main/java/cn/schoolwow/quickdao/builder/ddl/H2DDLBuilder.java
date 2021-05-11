@@ -2,9 +2,11 @@ package cn.schoolwow.quickdao.builder.ddl;
 
 import cn.schoolwow.quickdao.annotation.IdStrategy;
 import cn.schoolwow.quickdao.annotation.IndexType;
-import cn.schoolwow.quickdao.domain.*;
+import cn.schoolwow.quickdao.domain.Entity;
+import cn.schoolwow.quickdao.domain.IndexField;
+import cn.schoolwow.quickdao.domain.Property;
+import cn.schoolwow.quickdao.domain.QuickDAOConfig;
 
-import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -20,7 +22,8 @@ public class H2DDLBuilder extends MySQLDDLBuilder {
 
     @Override
     public boolean hasTableExists(Entity entity) throws SQLException {
-        ResultSet resultSet = connection.prepareStatement("select table_name from information_schema.tables where table_name = '"+entity.tableName.toUpperCase()+"'").executeQuery();
+        String hasTableExistsSQL = "select table_name from information_schema.tables where table_name = '"+entity.tableName.toUpperCase()+"'";
+        ResultSet resultSet = connectionExecutor.executeQuery("判断表是否存在",hasTableExistsSQL);
         boolean result = false;
         if(resultSet.next()){
             result = true;
@@ -31,11 +34,8 @@ public class H2DDLBuilder extends MySQLDDLBuilder {
 
     @Override
     public boolean hasIndexExists(String tableName, String indexName) throws SQLException {
-        String sql = "select count(1) from information_schema.indexes where index_name = '"+indexName.toUpperCase()+"'";
-        ThreadLocalMap.put("name","查看索引是否存在");
-        ThreadLocalMap.put("sql",sql);
-
-        ResultSet resultSet = connection.prepareStatement(sql).executeQuery();
+        String hasIndexExistsSQL = "select count(1) from information_schema.indexes where index_name = '"+indexName.toUpperCase()+"'";
+        ResultSet resultSet = connectionExecutor.executeQuery("查看索引是否存在",hasIndexExistsSQL);
         boolean result = false;
         if (resultSet.next()) {
             result = resultSet.getInt(1) > 0;
@@ -90,8 +90,8 @@ public class H2DDLBuilder extends MySQLDDLBuilder {
      * */
     @Override
     protected void getIndex(Entity entity) throws SQLException {
-        PreparedStatement preparedStatement = connection.prepareStatement("select sql from information_schema.indexes where table_name ='" + entity.tableName+"'");
-        ResultSet resultSet = preparedStatement.executeQuery();
+        String getIndexSQL = "select sql from information_schema.indexes where table_name ='" + entity.tableName+"'";
+        ResultSet resultSet = connectionExecutor.executeQuery("获取索引信息",getIndexSQL);
         while (resultSet.next()) {
             String sql = resultSet.getString("sql");
             String[] tokens = sql.split("\"");
@@ -109,7 +109,6 @@ public class H2DDLBuilder extends MySQLDDLBuilder {
             entity.indexFieldList.add(indexField);
         }
         resultSet.close();
-        preparedStatement.close();
     }
 
     /**
@@ -117,8 +116,8 @@ public class H2DDLBuilder extends MySQLDDLBuilder {
      * */
     @Override
     protected void getEntityPropertyList(Entity entity) throws SQLException {
-        PreparedStatement preparedStatement = connection.prepareStatement("show columns from " + quickDAOConfig.database.escape(entity.tableName));
-        ResultSet resultSet = preparedStatement.executeQuery();
+        String getEntityPropertyListSQL = "show columns from " + quickDAOConfig.database.escape(entity.tableName);
+        ResultSet resultSet = connectionExecutor.executeQuery("获取表字段信息",getEntityPropertyListSQL);
         List<Property> propertyList = new ArrayList<>();
         while (resultSet.next()) {
             Property property = new Property();
@@ -140,7 +139,6 @@ public class H2DDLBuilder extends MySQLDDLBuilder {
             propertyList.add(property);
         }
         resultSet.close();
-        preparedStatement.close();
         entity.properties = propertyList;
     }
 
@@ -149,16 +147,16 @@ public class H2DDLBuilder extends MySQLDDLBuilder {
      * */
     @Override
     protected List<Entity> getEntityList() throws SQLException {
+        String getEntityListSQL = "show tables;";
+        ResultSet resultSet = connectionExecutor.executeQuery("获取表列表",getEntityListSQL);
+
         List<Entity> entityList = new ArrayList<>();
-        PreparedStatement preparedStatement = connection.prepareStatement("show tables;");
-        ResultSet resultSet = preparedStatement.executeQuery();
         while (resultSet.next()) {
             Entity entity = new Entity();
             entity.tableName = resultSet.getString(1);
             entityList.add(entity);
         }
         resultSet.close();
-        preparedStatement.close();
         return entityList;
     }
 }

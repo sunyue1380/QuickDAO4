@@ -3,15 +3,14 @@ package cn.schoolwow.quickdao.dao.sql.dml;
 import cn.schoolwow.quickdao.annotation.IdStrategy;
 import cn.schoolwow.quickdao.builder.dml.AbstractDMLBuilder;
 import cn.schoolwow.quickdao.dao.sql.AbstractSQLDAO;
+import cn.schoolwow.quickdao.domain.ConnectionExecutorItem;
 import cn.schoolwow.quickdao.domain.Entity;
 import cn.schoolwow.quickdao.domain.QuickDAOConfig;
 import cn.schoolwow.quickdao.domain.SFunction;
-import cn.schoolwow.quickdao.domain.ThreadLocalMap;
 import cn.schoolwow.quickdao.exception.SQLRuntimeException;
 import cn.schoolwow.quickdao.util.LambdaUtils;
 
 import java.lang.reflect.Field;
-import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -34,11 +33,11 @@ public class AbstractDMLDAO extends AbstractSQLDAO implements DMLDAO{
         }
         int effect = 0;
         try {
-            PreparedStatement ps = dmlBuilder.insert(instance);
-            effect = ps.executeUpdate();
+            ConnectionExecutorItem connectionExecutorItem = dmlBuilder.insert(instance);
+            effect = sqlBuilder.connectionExecutor.executeUpdate(connectionExecutorItem);
             Entity entity = quickDAOConfig.getEntityByClassName(instance.getClass().getName());
             if (effect>0&&null!=entity.id&&entity.id.strategy.equals(IdStrategy.AutoIncrement)) {
-                ResultSet rs = ps.getGeneratedKeys();
+                ResultSet rs = connectionExecutorItem.preparedStatement.getGeneratedKeys();
                 if (rs.next()) {
                     Field idField = instance.getClass().getDeclaredField(entity.id.name);
                     idField.setAccessible(true);
@@ -65,11 +64,10 @@ public class AbstractDMLDAO extends AbstractSQLDAO implements DMLDAO{
                 }
                 rs.close();
             }
-            ps.close();
+            connectionExecutorItem.preparedStatement.close();
         } catch (Exception e) {
             throw new SQLRuntimeException(e);
         }
-        ThreadLocalMap.put("count",effect+"");
         return effect;
     }
 
@@ -80,17 +78,17 @@ public class AbstractDMLDAO extends AbstractSQLDAO implements DMLDAO{
         }
         int effect = 0;
         try {
-            PreparedStatement[] preparedStatements = dmlBuilder.insert(instances);
             Entity entity = quickDAOConfig.getEntityByClassName(instances[0].getClass().getName());
             Field idField = null;
             if(null!=entity.id&&entity.id.strategy.equals(IdStrategy.AutoIncrement)){
                 idField = instances[0].getClass().getDeclaredField(entity.id.name);
                 idField.setAccessible(true);
             }
-            for(int i=0;i<preparedStatements.length;i++){
-                effect += preparedStatements[i].executeUpdate();
+            ConnectionExecutorItem[] connectionExecutorItems = dmlBuilder.insert(instances);
+            for(int i=0;i<connectionExecutorItems.length;i++){
+                effect += dmlBuilder.connectionExecutor.executeUpdate(connectionExecutorItems[i]);
                 if(effect>0&&null!=idField){
-                    ResultSet rs = preparedStatements[i].getGeneratedKeys();
+                    ResultSet rs = connectionExecutorItems[i].preparedStatement.getGeneratedKeys();
                     if(rs.next()){
                         switch(idField.getType().getSimpleName().toLowerCase()){
                             case "int":
@@ -115,13 +113,12 @@ public class AbstractDMLDAO extends AbstractSQLDAO implements DMLDAO{
                     }
                     rs.close();
                 }
-                preparedStatements[i].close();
+                connectionExecutorItems[i].preparedStatement.close();
             }
-            dmlBuilder.connection.commit();
+            dmlBuilder.connectionExecutor.connection.commit();
         } catch (Exception e) {
             throw new SQLRuntimeException(e);
         }
-        ThreadLocalMap.put("count",effect+"");
         return effect;
     }
 
@@ -167,17 +164,16 @@ public class AbstractDMLDAO extends AbstractSQLDAO implements DMLDAO{
         }
         int effect = 0;
         try {
-            PreparedStatement ps = dmlBuilder.insertBatch(instances);
-            int[] batches = ps.executeBatch();
+            ConnectionExecutorItem connectionExecutorItem = dmlBuilder.insertBatch(instances);
+            int[] batches = connectionExecutorItem.preparedStatement.executeBatch();
             for (int batch : batches) {
                 effect += batch;
             }
-            ps.close();
-            dmlBuilder.connection.commit();
+            connectionExecutorItem.preparedStatement.close();
+            dmlBuilder.connectionExecutor.connection.commit();
         } catch (Exception e) {
             throw new SQLRuntimeException(e);
         }
-        ThreadLocalMap.put("count",effect+"");
         return effect;
     }
 
@@ -192,25 +188,23 @@ public class AbstractDMLDAO extends AbstractSQLDAO implements DMLDAO{
             return 0;
         }
         int effect = 0;
-        PreparedStatement ps = null;
         Entity entity = quickDAOConfig.getEntityByClassName(instance.getClass().getName());
         try {
+            ConnectionExecutorItem connectionExecutorItem = null;
             if(!entity.uniqueProperties.isEmpty()){
-                ps = dmlBuilder.updateByUniqueKey(instance);
-                effect = ps.executeUpdate();
+                connectionExecutorItem = dmlBuilder.updateByUniqueKey(instance);
             }else if(null!=entity.id){
-                ps = dmlBuilder.updateById(instance);
-                effect = ps.executeUpdate();
+                connectionExecutorItem = dmlBuilder.updateById(instance);
             }else{
                 logger.warn("[忽略更新操作]该实例无唯一性约束又无id,忽略该实例的更新操作!");
             }
-            if(null!=ps){
-                ps.close();
+            if(null!=connectionExecutorItem){
+                effect = sqlBuilder.connectionExecutor.executeUpdate(connectionExecutorItem);
+                connectionExecutorItem.preparedStatement.close();
             }
         } catch (Exception e) {
             throw new SQLRuntimeException(e);
         }
-        ThreadLocalMap.put("count",effect+"");
         return effect;
     }
 
@@ -220,26 +214,29 @@ public class AbstractDMLDAO extends AbstractSQLDAO implements DMLDAO{
             return 0;
         }
         int effect = 0;
-        PreparedStatement ps = null;
         try {
             Entity entity = quickDAOConfig.getEntityByClassName(instances[0].getClass().getName());
+            ConnectionExecutorItem connectionExecutorItem = null;
             if(!entity.uniqueProperties.isEmpty()){
                 //根据唯一性约束更新
-                ps = dmlBuilder.updateByUniqueKey(instances);
+                connectionExecutorItem = dmlBuilder.updateByUniqueKey(instances);
             }else if(null!=entity.id){
                 //根据id更新
-                ps = dmlBuilder.updateById(instances);
+                connectionExecutorItem = dmlBuilder.updateById(instances);
+            }else{
+                logger.warn("[忽略更新操作]该实例无唯一性约束又无id,忽略该实例的更新操作!");
             }
-            int[] batches = ps.executeBatch();
-            for (int batch : batches) {
-                effect += batch;
+            if(null!=connectionExecutorItem){
+                int[] batches = connectionExecutorItem.preparedStatement.executeBatch();
+                for (int batch : batches) {
+                    effect += batch;
+                }
+                connectionExecutorItem.preparedStatement.close();
             }
-            ps.close();
-            dmlBuilder.connection.commit();
+            dmlBuilder.connectionExecutor.connection.commit();
         } catch (Exception e) {
             throw new SQLRuntimeException(e);
         }
-        ThreadLocalMap.put("count",effect+"");
         return effect;
     }
 
@@ -277,7 +274,6 @@ public class AbstractDMLDAO extends AbstractSQLDAO implements DMLDAO{
         }
         effect += update(updateList);
         effect += insert(insertList);
-        ThreadLocalMap.put("count",effect+"");
         return effect;
     }
 
@@ -302,13 +298,12 @@ public class AbstractDMLDAO extends AbstractSQLDAO implements DMLDAO{
     public int delete(Class clazz, String field, Object value) {
         int effect = 0;
         try {
-            PreparedStatement ps = dmlBuilder.deleteByProperty(clazz,field,value);
-            effect = ps.executeUpdate();
-            ps.close();
+            ConnectionExecutorItem connectionExecutorItem = dmlBuilder.deleteByProperty(clazz,field,value);
+            effect = sqlBuilder.connectionExecutor.executeUpdate(connectionExecutorItem);
+            connectionExecutorItem.preparedStatement.close();
         } catch (SQLException e) {
             throw new SQLRuntimeException(e);
         }
-        ThreadLocalMap.put("count",effect+"");
         return effect;
     }
 
@@ -326,13 +321,12 @@ public class AbstractDMLDAO extends AbstractSQLDAO implements DMLDAO{
     public int delete(String tableName, String field, Object value) {
         int effect = 0;
         try {
-            PreparedStatement ps = dmlBuilder.deleteByProperty(tableName,field,value);
-            effect = ps.executeUpdate();
-            ps.close();
+            ConnectionExecutorItem connectionExecutorItem = dmlBuilder.deleteByProperty(tableName,field,value);
+            effect = sqlBuilder.connectionExecutor.executeUpdate(connectionExecutorItem);
+            connectionExecutorItem.preparedStatement.close();
         } catch (SQLException e) {
             throw new SQLRuntimeException(e);
         }
-        ThreadLocalMap.put("count",effect+"");
         return effect;
     }
 
@@ -340,13 +334,12 @@ public class AbstractDMLDAO extends AbstractSQLDAO implements DMLDAO{
     public int clear(Class clazz) {
         int effect = 0;
         try {
-            PreparedStatement ps = dmlBuilder.clear(clazz);
-            effect = ps.executeUpdate();
-            ps.close();
+            ConnectionExecutorItem connectionExecutorItem = dmlBuilder.clear(clazz);
+            effect = sqlBuilder.connectionExecutor.executeUpdate(connectionExecutorItem);
+            connectionExecutorItem.preparedStatement.close();
         } catch (SQLException e) {
             throw new SQLRuntimeException(e);
         }
-        ThreadLocalMap.put("count",effect+"");
         return effect;
     }
 }

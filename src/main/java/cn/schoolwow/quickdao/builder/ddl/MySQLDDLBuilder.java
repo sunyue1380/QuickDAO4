@@ -2,9 +2,11 @@ package cn.schoolwow.quickdao.builder.ddl;
 
 import cn.schoolwow.quickdao.annotation.IdStrategy;
 import cn.schoolwow.quickdao.annotation.IndexType;
-import cn.schoolwow.quickdao.domain.*;
+import cn.schoolwow.quickdao.domain.Entity;
+import cn.schoolwow.quickdao.domain.IndexField;
+import cn.schoolwow.quickdao.domain.Property;
+import cn.schoolwow.quickdao.domain.QuickDAOConfig;
 
-import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.*;
@@ -16,7 +18,8 @@ public class MySQLDDLBuilder extends AbstractDDLBuilder {
 
     @Override
     public String getDatabaseName() throws SQLException{
-        ResultSet resultSet = connection.prepareStatement("select database();").executeQuery();
+        String getDatabaseNameSQL = "select database();";
+        ResultSet resultSet = connectionExecutor.executeQuery("获取数据库名称",getDatabaseNameSQL);
         String databaseName = null;
         if(resultSet.next()){
             databaseName = resultSet.getString(1);
@@ -32,7 +35,8 @@ public class MySQLDDLBuilder extends AbstractDDLBuilder {
 
     @Override
     public boolean hasTableExists(Entity entity) throws SQLException {
-        ResultSet resultSet = connection.prepareStatement("show tables like '%"+entity.tableName+"%';").executeQuery();
+        String hasTableExistsSQL = "show tables like '%"+entity.tableName+"%';";
+        ResultSet resultSet = connectionExecutor.executeQuery("判断表是否存在",hasTableExistsSQL);
         boolean result = false;
         if(resultSet.next()){
             result = true;
@@ -117,18 +121,13 @@ public class MySQLDDLBuilder extends AbstractDDLBuilder {
         if(null!=charset&&!charset.isEmpty()){
             builder.append(" DEFAULT CHARSET="+charset);
         }
-        ThreadLocalMap.put("name","生成新表");
-        ThreadLocalMap.put("sql",builder.toString());
-        connection.prepareStatement(ThreadLocalMap.get("sql")).executeUpdate();
+        connectionExecutor.executeUpdate("生成新表",builder.toString());
     }
 
     @Override
     public boolean hasIndexExists(String tableName, String indexName) throws SQLException {
-        String sql = "show index from "+quickDAOConfig.database.escape(tableName)+" where key_name = '"+indexName+"'";
-
-        ThreadLocalMap.put("name","查看索引是否存在");
-        ThreadLocalMap.put("sql",sql);
-        ResultSet resultSet = connection.prepareStatement(sql).executeQuery();
+        String hasIndexExistsSQL = "show index from "+quickDAOConfig.database.escape(tableName)+" where key_name = '"+indexName+"'";
+        ResultSet resultSet = connectionExecutor.executeQuery("查看索引是否存在",hasIndexExistsSQL);
         boolean result = false;
         if (resultSet.next()) {
             result = true;
@@ -140,17 +139,13 @@ public class MySQLDDLBuilder extends AbstractDDLBuilder {
     @Override
     public void dropIndex(String tableName, String indexName) throws SQLException{
         String dropIndexSQL = "drop index "+quickDAOConfig.database.escape(indexName)+" on "+quickDAOConfig.database.escape(tableName);
-        ThreadLocalMap.put("name","删除索引");
-        ThreadLocalMap.put("sql",dropIndexSQL);
-        connection.prepareStatement(ThreadLocalMap.get("sql")).executeUpdate();
+        connectionExecutor.executeUpdate("删除索引",dropIndexSQL);
     }
 
     @Override
     public void enableForeignConstraintCheck(boolean enable) throws SQLException {
         String foreignConstraintCheckSQL = "set foreign_key_checks = " + (enable?1:0);
-        ThreadLocalMap.put("name",enable?"启用外键约束检查":"禁用外键约束检查");
-        ThreadLocalMap.put("sql",foreignConstraintCheckSQL);
-        connection.prepareStatement(ThreadLocalMap.get("sql")).executeUpdate();
+        connectionExecutor.executeUpdate(enable?"启用外键约束检查":"禁用外键约束检查",foreignConstraintCheckSQL);
     }
 
     @Override
@@ -209,8 +204,8 @@ public class MySQLDDLBuilder extends AbstractDDLBuilder {
      * */
     @Override
     protected void getIndex(Entity entity) throws SQLException {
-        PreparedStatement preparedStatement = connection.prepareStatement("show index from " + quickDAOConfig.database.escape(entity.tableName));
-        ResultSet resultSet = preparedStatement.executeQuery();
+        String getIndexSQL = "show index from " + quickDAOConfig.database.escape(entity.tableName);
+        ResultSet resultSet = connectionExecutor.executeQuery("获取索引信息",getIndexSQL);
         while (resultSet.next()) {
             String indexName = resultSet.getString("Key_name");
             IndexField indexField = null;
@@ -233,7 +228,6 @@ public class MySQLDDLBuilder extends AbstractDDLBuilder {
             }
         }
         resultSet.close();
-        preparedStatement.close();
     }
 
     /**
@@ -241,8 +235,8 @@ public class MySQLDDLBuilder extends AbstractDDLBuilder {
      * */
     @Override
     protected void getEntityPropertyList(Entity entity) throws SQLException {
-        PreparedStatement preparedStatement = connection.prepareStatement("show full columns from " + quickDAOConfig.database.escape(entity.tableName));
-        ResultSet resultSet = preparedStatement.executeQuery();
+        String getEntityPropertyListSQL = "show full columns from " + quickDAOConfig.database.escape(entity.tableName);
+        ResultSet resultSet = connectionExecutor.executeQuery("获取表字段信息",getEntityPropertyListSQL);
         List<Property> propertyList = new ArrayList<>();
         while (resultSet.next()) {
             Property property = new Property();
@@ -270,7 +264,6 @@ public class MySQLDDLBuilder extends AbstractDDLBuilder {
             propertyList.add(property);
         }
         resultSet.close();
-        preparedStatement.close();
         entity.properties = propertyList;
     }
 
@@ -279,9 +272,10 @@ public class MySQLDDLBuilder extends AbstractDDLBuilder {
      * */
     @Override
     protected List<Entity> getEntityList() throws SQLException {
+        String getEntityListSQL = "show table status;";
+        ResultSet resultSet = connectionExecutor.executeQuery("获取表列表",getEntityListSQL);
+
         List<Entity> entityList = new ArrayList<>();
-        PreparedStatement preparedStatement = connection.prepareStatement("show table status;");
-        ResultSet resultSet = preparedStatement.executeQuery();
         while (resultSet.next()) {
             Entity entity = new Entity();
             entity.tableName = resultSet.getString("Name");
@@ -291,7 +285,6 @@ public class MySQLDDLBuilder extends AbstractDDLBuilder {
             entityList.add(entity);
         }
         resultSet.close();
-        preparedStatement.close();
         return entityList;
     }
 }

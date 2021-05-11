@@ -2,16 +2,15 @@ package cn.schoolwow.quickdao.dao.sql.dql;
 
 import cn.schoolwow.quickdao.builder.dql.AbstractDQLBuilder;
 import cn.schoolwow.quickdao.dao.sql.AbstractSQLDAO;
+import cn.schoolwow.quickdao.domain.ConnectionExecutorItem;
 import cn.schoolwow.quickdao.domain.Entity;
 import cn.schoolwow.quickdao.domain.QuickDAOConfig;
 import cn.schoolwow.quickdao.domain.SFunction;
-import cn.schoolwow.quickdao.domain.ThreadLocalMap;
 import cn.schoolwow.quickdao.exception.SQLRuntimeException;
 import cn.schoolwow.quickdao.util.LambdaUtils;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 
-import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.List;
@@ -42,21 +41,19 @@ public class AbstractDQLDAO extends AbstractSQLDAO implements DQLDAO {
     @Override
     public <T> List<T> fetchList(Class<T> clazz, String field, Object value) {
         try {
-            PreparedStatement ps = null;
+            ConnectionExecutorItem connectionExecutorItem = null;
             if(null==value){
-                ps = dqlBuilder.fetchNull(clazz,field);
+                connectionExecutorItem = dqlBuilder.fetchNull(clazz,field);
             }else{
-                ps = dqlBuilder.fetch(clazz,field,value);
+                connectionExecutorItem = dqlBuilder.fetch(clazz,field,value);
             }
             Entity entity = quickDAOConfig.getEntityByClassName(clazz.getName());
-            ResultSet resultSet = ps.executeQuery();
+            ResultSet resultSet = sqlBuilder.connectionExecutor.executeQuery(connectionExecutorItem);
             JSONArray array = new JSONArray();
             while(resultSet.next()){
                 array.add(quickDAOConfig.database.getObject(entity, "t",resultSet));
             }
             resultSet.close();
-            ps.close();
-            ThreadLocalMap.put("count",array.size()+"");
             return array.toJavaList(clazz);
         } catch (SQLException e) {
             throw new SQLRuntimeException(e);
@@ -95,21 +92,19 @@ public class AbstractDQLDAO extends AbstractSQLDAO implements DQLDAO {
     @Override
     public JSONArray fetchList(String tableName, String field, Object value) {
         try {
-            PreparedStatement ps = null;
+            ConnectionExecutorItem connectionExecutorItem = null;
             if(null==value){
-                ps = dqlBuilder.fetchNull(tableName,field);
+                connectionExecutorItem = dqlBuilder.fetchNull(tableName,field);
             }else{
-                ps = dqlBuilder.fetch(tableName,field,value);
+                connectionExecutorItem = dqlBuilder.fetch(tableName,field,value);
             }
             Entity dbEntity = quickDAOConfig.getDbEntityByTableName(tableName);
-            ResultSet resultSet = ps.executeQuery();
+            ResultSet resultSet = sqlBuilder.connectionExecutor.executeQuery(connectionExecutorItem);
             JSONArray array = new JSONArray();
             while(resultSet.next()){
                 array.add(quickDAOConfig.database.getObject(dbEntity, "t",resultSet));
             }
             resultSet.close();
-            ps.close();
-            ThreadLocalMap.put("count",array.size()+"");
             return array;
         } catch (SQLException e) {
             throw new SQLRuntimeException(e);

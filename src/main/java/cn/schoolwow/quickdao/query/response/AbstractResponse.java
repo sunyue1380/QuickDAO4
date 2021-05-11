@@ -7,7 +7,6 @@ import com.alibaba.fastjson.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
@@ -28,13 +27,12 @@ public class AbstractResponse<T> implements Response<T>{
         long count = 0;
         query.parameterIndex = 1;
         try {
-            PreparedStatement ps = query.dqlBuilder.count(query);
-            ResultSet resultSet = ps.executeQuery();
+            ConnectionExecutorItem connectionExecutorItem = query.dqlBuilder.count(query);
+            ResultSet resultSet = query.dqlBuilder.connectionExecutor.executeQuery(connectionExecutorItem);
             if (resultSet.next()) {
                 count = resultSet.getLong(1);
             }
             resultSet.close();
-            ps.close();
         } catch (SQLException e) {
             throw new SQLRuntimeException(e);
         }
@@ -47,35 +45,34 @@ public class AbstractResponse<T> implements Response<T>{
         int count = 0;
         try {
             if(null!=query.insertArray){
-                PreparedStatement[] preparedStatements = query.dqlBuilder.insertArray(query);
-                for(int i=0;i<preparedStatements.length;i++){
-                    count += preparedStatements[i].executeUpdate();
+                ConnectionExecutorItem[] connectionExecutorItems = query.dqlBuilder.insertArray(query);
+                for(int i=0;i<connectionExecutorItems.length;i++){
+                    count += query.dqlBuilder.connectionExecutor.executeUpdate(connectionExecutorItems[i]);
                     if(count>0){
-                        ResultSet rs = preparedStatements[i].getGeneratedKeys();
+                        ResultSet rs = connectionExecutorItems[i].preparedStatement.getGeneratedKeys();
                         if (rs.next()) {
                             query.insertArray.getJSONObject(i).put("generatedKeys",rs.getString(1));
                         }
                         rs.close();
                     }
-                    preparedStatements[i].close();
+                    connectionExecutorItems[i].preparedStatement.close();
                 }
-                query.dqlBuilder.connection.commit();
+                query.dqlBuilder.connectionExecutor.connection.commit();
             }else{
-                PreparedStatement ps = query.dqlBuilder.insert(query);
-                count = ps.executeUpdate();
+                ConnectionExecutorItem connectionExecutorItem = query.dqlBuilder.insert(query);
+                count = query.dqlBuilder.connectionExecutor.executeUpdate(connectionExecutorItem);
                 if (count>0&&null!=query.insertValue) {
-                    ResultSet rs = ps.getGeneratedKeys();
+                    ResultSet rs = connectionExecutorItem.preparedStatement.getGeneratedKeys();
                     if (rs.next()) {
                         query.insertValue.put("generatedKeys",rs.getString(1));
                     }
                     rs.close();
                 }
-                ps.close();
+                connectionExecutorItem.preparedStatement.close();
             }
         } catch (SQLException e) {
             throw new SQLRuntimeException(e);
         }
-        ThreadLocalMap.put("count",count+"");
         return count;
     }
 
@@ -83,13 +80,12 @@ public class AbstractResponse<T> implements Response<T>{
     public int update() {
         int count = 0;
         try {
-            PreparedStatement ps = query.dqlBuilder.update(query);
-            count = ps.executeUpdate();
-            ps.close();
+            ConnectionExecutorItem connectionExecutorItem = query.dqlBuilder.update(query);
+            count = query.dqlBuilder.connectionExecutor.executeUpdate(connectionExecutorItem);
+            connectionExecutorItem.preparedStatement.close();
         } catch (SQLException e) {
             throw new SQLRuntimeException(e);
         }
-        ThreadLocalMap.put("count",count+"");
         return count;
     }
 
@@ -97,13 +93,12 @@ public class AbstractResponse<T> implements Response<T>{
     public int delete() {
         int count = 0;
         try {
-            PreparedStatement ps = query.dqlBuilder.delete(query);
-            count = ps.executeUpdate();
-            ps.close();
+            ConnectionExecutorItem connectionExecutorItem = query.dqlBuilder.delete(query);
+            count = query.dqlBuilder.connectionExecutor.executeUpdate(connectionExecutorItem);
+            connectionExecutorItem.preparedStatement.close();
         } catch (SQLException e) {
             throw new SQLRuntimeException(e);
         }
-        ThreadLocalMap.put("count",count+"");
         return count;
     }
 
@@ -140,14 +135,14 @@ public class AbstractResponse<T> implements Response<T>{
     @Override
     public <E> List<E> getSingleColumnList(Class<E> clazz) {
         try {
-            PreparedStatement ps = query.dqlBuilder.getArray(query);
             JSONArray array = new JSONArray(query.dqlBuilder.getResultSetRowCount(query));
-            ResultSet resultSet = ps.executeQuery();
+            ConnectionExecutorItem connectionExecutorItem = query.dqlBuilder.getArray(query);
+            ResultSet resultSet = query.dqlBuilder.connectionExecutor.executeQuery(connectionExecutorItem);
             while (resultSet.next()) {
                 array.add(resultSet.getObject(1));
             }
             resultSet.close();
-            ps.close();
+            connectionExecutorItem.preparedStatement.close();
             return array.toJavaList(clazz);
         } catch (SQLException e) {
             throw new SQLRuntimeException(e);
@@ -189,9 +184,9 @@ public class AbstractResponse<T> implements Response<T>{
     public JSONArray getArray() {
         JSONArray array = null;
         try {
-            PreparedStatement ps = query.dqlBuilder.getArray(query);
             array = new JSONArray(query.dqlBuilder.getResultSetRowCount(query));
-            ResultSet resultSet = ps.executeQuery();
+            ConnectionExecutorItem connectionExecutorItem = query.dqlBuilder.getArray(query);
+            ResultSet resultSet = query.dqlBuilder.connectionExecutor.executeQuery(connectionExecutorItem);
             if(query.column.length()>0){
                 if(null==query.columnTypeMapping){
                     query.columnTypeMapping = query.quickDAOConfig.columnTypeMapping;
@@ -233,9 +228,8 @@ public class AbstractResponse<T> implements Response<T>{
                     array.add(o);
                 }
             }
-            ThreadLocalMap.put("count",array.size()+"");
             resultSet.close();
-            ps.close();
+            connectionExecutorItem.preparedStatement.close();
         } catch (SQLException e) {
             throw new SQLRuntimeException(e);
         }

@@ -1,6 +1,6 @@
 package cn.schoolwow.quickdao.builder;
 
-import java.sql.PreparedStatement;
+import cn.schoolwow.quickdao.domain.ConnectionExecutorItem;
 
 /**
  * 公共SQLBuilder
@@ -9,10 +9,10 @@ public interface SQLBuilder {
     /**
      * 根据唯一性约束查询
      */
-    PreparedStatement selectCountById(Object instance) throws Exception;
+    ConnectionExecutorItem selectCountById(Object instance) throws Exception;
 
     /**
      * 根据唯一性约束查询
      */
-    PreparedStatement selectCountByUniqueKey(Object instance) throws Exception;
+    ConnectionExecutorItem selectCountByUniqueKey(Object instance) throws Exception;
 }
