@@ -663,6 +663,11 @@ public class AbstractCondition<T> implements Condition<T>, Serializable,Cloneabl
         return this.query;
     }
 
+    @Override
+    public String toString() {
+        return query.toString();
+    }
+
     /**添加in查询*/
     private void addInQuery(String field, Object[] values, String in) {
         if (null == values || values.length == 0) {

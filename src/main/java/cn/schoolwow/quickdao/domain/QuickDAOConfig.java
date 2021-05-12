@@ -131,4 +131,30 @@ public class QuickDAOConfig {
         }
         return null;
     }
+
+    @Override
+    public String toString() {
+        return "\n{\n" +
+                "数据源:" + dataSource + "\n"
+                + "待扫描包名:" + packageNameMap + "\n"
+                + "待扫描类:" + entityClassMap + "\n"
+                + "要忽略的类:" + ignoreClassList + "\n"
+                + "要忽略的包名:" + ignorePackageNameList + "\n"
+                + "函数式接口过滤类:" + predicate + "\n"
+                + "是否开启外键约束:" + openForeignKey + "\n"
+                + "是否自动建表:" + autoCreateTable + "\n"
+                + "是否自动新增属性:" + autoCreateProperty + "\n"
+                + "全局Id生成策略:" + idStrategy + "\n"
+                + "全局Id生成器实例:" + idGenerator + "\n"
+                + "当前数据库名称:" + databaseName + "\n"
+                + "全局表编码格式:" + charset + "\n"
+                + "全局表引擎:" + engine + "\n"
+                + "全局类型转换:" + columnTypeMapping + "\n"
+                + "扫描后的实体类信息个数:" + entityMap.size() + "\n"
+                + "SQL语句缓存个数:" + sqlCache.size() + "\n"
+                + "数据库获取的表个数:" + (null==dbEntityList?"无信息":dbEntityList.size()) + "\n"
+                + "虚拟表(dual等):" + visualTableList + "\n"
+                + "数据库信息:" + database + "\n"
+                + "}\n";
+    }
 }

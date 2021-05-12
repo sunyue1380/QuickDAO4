@@ -259,14 +259,7 @@ public enum Database {
                 }
                 break;
                 case "java.sql.Blob": {
-                    switch(this){
-                        case SQLite:{
-                            value = resultSet.getObject(columnName);
-                        }break;
-                        default:{
-                            value = resultSet.getBlob(columnName);
-                        }break;
-                    }
+                    value = resultSet.getBlob(columnName);
                 }
                 break;
                 case "java.sql.Clob": {

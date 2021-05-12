@@ -161,4 +161,22 @@ public class Entity implements Serializable, Cloneable{
         }
         return null;
     }
+
+    @Override
+    public String toString() {
+        return "\n{\n" +
+                "实体类类名:" + (null==clazz?"":clazz.getName()) + "\n"
+                + "原始表名:" + tableName + "\n"
+                + "转义后表名:" + escapeTableName + "\n"
+                + "表注释:" + comment + "\n"
+                + "Id属性:" + (null==id?"无":id.column) + "\n"
+                + "索引列表:" + indexFieldList + "\n"
+                + "字段列表:" + properties + "\n"
+                + "外键约束列表:" + foreignKeyProperties + "\n"
+                + "实体类成员变量:" + compositFieldMap + "\n"
+                + "表编码格式:" + charset + "\n"
+                + "表引擎:" + engine + "\n"
+                + "记录唯一字段列表:" + uniqueProperties + "\n"
+                + "}\n";
+    }
 }

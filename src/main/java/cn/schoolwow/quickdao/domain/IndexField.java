@@ -69,4 +69,16 @@ public class IndexField implements Serializable,Cloneable {
         }
         return null;
     }
+
+    @Override
+    public String toString() {
+        return "\n{\n" +
+                "表名:" + tableName + "\n"
+                + "索引类型:" + indexType + "\n"
+                + "索引名称:" + indexName + "\n"
+                + "索引方法:" + using + "\n"
+                + "索引注释:" + comment + "\n"
+                + "索引字段:" + columns + "\n"
+                + "}\n";
+    }
 }
