@@ -236,6 +236,11 @@ public class AbstractResponse<T> implements Response<T>{
         return array;
     }
 
+    @Override
+    public String toString() {
+        return query.toString();
+    }
+
     /**设置分页对象*/
     private void setPageVo() {
         if (query.pageVo == null) {

@@ -176,4 +176,40 @@ public class Query implements Serializable,Cloneable {
         }
         return null;
     }
+
+    @Override
+    public String toString() {
+        return "\n{\n" +
+                "是否开启事务:" + transaction + "\n"
+                + "关联Entity:" + (null==entity?"无":entity) + "\n"
+                + "from子查询:" + fromQuery + "\n"
+                + "关联表计数:" + joinTableIndex + "\n"
+                + "主表别名:" + tableAliasName + "\n"
+                + "distinct:" + distinct + "\n"
+                + "列名:" + column + "\n"
+                + "列类型转换:" + columnTypeMapping + "\n"
+                + "字段插入:" + insertBuilder.toString() + "\n"
+                + "字段更新:" + setBuilder.toString() + "\n"
+                + "查询条件:" + where + "\n"
+                + "分组查询:" + groupBy + "\n"
+                + "having查询:" + having + "\n"
+                + "排序:" + orderBy + "\n"
+                + "分页:" + limit + "\n"
+                + "是否返回复杂属性:" + compositField + "\n"
+                + "union类型:" + unionType + "\n"
+                + "union语句列表:" + unionList + "\n"
+                + "or查询语句列表:" + orList + "\n"
+                + "参数索引:" + parameterIndex + "\n"
+                + "select子查询:" + selectQueryList + "\n"
+                + "查询参数:" + parameterList + "\n"
+                + "插入参数对象:" + insertValue + "\n"
+                + "批量插入参数对象:" + insertArray + "\n"
+                + "插入参数:" + insertParameterList + "\n"
+                + "查询参数:" + parameterList + "\n"
+                + "更新参数:" + updateParameterList + "\n"
+                + "having参数:" + havingParameterList + "\n"
+                + "分页对象:" + pageVo + "\n"
+                + "关联子查询:" + subQueryList + "\n"
+                + "}\n";
+    }
 }

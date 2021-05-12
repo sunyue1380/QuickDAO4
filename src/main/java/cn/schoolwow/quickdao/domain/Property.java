@@ -125,4 +125,28 @@ public class Property implements Serializable,Cloneable {
         }
         return null;
     }
+
+    @Override
+    public String toString() {
+        return "\n{\n" +
+                "是否为id:" + id + "\n"
+                + "id生成策略:" + strategy + "\n"
+                + "返回列标签名称:" + columnLabel + "\n"
+                + "列名:" + column + "\n"
+                + "数据库类型:" + columnType + "\n"
+                + "注释:" + comment + "\n"
+                + "类:" + className + "\n"
+                + "属性名:" + name + "\n"
+                + "是否非空:" + notNull + "\n"
+                + "check约束:" + check + "\n"
+                + "转义后的check约束:" + escapeCheck + "\n"
+                + "默认值:" + defaultValue + "\n"
+                + "属性所在位置:" + position + "\n"
+                + "在哪个字段之后:" + after + "\n"
+                + "字段函数:" + function + "\n"
+                + "是否填充插入时间:" + createdAt + "\n"
+                + "是否填充更新时间:" + updateAt + "\n"
+                + "外键关联:" + foreignKey + "\n"
+                + "}\n";
+    }
 }

@@ -11,19 +11,24 @@ import cn.schoolwow.quickdao.mysql.entity.DownloadTask;
 import cn.schoolwow.quickdao.mysql.entity.Order;
 import cn.schoolwow.quickdao.mysql.entity.Person;
 import cn.schoolwow.quickdao.mysql.entity.TypeEntity;
+import cn.schoolwow.quickdao.query.condition.Condition;
+import cn.schoolwow.quickdao.query.subCondition.SubCondition;
 import com.alibaba.fastjson.JSONArray;
 import org.junit.Assert;
 import org.junit.Test;
 
+import javax.sql.rowset.serial.SerialBlob;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
+import java.sql.SQLException;
 import java.sql.Time;
 import java.sql.Timestamp;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Date;
+import java.util.List;
 
 /**配置项测试*/
 public class ConfigTest extends MySQLTest {
@@ -152,7 +157,7 @@ public class ConfigTest extends MySQLTest {
 
     /**测试类型转换*/
     @Test
-    public void testTypeMapping(){
+    public void testTypeMapping() throws SQLException {
         dao.rebuild(TypeEntity.class);
         TypeEntity typeEntity = new TypeEntity();
         typeEntity.setByteType((byte)0);
@@ -171,7 +176,7 @@ public class ConfigTest extends MySQLTest {
         typeEntity.setLocalDate(LocalDate.now());
         typeEntity.setLocalDateTime(LocalDateTime.now());
         typeEntity.setBigDecimalType(new BigDecimal(0));
-        typeEntity.setBlobType(null);
+        typeEntity.setBlobType(new SerialBlob(new byte[]{0,0,0,0,0}));
         typeEntity.setClobType(null);
         typeEntity.setnClobType(null);
         typeEntity.setInputStreamType(null);
@@ -183,6 +188,21 @@ public class ConfigTest extends MySQLTest {
                 .execute()
                 .getArray();
         Assert.assertEquals(1,array.size());
+
+        List<TypeEntity> typeEntityList = array.toJavaList(TypeEntity.class);
+        System.out.println(typeEntityList.size());
     }
 
+    @Test
+    public void testToString(){
+        List<Entity> entityList = dao.getDbEntityList();
+        for(Entity entity:entityList){
+            System.out.println(entity);
+        }
+        Condition condition = dao.query(Person.class);
+        System.out.println(condition);
+        SubCondition subCondition = dao.query(Person.class)
+                .joinTable(Order.class,"id","personId");
+        System.out.println(subCondition);
+    }
 }

@@ -255,6 +255,11 @@ public class AbstractSubCondition<T,P> implements SubCondition<T,P>, Serializabl
         return subQuery.condition;
     }
 
+    @Override
+    public String toString() {
+        return subQuery.toString();
+    }
+
     /**添加in查询*/
     private void addInQuery(String field, Object[] values, String in) {
         if (null == values || values.length == 0) {

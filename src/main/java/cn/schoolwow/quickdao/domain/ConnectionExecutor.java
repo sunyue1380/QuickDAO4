@@ -108,7 +108,7 @@ public class ConnectionExecutor {
             long endTime = System.currentTimeMillis();
             if(!"获取行数".equals(name)){
                 StackTraceElement[] stackTraceElements = Thread.currentThread().getStackTrace();
-                if(stackTraceElements[2].getClassName().startsWith("cn.schoolwow.quickdao.builder.ddl")){
+                if(stackTraceElements[3].getClassName().startsWith("cn.schoolwow.quickdao.builder.ddl")){
                     if(count>=0){
                         logger.trace("[{}]行数:{},耗时:{}ms,执行SQL:{}", name, count, endTime - startTime, sql);
                         count = -1;
@@ -147,7 +147,7 @@ public class ConnectionExecutor {
             int effect = preparedStatement.executeUpdate();
             long endTime = System.currentTimeMillis();
             StackTraceElement[] stackTraceElements = Thread.currentThread().getStackTrace();
-            if(stackTraceElements[2].getClassName().startsWith("cn.schoolwow.quickdao.builder.ddl")){
+            if(stackTraceElements[3].getClassName().startsWith("cn.schoolwow.quickdao.builder.ddl")){
                 logger.trace("[{}]耗时:{}ms,执行SQL:{}", name, endTime - startTime, sql);
             }else{
                 logger.debug("[{}]耗时:{}ms,执行SQL:{}", name, endTime - startTime, sql);

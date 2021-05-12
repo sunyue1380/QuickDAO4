@@ -78,4 +78,20 @@ public class SubQuery<T,P> implements Serializable {
      * 主表
      */
     public transient AbstractCondition<P> condition;
+
+    @Override
+    public String toString() {
+        return "\n{\n" +
+                "关联实体:" + (null==entity?"无":entity.clazz) + "\n"
+                + "表别名:" + tableAliasName + "\n"
+                + "主表字段:" + primaryField + "\n"
+                + "子表字段:" + joinTableField + "\n"
+                + "对象变量名:" + compositField + "\n"
+                + "on条件映射:" + onConditionMap + "\n"
+                + "连接方式:" + join + "\n"
+                + "查询条件:" + where + "\n"
+                + "查询参数:" + parameterList + "\n"
+                + "关联子查询:" + subQuerySQLBuilder + "\n"
+                + "}\n";
+    }
 }
