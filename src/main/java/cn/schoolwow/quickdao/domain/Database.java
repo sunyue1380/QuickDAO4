@@ -23,6 +23,7 @@ import java.util.Date;
 
 /**数据库类型*/
 public enum Database {
+    MariaDB,
     Mysql,
     H2,
     SQLite,
@@ -32,6 +33,7 @@ public enum Database {
     /**返回注释语句*/
     public String comment(String comment){
         switch (this){
+            case MariaDB:
             case Mysql:{
                 return "comment \"" + comment + "\"";
             }
@@ -50,6 +52,7 @@ public enum Database {
     /**转义表,列等*/
     public String escape(String value){
         switch (this){
+            case MariaDB:
             case Mysql:
             case H2:
             case SQLite:{
@@ -66,6 +69,7 @@ public enum Database {
     /**获取Condition实例*/
     public Condition getConditionInstance(Query query){
         switch(this){
+            case MariaDB:
             case Mysql:
             case SQLite:
             case H2:{return new AbstractCondition(query);}
@@ -81,6 +85,7 @@ public enum Database {
     public SubCondition getSubConditionInstance(SubQuery subQuery){
         switch(this){
             case SQLite:{return new SQLiteSubCondition(subQuery);}
+            case MariaDB:
             case Mysql:
             case H2:
             case Postgre:
@@ -94,6 +99,7 @@ public enum Database {
     /**获取DDL实例*/
     public AbstractDDLBuilder getDDLBuilderInstance(QuickDAOConfig quickDAOConfig){
         switch(this){
+            case MariaDB:
             case Mysql:{return new MySQLDDLBuilder(quickDAOConfig);}
             case SQLite:{return new SQLiteDDLBuilder(quickDAOConfig);}
             case H2:{return new H2DDLBuilder(quickDAOConfig);}
@@ -111,6 +117,7 @@ public enum Database {
             case SQLite:
             case SQLServer:
             case Postgre:{return new SQLiteDQLBuilder(quickDAOConfig);}
+            case MariaDB:
             case Mysql:
             case H2:{return new AbstractDQLBuilder(quickDAOConfig);}
             default:{
@@ -312,6 +319,8 @@ public enum Database {
         } else if (jdbcUrl.contains("jdbc:sqlite")) {
             return Database.SQLite;
         } else if (jdbcUrl.contains("jdbc:mysql")) {
+            return Database.Mysql;
+        } else if (jdbcUrl.contains("jdbc:mariadb")) {
             return Database.Mysql;
         } else if (jdbcUrl.contains("jdbc:postgresql")) {
             return Database.Postgre;

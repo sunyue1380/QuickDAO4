@@ -51,6 +51,49 @@ public class DAOUtil {
     }
 
     /**
+     * 获取mariadb接口对象
+     */
+    public static HikariDataSource getMariaDBDataSource() {
+        HikariDataSource hikariDataSource = new HikariDataSource();
+        hikariDataSource.setDriverClassName("org.mariadb.jdbc.Driver");
+        hikariDataSource.setJdbcUrl("jdbc:mariadb://127.0.0.1:3306/quickdao");
+        hikariDataSource.setUsername("root");
+        hikariDataSource.setPassword("123456");
+        return hikariDataSource;
+    }
+
+    /**
+     * 获取mariadb接口对象
+     */
+    public static DAO getMariaDBDAO() {
+        return getMySQLDAO(null);
+    }
+
+    /**
+     * 获取mariadb接口对象
+     */
+    public static DAO getMariaDBDAO(HikariDataSource hikariDataSource) {
+        if(hikariDataSource==null){
+            hikariDataSource = getMySQLDataSource();
+        }
+        DAO dao = QuickDAO.newInstance()
+                .dataSource(hikariDataSource)
+                .packageName("cn.schoolwow.quickdao.mariadb.entity")
+                .charset("utf8")
+                .engine("InnoDB")
+                .foreignKey(false)
+                .columnTypeMapping((property) -> {
+                    if (property.column.equalsIgnoreCase("created_at") ||
+                            property.column.equalsIgnoreCase("updated_at")) {
+                        return LocalDateTime.class;
+                    }
+                    return null;
+                })
+                .build();
+        return dao;
+    }
+
+    /**
      * 获取mysql接口对象
      */
     public static HikariDataSource getMySQLDataSource() {
