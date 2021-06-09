@@ -12,6 +12,7 @@ public class DCLTest extends MySQLTest {
     @Test
     public void dcl(){
         List<String> userNameList = dao.getUserNameList();
+        System.out.println(userNameList);
         if(userNameList.contains("quickdao")){
             dao.deleteUser(dataBaseUser);
         }

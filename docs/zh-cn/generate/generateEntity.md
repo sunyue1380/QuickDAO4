@@ -1,6 +1,6 @@
 # 实体类生成
 
-QuickDAO支持扫描数据库表信息并自动生成对应Entity类功能
+QuickDAO支持扫描数据库表信息并自动生成对应Entity类
 
 ```java
 BasicDataSource dataSource = new BasicDataSource();

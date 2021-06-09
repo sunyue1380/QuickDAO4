@@ -21,6 +21,7 @@
 
   - [简单更新](zh-cn/operate/simple.md)
   - [批量更新](zh-cn/operate/batch.md)
+  - [DCL操作](zh-cn/operate/dcl.md)
   - [DDL操作](zh-cn/operate/ddl.md)
   
 - 事务

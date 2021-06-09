@@ -16,6 +16,7 @@ public class DatabaseTest {
         dataBaseUser.password = "123456";
 
         grantOption.dataBaseUser = dataBaseUser;
+        grantOption.privileges = "all privileges";
         grantOption.databaseName = "quickdao";
     }
 }

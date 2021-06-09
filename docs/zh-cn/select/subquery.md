@@ -1,6 +1,6 @@
 # 关联子查询
 
-QuickDAO持子查询功能,您可以将Condition接口对象作为子查询参数传入.
+QuickDAO支持子查询功能,您可以将Condition接口对象作为子查询参数传入.
 
 ## 实体类信息
 
