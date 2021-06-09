@@ -161,6 +161,15 @@ public class DMLTest extends PostgreLTest {
                 }
             }
         }
+        {
+            int effect = dao.query(Person.class)
+                    .addUpdate("password","654321")
+                    .execute()
+                    .update();
+            Assert.assertEquals(6,effect);
+            List<Person> personList = dao.fetchList(Person.class,"password","654321");
+            Assert.assertEquals(6,personList.size());
+        }
     }
 
     private void save() {

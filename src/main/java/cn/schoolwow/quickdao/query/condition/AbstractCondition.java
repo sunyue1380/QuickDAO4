@@ -316,7 +316,14 @@ public class AbstractCondition<T> implements Condition<T>, Serializable,Cloneabl
 
     @Override
     public Condition<T> addUpdate(String field, Object value) {
-        query.setBuilder.append(query.quickDAOConfig.database.escape(query.entity.getColumnNameByFieldName(field)) + " = ?,");
+        Property property = query.entity.getPropertyByFieldName(field);
+        query.setBuilder.append(query.quickDAOConfig.database.escape(null==property?field:property.column) + " = ");
+        if(null==property||null==property.function){
+            query.setBuilder.append("?");
+        }else{
+            query.setBuilder.append(property.function);
+        }
+        query.setBuilder.append(",");
         query.updateParameterList.add(value);
         return this;
     }

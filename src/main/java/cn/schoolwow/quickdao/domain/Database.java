@@ -321,7 +321,7 @@ public enum Database {
         } else if (jdbcUrl.contains("jdbc:mysql")) {
             return Database.Mysql;
         } else if (jdbcUrl.contains("jdbc:mariadb")) {
-            return Database.Mysql;
+            return Database.MariaDB;
         } else if (jdbcUrl.contains("jdbc:postgresql")) {
             return Database.Postgre;
         } else if (jdbcUrl.contains("jdbc:sqlserver:")) {
