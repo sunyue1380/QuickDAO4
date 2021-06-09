@@ -1,5 +1,8 @@
 package cn.schoolwow.quickdao.domain;
 
+import cn.schoolwow.quickdao.builder.dcl.AbstractDCLBuilder;
+import cn.schoolwow.quickdao.builder.dcl.MySQLDCLBuilder;
+import cn.schoolwow.quickdao.builder.dcl.PostgreDCLBuilder;
 import cn.schoolwow.quickdao.builder.ddl.*;
 import cn.schoolwow.quickdao.builder.dql.AbstractDQLBuilder;
 import cn.schoolwow.quickdao.builder.dql.SQLiteDQLBuilder;
@@ -23,11 +26,17 @@ import java.util.Date;
 
 /**数据库类型*/
 public enum Database {
+    /**MariaDB数据库*/
     MariaDB,
+    /**MySQL数据库*/
     Mysql,
+    /**H2数据库*/
     H2,
+    /**SQLite数据库*/
     SQLite,
+    /**Postgre数据库*/
     Postgre,
+    /**SQLServer数据库*/
     SQLServer;
 
     /**返回注释语句*/
@@ -45,8 +54,10 @@ public enum Database {
             case SQLServer:{
                 return "";
             }
+            default:{
+                return comment;
+            }
         }
-        return comment;
     }
 
     /**转义表,列等*/
@@ -62,8 +73,10 @@ public enum Database {
             case SQLServer:{
                 return "\""+value +"\"";
             }
+            default:{
+                return value;
+            }
         }
-        return value;
     }
 
     /**获取Condition实例*/
@@ -90,6 +103,21 @@ public enum Database {
             case H2:
             case Postgre:
             case SQLServer:{return new AbstractSubCondition(subQuery);}
+            default:{
+                throw new IllegalArgumentException("不支持的数据库类型!");
+            }
+        }
+    }
+
+    /**获取DCL实例*/
+    public AbstractDCLBuilder getDCLBuilderInstance(QuickDAOConfig quickDAOConfig){
+        switch(this){
+            case H2:
+            case MariaDB:
+            case Mysql:{return new MySQLDCLBuilder(quickDAOConfig);}
+            case Postgre:{return new PostgreDCLBuilder(quickDAOConfig);}
+            case SQLite:{throw new IllegalArgumentException("SQLite不支持创建用户等操作!");}
+            case SQLServer:{throw new UnsupportedOperationException("当前不支持SQLServer的DCL相关操作!");}
             default:{
                 throw new IllegalArgumentException("不支持的数据库类型!");
             }

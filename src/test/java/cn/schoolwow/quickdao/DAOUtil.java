@@ -2,6 +2,7 @@ package cn.schoolwow.quickdao;
 
 import cn.schoolwow.quickdao.dao.DAO;
 import com.zaxxer.hikari.HikariDataSource;
+import org.aeonbits.owner.ConfigCache;
 
 import java.io.File;
 import java.time.LocalDateTime;
@@ -10,6 +11,7 @@ import java.time.LocalDateTime;
  * 获取各类DAO接口对象
  */
 public class DAOUtil {
+    private static Account account = ConfigCache.getOrCreate(Account.class);
     /**
      * 获取h2接口对象
      */
@@ -56,9 +58,9 @@ public class DAOUtil {
     public static HikariDataSource getMariaDBDataSource() {
         HikariDataSource hikariDataSource = new HikariDataSource();
         hikariDataSource.setDriverClassName("org.mariadb.jdbc.Driver");
-        hikariDataSource.setJdbcUrl("jdbc:mariadb://127.0.0.1:3306/quickdao");
-        hikariDataSource.setUsername("root");
-        hikariDataSource.setPassword("123456");
+        hikariDataSource.setJdbcUrl(account.mysqlJdbc());
+        hikariDataSource.setUsername(account.mysqlUsername());
+        hikariDataSource.setPassword(account.mysqlPassword());
         return hikariDataSource;
     }
 
@@ -99,9 +101,9 @@ public class DAOUtil {
     public static HikariDataSource getMySQLDataSource() {
         HikariDataSource hikariDataSource = new HikariDataSource();
         hikariDataSource.setDriverClassName("com.mysql.jdbc.Driver");
-        hikariDataSource.setJdbcUrl("jdbc:mysql://127.0.0.1:3306/quickdao");
-        hikariDataSource.setUsername("root");
-        hikariDataSource.setPassword("123456");
+        hikariDataSource.setJdbcUrl(account.mysqlJdbc());
+        hikariDataSource.setUsername(account.mysqlUsername());
+        hikariDataSource.setPassword(account.mysqlPassword());
         return hikariDataSource;
     }
 
@@ -142,9 +144,9 @@ public class DAOUtil {
     public static HikariDataSource getPostgreDataSource() {
         HikariDataSource hikariDataSource = new HikariDataSource();
         hikariDataSource.setDriverClassName("org.postgresql.Driver");
-        hikariDataSource.setJdbcUrl("jdbc:postgresql://127.0.0.1:5432/quickdao");
-        hikariDataSource.setUsername("postgres");
-        hikariDataSource.setPassword("123456");
+        hikariDataSource.setJdbcUrl(account.postgreJdbc());
+        hikariDataSource.setUsername(account.postgreUsername());
+        hikariDataSource.setPassword(account.postgrePassword());
         return hikariDataSource;
     }
 
@@ -223,9 +225,9 @@ public class DAOUtil {
     public static HikariDataSource getSQLServerDataSource() {
         HikariDataSource hikariDataSource = new HikariDataSource();
         hikariDataSource.setDriverClassName("com.microsoft.sqlserver.jdbc.SQLServerDriver");
-        hikariDataSource.setJdbcUrl("jdbc:sqlserver://127.0.0.1:1433; DatabaseName=quickdao");
-        hikariDataSource.setUsername("sa");
-        hikariDataSource.setPassword("123456");
+        hikariDataSource.setJdbcUrl(account.sqlserverJdbc());
+        hikariDataSource.setUsername(account.sqlserverUsername());
+        hikariDataSource.setPassword(account.sqlserverPassword());
         return hikariDataSource;
     }
 

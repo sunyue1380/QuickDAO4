@@ -1,6 +1,7 @@
 package cn.schoolwow.quickdao.dao;
 
 import cn.schoolwow.quickdao.dao.sql.AbstractSQLDAO;
+import cn.schoolwow.quickdao.dao.sql.dcl.AbstractDCLDAO;
 import cn.schoolwow.quickdao.dao.sql.ddl.AbstractDDLDAO;
 import cn.schoolwow.quickdao.dao.sql.ddl.DDLDAO;
 import cn.schoolwow.quickdao.dao.sql.dml.AbstractDMLDAO;
@@ -45,6 +46,10 @@ public class DAOInvocationHandler implements InvocationHandler {
                 instance = new AbstractDMLDAO(quickDAOConfig);
             }
             break;
+            case "DCLDAO": {
+                instance = new AbstractDCLDAO(quickDAOConfig);
+            }
+            break;
             case "DDLDAO": {
                 instance = new AbstractDDLDAO(quickDAOConfig);
             }
@@ -53,32 +58,32 @@ public class DAOInvocationHandler implements InvocationHandler {
                 instance = new AbstractDQLDAO(quickDAOConfig);
             }
             break;
+            default:{
+                return method.invoke(daoOperation, args);
+            }
         }
-        if(null==instance){
-            return method.invoke(daoOperation, args);
-        }else{
-            Object result = null;
-            try {
-                if(quickDAOConfig.database.equals(Database.SQLite)){
-                    quickDAOConfig.sqliteLock.lock();
-                }
-                instance.sqlBuilder.connectionExecutor = new ConnectionExecutor(quickDAOConfig);
-                instance.sqlBuilder.connectionExecutor.connection = quickDAOConfig.dataSource.getConnection();
-                result = method.invoke(instance, args);
-                if("DDLDAO".equals(interfaceName)){
-                    DDLDAO ddldao = (DDLDAO) instance;
-                    ddldao.refreshDbEntityList();
-                }
-                return result;
-            } catch (InvocationTargetException e){
-                throw e.getTargetException();
-            } finally {
-                if(null!=instance.sqlBuilder.connectionExecutor.connection){
-                    instance.sqlBuilder.connectionExecutor.connection.close();
-                }
-                if(quickDAOConfig.database.equals(Database.SQLite)){
-                    quickDAOConfig.sqliteLock.unlock();
-                }
+
+        Object result = null;
+        try {
+            if(quickDAOConfig.database.equals(Database.SQLite)){
+                quickDAOConfig.sqliteLock.lock();
+            }
+            instance.sqlBuilder.connectionExecutor = new ConnectionExecutor(quickDAOConfig);
+            instance.sqlBuilder.connectionExecutor.connection = quickDAOConfig.dataSource.getConnection();
+            result = method.invoke(instance, args);
+            if("DDLDAO".equals(interfaceName)){
+                DDLDAO ddldao = (DDLDAO) instance;
+                ddldao.refreshDbEntityList();
+            }
+            return result;
+        } catch (InvocationTargetException e){
+            throw e.getTargetException();
+        } finally {
+            if(null!=instance.sqlBuilder.connectionExecutor.connection){
+                instance.sqlBuilder.connectionExecutor.connection.close();
+            }
+            if(quickDAOConfig.database.equals(Database.SQLite)){
+                quickDAOConfig.sqliteLock.unlock();
             }
         }
     }
