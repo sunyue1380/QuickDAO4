@@ -35,7 +35,14 @@ public class ConnectionExecutor {
      * */
     public ConnectionExecutorItem newConnectionExecutorItem(String name, String sql) throws SQLException{
         try {
-            PreparedStatement preparedStatement = connection.prepareStatement(sql,PreparedStatement.RETURN_GENERATED_KEYS);
+            //解决postgre数据获取自增id时异常问题
+            PreparedStatement preparedStatement;
+            if(sql.startsWith("insert ")){
+                preparedStatement = connection.prepareStatement(sql, PreparedStatement.RETURN_GENERATED_KEYS);
+            }else{
+                preparedStatement = connection.prepareStatement(sql);
+            }
+
             ConnectionExecutorItem connectionExecutorItem = new ConnectionExecutorItem();
             connectionExecutorItem.name = name;
             connectionExecutorItem.sql = sql;
