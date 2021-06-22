@@ -7,6 +7,7 @@ import com.alibaba.fastjson.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
@@ -49,11 +50,7 @@ public class AbstractResponse<T> implements Response<T>{
                 for(int i=0;i<connectionExecutorItems.length;i++){
                     count += query.dqlBuilder.connectionExecutor.executeUpdate(connectionExecutorItems[i]);
                     if(count>0){
-                        ResultSet rs = connectionExecutorItems[i].preparedStatement.getGeneratedKeys();
-                        if (rs.next()) {
-                            query.insertArray.getJSONObject(i).put("generatedKeys",rs.getString(1));
-                        }
-                        rs.close();
+                        setGeneratedKeys(query.insertArray.getJSONObject(i),connectionExecutorItems[i].preparedStatement);
                     }
                     connectionExecutorItems[i].preparedStatement.close();
                 }
@@ -62,11 +59,7 @@ public class AbstractResponse<T> implements Response<T>{
                 ConnectionExecutorItem connectionExecutorItem = query.dqlBuilder.insert(query);
                 count = query.dqlBuilder.connectionExecutor.executeUpdate(connectionExecutorItem);
                 if (count>0&&null!=query.insertValue) {
-                    ResultSet rs = connectionExecutorItem.preparedStatement.getGeneratedKeys();
-                    if (rs.next()) {
-                        query.insertValue.put("generatedKeys",rs.getString(1));
-                    }
-                    rs.close();
+                    setGeneratedKeys(query.insertValue,connectionExecutorItem.preparedStatement);
                 }
                 connectionExecutorItem.preparedStatement.close();
             }
@@ -278,5 +271,15 @@ public class AbstractResponse<T> implements Response<T>{
                 oo.put(subQuery.compositField, subObject);
             }
         }
+    }
+
+    /**设置生成的自增id*/
+    private void setGeneratedKeys(JSONObject insertObject, PreparedStatement preparedStatement) throws SQLException {
+        ResultSet rs = null;
+        rs = preparedStatement.getGeneratedKeys();
+        if (rs.next()) {
+            insertObject.put("generatedKeys",rs.getString(1));
+        }
+        rs.close();
     }
 }

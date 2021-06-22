@@ -49,11 +49,11 @@ public class PostgreDDLBuilder extends AbstractDDLBuilder {
                 builder.append(getAutoIncrementSQL(property));
             }else{
                 builder.append(quickDAOConfig.database.escape(property.column) + " " + property.columnType);
-                if (property.notNull) {
-                    builder.append(" not null");
-                }
                 if (null!=property.defaultValue&&!property.defaultValue.isEmpty()) {
                     builder.append(" default " + property.defaultValue);
+                }
+                if (property.notNull) {
+                    builder.append(" not null");
                 }
                 if (null != property.comment) {
                     builder.append(" "+quickDAOConfig.database.comment(property.comment));
@@ -153,9 +153,6 @@ public class PostgreDDLBuilder extends AbstractDDLBuilder {
         return fieldTypeMapping;
     }
 
-    /**
-     * 提取索引信息
-     * */
     @Override
     protected void getIndex(Entity entity) throws SQLException {
         String getIndexSQL = "select tablename,indexname,indexdef from pg_indexes where tablename = '"+entity.tableName+"'";
@@ -181,9 +178,6 @@ public class PostgreDDLBuilder extends AbstractDDLBuilder {
         resultSet.close();
     }
 
-    /**
-     * 提取表字段信息
-     * */
     @Override
     protected void getEntityPropertyList(Entity entity) throws SQLException {
         List<Property> propertyList = new ArrayList<>();
@@ -246,9 +240,6 @@ public class PostgreDDLBuilder extends AbstractDDLBuilder {
         entity.properties = propertyList;
     }
 
-    /**
-     * 从数据库提取表信息
-     * */
     @Override
     protected List<Entity> getEntityList() throws SQLException {
         String getEntityListSQL = "select relname as name,cast(obj_description(relfilenode,'pg_class') as varchar) as comment from pg_class c where  relkind = 'r' and relname not like 'pg_%' and relname not like 'sql_%' order by relname";

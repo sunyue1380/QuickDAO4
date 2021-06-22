@@ -33,7 +33,7 @@ public interface DDLBuilder {
     void createTable(Entity entity) throws SQLException;
 
     /**
-     * 创建新表
+     * 创建字段
      */
     void createProperty(Property property) throws SQLException;
 

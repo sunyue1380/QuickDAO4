@@ -2,14 +2,12 @@ package cn.schoolwow.quickdao.domain;
 
 import cn.schoolwow.quickdao.builder.dcl.AbstractDCLBuilder;
 import cn.schoolwow.quickdao.builder.dcl.MySQLDCLBuilder;
+import cn.schoolwow.quickdao.builder.dcl.OracleDCLBuilder;
 import cn.schoolwow.quickdao.builder.dcl.PostgreDCLBuilder;
 import cn.schoolwow.quickdao.builder.ddl.*;
 import cn.schoolwow.quickdao.builder.dql.AbstractDQLBuilder;
 import cn.schoolwow.quickdao.builder.dql.SQLiteDQLBuilder;
-import cn.schoolwow.quickdao.query.condition.AbstractCondition;
-import cn.schoolwow.quickdao.query.condition.Condition;
-import cn.schoolwow.quickdao.query.condition.PostgreCondition;
-import cn.schoolwow.quickdao.query.condition.SQLServerCondition;
+import cn.schoolwow.quickdao.query.condition.*;
 import cn.schoolwow.quickdao.query.subCondition.AbstractSubCondition;
 import cn.schoolwow.quickdao.query.subCondition.SQLiteSubCondition;
 import cn.schoolwow.quickdao.query.subCondition.SubCondition;
@@ -37,7 +35,9 @@ public enum Database {
     /**Postgre数据库*/
     Postgre,
     /**SQLServer数据库*/
-    SQLServer;
+    SQLServer,
+    /**Oracle数据库*/
+    Oracle;
 
     /**返回注释语句*/
     public String comment(String comment){
@@ -51,7 +51,8 @@ public enum Database {
             }
             case H2:
             case Postgre:
-            case SQLServer:{
+            case SQLServer:
+            case Oracle:{
                 return "";
             }
             default:{
@@ -70,7 +71,8 @@ public enum Database {
                 return "`"+value+"`";
             }
             case Postgre:
-            case SQLServer:{
+            case SQLServer:
+            case Oracle:{
                 return "\""+value +"\"";
             }
             default:{
@@ -88,6 +90,7 @@ public enum Database {
             case H2:{return new AbstractCondition(query);}
             case Postgre:{return new PostgreCondition(query);}
             case SQLServer:{return new SQLServerCondition(query);}
+            case Oracle:{return new OracleCondition(query);}
             default:{
                 throw new IllegalArgumentException("不支持的数据库类型!");
             }
@@ -102,7 +105,8 @@ public enum Database {
             case Mysql:
             case H2:
             case Postgre:
-            case SQLServer:{return new AbstractSubCondition(subQuery);}
+            case SQLServer:
+            case Oracle:{return new AbstractSubCondition(subQuery);}
             default:{
                 throw new IllegalArgumentException("不支持的数据库类型!");
             }
@@ -118,6 +122,7 @@ public enum Database {
             case Postgre:{return new PostgreDCLBuilder(quickDAOConfig);}
             case SQLite:{throw new IllegalArgumentException("SQLite不支持创建用户等操作!");}
             case SQLServer:{throw new UnsupportedOperationException("当前不支持SQLServer的DCL相关操作!");}
+            case Oracle:{return new OracleDCLBuilder(quickDAOConfig);}
             default:{
                 throw new IllegalArgumentException("不支持的数据库类型!");
             }
@@ -133,6 +138,7 @@ public enum Database {
             case H2:{return new H2DDLBuilder(quickDAOConfig);}
             case Postgre:{return new PostgreDDLBuilder(quickDAOConfig);}
             case SQLServer:{return new SQLServerDDLBuilder(quickDAOConfig);}
+            case Oracle:{return new OracleDDLBuilder(quickDAOConfig);}
             default:{
                 throw new IllegalArgumentException("不支持的数据库类型!");
             }
@@ -144,7 +150,8 @@ public enum Database {
         switch(this){
             case SQLite:
             case SQLServer:
-            case Postgre:{return new SQLiteDQLBuilder(quickDAOConfig);}
+            case Postgre:
+            case Oracle:{return new SQLiteDQLBuilder(quickDAOConfig);}
             case MariaDB:
             case Mysql:
             case H2:{return new AbstractDQLBuilder(quickDAOConfig);}
@@ -354,6 +361,8 @@ public enum Database {
             return Database.Postgre;
         } else if (jdbcUrl.contains("jdbc:sqlserver:")) {
             return Database.SQLServer;
+        } else if (jdbcUrl.contains("jdbc:oracle:")) {
+            return Database.Oracle;
         } else {
             throw new IllegalArgumentException("不支持的数据库类型!");
         }

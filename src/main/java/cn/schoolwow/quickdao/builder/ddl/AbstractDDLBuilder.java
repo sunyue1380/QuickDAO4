@@ -1,6 +1,5 @@
 package cn.schoolwow.quickdao.builder.ddl;
 
-import cn.schoolwow.quickdao.annotation.IdStrategy;
 import cn.schoolwow.quickdao.builder.AbstractSQLBuilder;
 import cn.schoolwow.quickdao.domain.Entity;
 import cn.schoolwow.quickdao.domain.IndexField;
@@ -40,19 +39,16 @@ public abstract class AbstractDDLBuilder extends AbstractSQLBuilder implements D
     public abstract boolean hasTableExists(Entity entity) throws SQLException;
 
     @Override
-    public void createTable(Entity entity) throws SQLException {
-        StringBuilder builder = getCreateTableBuilder(entity);
-        connectionExecutor.executeUpdate("生成新表",builder.toString());
-    }
+    public abstract void createTable(Entity entity) throws SQLException;
 
     @Override
     public void createProperty(Property property) throws SQLException{
         StringBuilder createPropertyBuilder = new StringBuilder("alter table " + quickDAOConfig.database.escape(property.entity.tableName) + " add " + quickDAOConfig.database.escape(property.column) + " " + property.columnType);
-        if (property.notNull) {
-            createPropertyBuilder.append(" not null");
-        }
         if (null!=property.defaultValue&&!property.defaultValue.isEmpty()) {
             createPropertyBuilder.append(" default " + property.defaultValue);
+        }
+        if (property.notNull) {
+            createPropertyBuilder.append(" not null");
         }
         if (null!=property.escapeCheck&&!property.escapeCheck.isEmpty()) {
             createPropertyBuilder.append(" check " + property.escapeCheck);
@@ -63,7 +59,6 @@ public abstract class AbstractDDLBuilder extends AbstractSQLBuilder implements D
         if (null != property.after) {
             createPropertyBuilder.append(" after "+quickDAOConfig.database.escape(property.after));
         }
-        createPropertyBuilder.append(";");
         connectionExecutor.executeUpdate("添加新列",createPropertyBuilder.toString());
     }
 
@@ -81,7 +76,7 @@ public abstract class AbstractDDLBuilder extends AbstractSQLBuilder implements D
             builder.append(quickDAOConfig.database.escape(quickDAOConfig.databaseName)+".");
         }
         builder.append(quickDAOConfig.database.escape(property.entity.tableName));
-        builder.append(" drop column "+quickDAOConfig.database.escape(property.column)+";");
+        builder.append(" drop column "+quickDAOConfig.database.escape(property.column));
 
         connectionExecutor.executeUpdate("删除列",builder.toString());
     }
@@ -120,11 +115,11 @@ public abstract class AbstractDDLBuilder extends AbstractSQLBuilder implements D
         if(indexField.columns.isEmpty()){
             return;
         }
-        StringBuilder builder = new StringBuilder("create ");
+        StringBuilder builder = new StringBuilder("create");
         switch (indexField.indexType){
             case NORMAL:{}break;
-            case UNIQUE:{builder.append("unique");}break;
-            case FULLTEXT:{builder.append("fulltext");}break;
+            case UNIQUE:{builder.append(" unique");}break;
+            case FULLTEXT:{builder.append(" fulltext");}break;
         }
         builder.append(" index " + quickDAOConfig.database.escape(indexField.indexName) + " on " + quickDAOConfig.database.escape(indexField.tableName) + "(");
         for(String column:indexField.columns){
@@ -138,7 +133,6 @@ public abstract class AbstractDDLBuilder extends AbstractSQLBuilder implements D
         if(null!=indexField.comment&&!indexField.comment.isEmpty()){
             builder.append(" "+quickDAOConfig.database.comment(indexField.comment));
         }
-        builder.append(";");
         connectionExecutor.executeUpdate("添加索引",builder.toString());
     }
 
@@ -236,78 +230,11 @@ public abstract class AbstractDDLBuilder extends AbstractSQLBuilder implements D
         return new ArrayList<>();
     }
 
-
     /**
      * 获取自增语句
      * @param property 自增字段信息
      * */
     protected abstract String getAutoIncrementSQL(Property property);
-
-    /**
-     * 获取建表语句
-     * @param entity 建表实体类
-     * */
-    protected StringBuilder getCreateTableBuilder(Entity entity){
-        StringBuilder builder = new StringBuilder("create table " + entity.escapeTableName + "(");
-        for (Property property : entity.properties) {
-            if(property.id&&property.strategy== IdStrategy.AutoIncrement){
-                builder.append(getAutoIncrementSQL(property));
-            }else{
-                builder.append(quickDAOConfig.database.escape(property.column) + " " + property.columnType);
-                if (property.notNull) {
-                    builder.append(" not null");
-                }
-                if (null!=property.defaultValue&&!property.defaultValue.isEmpty()) {
-                    builder.append(" default " + property.defaultValue);
-                }
-                if (null != property.comment) {
-                    builder.append(" "+quickDAOConfig.database.comment(property.comment));
-                }
-                if (null!=property.escapeCheck&&!property.escapeCheck.isEmpty()) {
-                    builder.append(" check " + property.escapeCheck);
-                }
-            }
-            builder.append(",");
-        }
-        for(IndexField indexField:entity.indexFieldList){
-            if(null==indexField.columns||indexField.columns.isEmpty()){
-                logger.warn("[忽略索引]该索引字段信息为空!表:{},索引名称:{}",entity.tableName,indexField.indexName);
-                continue;
-            }
-            switch (indexField.indexType){
-                case NORMAL:{}break;
-                case UNIQUE:{builder.append("unique");}break;
-                case FULLTEXT:{builder.append("fulltext");}break;
-            }
-            builder.append(" index " + quickDAOConfig.database.escape(indexField.indexName) + " (");
-            for(String column:indexField.columns){
-                builder.append(quickDAOConfig.database.escape(column)+",");
-            }
-            builder.deleteCharAt(builder.length()-1);
-            builder.append(")");
-            if(null!=indexField.using&&!indexField.using.isEmpty()){
-                builder.append(" using "+indexField.using);
-            }
-            if(null!=indexField.comment&&!indexField.comment.isEmpty()){
-                builder.append(" "+quickDAOConfig.database.comment(indexField.comment));
-            }
-            builder.append(",");
-        }
-        if (quickDAOConfig.openForeignKey&&null!=entity.foreignKeyProperties&&entity.foreignKeyProperties.size()>0) {
-            for (Property property : entity.foreignKeyProperties) {
-                builder.append("foreign key(" + quickDAOConfig.database.escape(property.column) + ") references ");
-                String operation = property.foreignKey.foreignKeyOption().getOperation();
-                builder.append(quickDAOConfig.database.escape(quickDAOConfig.getEntityByClassName(property.foreignKey.table().getName()).tableName) + "(" + quickDAOConfig.database.escape(property.foreignKey.field()) + ") ON DELETE " + operation+ " ON UPDATE " + operation);
-                builder.append(",");
-            }
-        }
-        builder.deleteCharAt(builder.length() - 1);
-        builder.append(")");
-        if (null != entity.comment) {
-            builder.append(" "+quickDAOConfig.database.comment(entity.comment));
-        }
-        return builder;
-    }
 
     /**
      * 提取索引信息

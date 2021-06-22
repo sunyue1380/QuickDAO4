@@ -30,7 +30,7 @@ public class SQLiteDQLBuilder extends AbstractDQLBuilder {
 
     @Override
     public ConnectionExecutorItem delete(Query query) throws SQLException {
-        StringBuilder builder = new StringBuilder("delete from "+query.quickDAOConfig.database.escape(query.entity.tableName));
+        StringBuilder builder = new StringBuilder("delete from " + query.quickDAOConfig.database.escape(query.entity.tableName));
         builder.append(" " + query.where.replace(query.tableAliasName+".",""));
 
         String sql = builder.toString();

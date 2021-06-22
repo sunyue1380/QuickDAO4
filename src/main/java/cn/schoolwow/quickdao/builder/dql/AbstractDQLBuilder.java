@@ -47,7 +47,7 @@ public class AbstractDQLBuilder extends AbstractSQLBuilder implements DQLBuilder
             StringBuilder builder = new StringBuilder("select ");
             builder.append(columns(entity,"t"));
             Property property = entity.getPropertyByFieldName(field);
-            builder.append(" from " + entity.escapeTableName + " as t where t." + quickDAOConfig.database.escape(entity.getColumnNameByFieldName(field)) + " = "+(null==property||null==property.function?"?":property.function)+"");
+            builder.append(" from " + entity.escapeTableName + " t where t." + quickDAOConfig.database.escape(entity.getColumnNameByFieldName(field)) + " = "+(null==property||null==property.function?"?":property.function)+"");
             quickDAOConfig.sqlCache.put(key, builder.toString());
         }
         String sql = quickDAOConfig.sqlCache.get(key);
@@ -79,7 +79,7 @@ public class AbstractDQLBuilder extends AbstractSQLBuilder implements DQLBuilder
             Entity dbEntity = quickDAOConfig.getDbEntityByTableName(tableName);
             StringBuilder builder = new StringBuilder("select ");
             builder.append(columns(dbEntity,"t"));
-            builder.append(" from " + dbEntity.escapeTableName + " as t where t." + quickDAOConfig.database.escape(dbEntity.getColumnNameByFieldName(field)) + " = ?");
+            builder.append(" from " + dbEntity.escapeTableName + " t where t." + quickDAOConfig.database.escape(dbEntity.getColumnNameByFieldName(field)) + " = ?");
             quickDAOConfig.sqlCache.put(key, builder.toString());
         }
         String sql = quickDAOConfig.sqlCache.get(key);
@@ -101,10 +101,10 @@ public class AbstractDQLBuilder extends AbstractSQLBuilder implements DQLBuilder
         }
         builder.append(" from " + query.entity.escapeTableName);
         if(null!=query.entity.clazz){
-            builder.append(" as " + query.tableAliasName);
+            builder.append(" " + query.tableAliasName);
         }
         addJoinTableStatement(query,builder);
-        builder.append(" " + query.where + " " + query.groupBy + " " + query.having + " ) as foo");
+        builder.append(" " + query.where + " " + query.groupBy + " " + query.having + " ) foo");
         String sql = builder.toString();
         ConnectionExecutorItem connectionExecutorItem = connectionExecutor.newConnectionExecutorItem("获取行数",sql);
         builder = new StringBuilder(sql.replace("?",PLACEHOLDER));
@@ -132,10 +132,10 @@ public class AbstractDQLBuilder extends AbstractSQLBuilder implements DQLBuilder
         }
         builder.append(" from " + query.entity.escapeTableName);
         if(null!=query.entity.clazz){
-            builder.append(" as " + query.tableAliasName);
+            builder.append(" " + query.tableAliasName);
         }
         addJoinTableStatement(query,builder);
-        builder.append(" " + query.where + " " + query.groupBy + " " + query.having + " ) as foo");
+        builder.append(" " + query.where + " " + query.groupBy + " " + query.having + " ) foo");
         String sql = builder.toString();
 
         ConnectionExecutorItem connectionExecutorItem = connectionExecutor.newConnectionExecutorItem("获取总行数",sql);
@@ -210,7 +210,7 @@ public class AbstractDQLBuilder extends AbstractSQLBuilder implements DQLBuilder
 
     @Override
     public ConnectionExecutorItem update(Query query) throws SQLException {
-        StringBuilder builder = new StringBuilder("update " + query.entity.escapeTableName + " as t ");
+        StringBuilder builder = new StringBuilder("update " + query.entity.escapeTableName + " " + query.tableAliasName +" ");
         addJoinTableStatement(query,builder);
         builder.append(query.setBuilder.toString() + " " + query.where);
 
@@ -306,7 +306,7 @@ public class AbstractDQLBuilder extends AbstractSQLBuilder implements DQLBuilder
         }
         builder.append(" from " + query.entity.escapeTableName);
         if(null!=query.entity.clazz){
-            builder.append(" as " + query.tableAliasName);
+            builder.append(" " + query.tableAliasName);
         }
         addJoinTableStatement(query,builder);
         builder.append(" " + query.where + " " + query.groupBy + " " + query.having);
@@ -324,7 +324,7 @@ public class AbstractDQLBuilder extends AbstractSQLBuilder implements DQLBuilder
             }else{
                 sqlBuilder.append("(" + subQuery.subQuerySQLBuilder.toString() + ")");
             }
-            sqlBuilder.append(" as " + subQuery.tableAliasName);
+            sqlBuilder.append(" " + subQuery.tableAliasName);
             if(null!=subQuery.primaryField&&null!=subQuery.joinTableField){
                 sqlBuilder.append(" on ");
                 if (subQuery.parentSubQuery == null) {

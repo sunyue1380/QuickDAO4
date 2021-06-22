@@ -60,10 +60,10 @@ public class ConnectionExecutor {
     public ResultSet executeQuery(String name, String sql) throws SQLException{
         try {
             PreparedStatement preparedStatement = connection.prepareStatement(sql);
+            preparedStatement.closeOnCompletion();
             ResultSet resultSet = executeQuery(name, sql, preparedStatement);
             return resultSet;
         }catch (SQLException e){
-            logger.warn("[SQL语句执行失败]名称:{},原始SQL:{}", name, sql);
             throw e;
         }
     }
@@ -88,7 +88,6 @@ public class ConnectionExecutor {
             preparedStatement.close();
             return effect;
         }catch (SQLException e){
-            logger.warn("[SQL语句执行失败]名称:{},原始SQL:{}", name, sql);
             throw e;
         }
     }
@@ -111,6 +110,7 @@ public class ConnectionExecutor {
     private ResultSet executeQuery(String name, String sql, PreparedStatement preparedStatement) throws SQLException {
         try {
             long startTime = System.currentTimeMillis();
+            preparedStatement.closeOnCompletion();
             ResultSet resultSet = preparedStatement.executeQuery();
             long endTime = System.currentTimeMillis();
             if(!"获取行数".equals(name)){

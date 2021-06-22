@@ -148,9 +148,6 @@ public class SQLiteDDLBuilder extends AbstractDDLBuilder {
         return fieldTypeMapping;
     }
 
-    /**
-     * 提取索引信息
-     * */
     @Override
     protected void getIndex(Entity entity) throws SQLException {
         String getIndexSQL = "select sql from sqlite_master where type='index' and sql is not null and tbl_name = '" + entity.tableName+"'";
@@ -174,9 +171,6 @@ public class SQLiteDDLBuilder extends AbstractDDLBuilder {
         resultSet.close();
     }
 
-    /**
-     * 提取表字段信息
-     * */
     @Override
     protected void getEntityPropertyList(Entity entity) throws SQLException {
         String getEntityPropertyListSQL = "PRAGMA table_info(`" + entity.tableName + "`)";
@@ -200,9 +194,6 @@ public class SQLiteDDLBuilder extends AbstractDDLBuilder {
         entity.properties = propertyList;
     }
 
-    /**
-     * 从数据库提取表信息
-     * */
     @Override
     protected List<Entity> getEntityList() throws SQLException {
         String getEntityListSQL = "select name from sqlite_master where type='table' and name != 'sqlite_sequence';";

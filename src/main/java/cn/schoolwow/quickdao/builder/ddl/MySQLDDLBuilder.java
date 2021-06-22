@@ -189,7 +189,6 @@ public class MySQLDDLBuilder extends AbstractDDLBuilder {
         return fieldTypeMapping;
     }
 
-    /**获取虚拟表信息*/
     @Override
     protected List<Entity> getVirtualEntity(){
         Entity entity = new Entity();
@@ -199,9 +198,6 @@ public class MySQLDDLBuilder extends AbstractDDLBuilder {
         return Arrays.asList(entity);
     }
 
-    /**
-     * 提取索引信息
-     * */
     @Override
     protected void getIndex(Entity entity) throws SQLException {
         String getIndexSQL = "show index from " + quickDAOConfig.database.escape(entity.tableName);
@@ -230,9 +226,6 @@ public class MySQLDDLBuilder extends AbstractDDLBuilder {
         resultSet.close();
     }
 
-    /**
-     * 提取表字段信息
-     * */
     @Override
     protected void getEntityPropertyList(Entity entity) throws SQLException {
         String getEntityPropertyListSQL = "show full columns from " + quickDAOConfig.database.escape(entity.tableName);
@@ -267,9 +260,6 @@ public class MySQLDDLBuilder extends AbstractDDLBuilder {
         entity.properties = propertyList;
     }
 
-    /**
-     * 从数据库提取表信息
-     * */
     @Override
     protected List<Entity> getEntityList() throws SQLException {
         String getEntityListSQL = "show table status;";

@@ -151,9 +151,6 @@ public class SQLServerDDLBuilder extends AbstractDDLBuilder {
         return fieldTypeMapping;
     }
 
-    /**
-     * 提取索引信息
-     * */
     @Override
     protected void getIndex(Entity entity) throws SQLException {
         String getIndexSQL = "select i.is_unique,i.name,col.name col_name from sys.indexes i left join sys.index_columns ic on ic.object_id = i.object_id and ic.index_id = i.index_id left join (select * from sys.all_columns where object_id = object_id( '"+entity.tableName+"', N'U' )) col on ic.column_id = col.column_id where i.object_id = object_id('"+entity.tableName+"', N'U' ) and i.index_id > 0";
@@ -178,9 +175,6 @@ public class SQLServerDDLBuilder extends AbstractDDLBuilder {
         resultSet.close();
     }
 
-    /**
-     * 提取表字段信息
-     * */
     @Override
     protected void getEntityPropertyList(Entity entity) throws SQLException {
         {
@@ -228,9 +222,6 @@ public class SQLServerDDLBuilder extends AbstractDDLBuilder {
         }
     }
 
-    /**
-     * 从数据库提取表信息
-     * */
     @Override
     protected List<Entity> getEntityList() throws SQLException {
         String getEntityListSQL = "select name from sysobjects where xtype='u' order by name;";

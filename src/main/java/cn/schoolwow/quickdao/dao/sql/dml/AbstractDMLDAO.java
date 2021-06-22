@@ -11,8 +11,10 @@ import cn.schoolwow.quickdao.exception.SQLRuntimeException;
 import cn.schoolwow.quickdao.util.LambdaUtils;
 
 import java.lang.reflect.Field;
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -37,32 +39,7 @@ public class AbstractDMLDAO extends AbstractSQLDAO implements DMLDAO{
             effect = sqlBuilder.connectionExecutor.executeUpdate(connectionExecutorItem);
             Entity entity = quickDAOConfig.getEntityByClassName(instance.getClass().getName());
             if (effect>0&&null!=entity.id&&entity.id.strategy.equals(IdStrategy.AutoIncrement)) {
-                ResultSet rs = connectionExecutorItem.preparedStatement.getGeneratedKeys();
-                if (rs.next()) {
-                    Field idField = instance.getClass().getDeclaredField(entity.id.name);
-                    idField.setAccessible(true);
-                    switch(idField.getType().getSimpleName().toLowerCase()){
-                        case "int":
-                        case "integer":{
-                            if(idField.getType().isPrimitive()){
-                                idField.setInt(instance,rs.getInt(1));
-                            }else{
-                                idField.set(instance,Integer.valueOf(rs.getInt(1)));
-                            }
-                        }break;
-                        case "long":{
-                            if(idField.getType().isPrimitive()){
-                                idField.setLong(instance,rs.getLong(1));
-                            }else{
-                                idField.set(instance,Long.valueOf(rs.getLong(1)));
-                            }
-                        }break;
-                        case "string":{
-                            idField.set(instance,rs.getString(1));
-                        }break;
-                    }
-                }
-                rs.close();
+                setAutoIncrementPrimaryKeyValue(instance,entity,connectionExecutorItem.preparedStatement);
             }
             connectionExecutorItem.preparedStatement.close();
         } catch (Exception e) {
@@ -79,39 +56,11 @@ public class AbstractDMLDAO extends AbstractSQLDAO implements DMLDAO{
         int effect = 0;
         try {
             Entity entity = quickDAOConfig.getEntityByClassName(instances[0].getClass().getName());
-            Field idField = null;
-            if(null!=entity.id&&entity.id.strategy.equals(IdStrategy.AutoIncrement)){
-                idField = instances[0].getClass().getDeclaredField(entity.id.name);
-                idField.setAccessible(true);
-            }
             ConnectionExecutorItem[] connectionExecutorItems = dmlBuilder.insert(instances);
             for(int i=0;i<connectionExecutorItems.length;i++){
                 effect += dmlBuilder.connectionExecutor.executeUpdate(connectionExecutorItems[i]);
-                if(effect>0&&null!=idField){
-                    ResultSet rs = connectionExecutorItems[i].preparedStatement.getGeneratedKeys();
-                    if(rs.next()){
-                        switch(idField.getType().getSimpleName().toLowerCase()){
-                            case "int":
-                            case "integer":{
-                                if(idField.getType().isPrimitive()){
-                                    idField.setInt(instances[i],rs.getInt(1));
-                                }else{
-                                    idField.set(instances[i],Integer.valueOf(rs.getInt(1)));
-                                }
-                            }break;
-                            case "long":{
-                                if(idField.getType().isPrimitive()){
-                                    idField.setLong(instances[i],rs.getLong(1));
-                                }else{
-                                    idField.set(instances[i],Long.valueOf(rs.getLong(1)));
-                                }
-                            }break;
-                            case "string":{
-                                idField.set(instances[i],rs.getString(1));
-                            }break;
-                        }
-                    }
-                    rs.close();
+                if(effect>0&&null!=entity.id&&entity.id.strategy.equals(IdStrategy.AutoIncrement)){
+                    setAutoIncrementPrimaryKeyValue(instances[i],entity,connectionExecutorItems[i].preparedStatement);
                 }
                 connectionExecutorItems[i].preparedStatement.close();
             }
@@ -229,7 +178,15 @@ public class AbstractDMLDAO extends AbstractSQLDAO implements DMLDAO{
             if(null!=connectionExecutorItem){
                 int[] batches = connectionExecutorItem.preparedStatement.executeBatch();
                 for (int batch : batches) {
-                    effect += batch;
+                    switch (batch){
+                        case Statement.SUCCESS_NO_INFO:{
+                            effect += 1;
+                        }break;
+                        case Statement.EXECUTE_FAILED:{}break;
+                        default:{
+                            effect += batch;
+                        };
+                    }
                 }
                 connectionExecutorItem.preparedStatement.close();
             }
@@ -341,5 +298,34 @@ public class AbstractDMLDAO extends AbstractSQLDAO implements DMLDAO{
             throw new SQLRuntimeException(e);
         }
         return effect;
+    }
+
+    /**设置主键自增id值*/
+    private void setAutoIncrementPrimaryKeyValue(Object instance, Entity entity, PreparedStatement preparedStatement) throws Exception{
+        Field idField = instance.getClass().getDeclaredField(entity.id.name);
+        idField.setAccessible(true);
+        ResultSet rs = null;
+        switch (quickDAOConfig.database){
+            case Oracle:{
+                String getIdValueSQL = "select " + entity.tableName + "_seq.currVal from dual";
+                rs = sqlBuilder.connectionExecutor.executeQuery("获取自增id",getIdValueSQL);
+            }break;
+            default:{
+                rs = preparedStatement.getGeneratedKeys();
+            };break;
+        }
+        if(rs.next()){
+            switch(idField.getType().getName()){
+                case "int":{idField.setInt(instance, rs.getInt(1));}break;
+                case "java.lang.Integer":{idField.set(instance, rs.getInt(1));}break;
+                case "long":{idField.setLong(instance, rs.getLong(1));}break;
+                case "java.lang.Long":{idField.set(instance, rs.getLong(1));}break;
+                case "java.lang.String":{idField.set(instance, rs.getString(1));}break;
+                default:{
+                    throw new IllegalArgumentException("当前仅支持int,long,String类型的自增主键!自增字段名称:"+idField.getName()+",类型:"+idField.getType().getName()+"!");
+                }
+            }
+        }
+        rs.close();
     }
 }

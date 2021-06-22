@@ -11,8 +11,7 @@ import java.math.BigDecimal;
 import java.net.URL;
 import java.sql.*;
 import java.text.SimpleDateFormat;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
+import java.time.*;
 import java.time.format.DateTimeFormatter;
 
 public class AbstractSQLBuilder implements SQLBuilder{
@@ -45,7 +44,7 @@ public class AbstractSQLBuilder implements SQLBuilder{
         if (!quickDAOConfig.sqlCache.containsKey(key)) {
             StringBuilder builder = new StringBuilder();
             builder.append("select count(1) from " + entity.escapeTableName + " where ");
-            builder.append(entity.id.column+" = "+(null==entity.id.function?"?":entity.id.function)+" ");
+            builder.append(quickDAOConfig.database.escape(entity.id.column) + " = "+(null==entity.id.function?"?":entity.id.function)+" ");
             quickDAOConfig.sqlCache.put(key, builder.toString());
         }
 
@@ -55,7 +54,11 @@ public class AbstractSQLBuilder implements SQLBuilder{
         field.setAccessible(true);
         Object value = field.get(instance);
         connectionExecutorItem.preparedStatement.setObject(1,value);
-        connectionExecutorItem.sql = sql.replace("?",value==null?"":value.toString());
+        if(field.getType().getName().equals("java.lang.String")){
+            connectionExecutorItem.sql = sql.replace("?",value==null?"":"'"+value.toString()+"'");
+        }else{
+            connectionExecutorItem.sql = sql.replace("?",value==null?"":value.toString());
+        }
         return connectionExecutorItem;
     }
 
@@ -203,12 +206,33 @@ public class AbstractSQLBuilder implements SQLBuilder{
             }break;
             case "java.time.LocalDate": {
                 LocalDate localDate = (LocalDate) parameter;
-                ps.setObject(parameterIndex,localDate);
+                switch (quickDAOConfig.database){
+                    case Oracle:{
+                        //oracle不支持直接设置LocalDate类型
+                        ZonedDateTime zonedDateTime = localDate.atStartOfDay(ZoneId.systemDefault());
+                        Date date = new Date(Date.from(zonedDateTime.toInstant()).getTime());
+                        ps.setObject(parameterIndex,date);
+                    }break;
+                    default:{
+                        ps.setObject(parameterIndex,localDate);
+                    }break;
+                }
                 parameterSQL = "'"+localDate.format(dateFormatter)+"'";
             }break;
             case "java.time.LocalDateTime": {
                 LocalDateTime localDateTime = (LocalDateTime) parameter;
-                ps.setObject(parameterIndex,localDateTime);
+                switch (quickDAOConfig.database){
+                    case Oracle:{
+                        //oracle不支持直接设置LocalDateTime类型
+                        ZoneId zoneId = ZoneId.systemDefault();
+                        Instant instant = localDateTime.atZone(zoneId).toInstant();
+                        Timestamp timestamp = new Timestamp(instant.toEpochMilli());
+                        ps.setObject(parameterIndex,timestamp);
+                    }break;
+                    default:{
+                        ps.setObject(parameterIndex,localDateTime);
+                    }break;
+                }
                 parameterSQL = "'"+localDateTime.format(dateTimeFormatter)+"'";
             }break;
             case "java.sql.Array": {
@@ -245,7 +269,12 @@ public class AbstractSQLBuilder implements SQLBuilder{
                 ps.setCharacterStream(parameterIndex, (Reader) parameter);
             }break;
             default:{
-                ps.setObject(parameterIndex,parameter);
+                try {
+                    ps.setObject(parameterIndex,parameter);
+                }catch (SQLException e){
+                    e.printStackTrace();
+                    System.out.println(parameter);
+                }
             }
         }
         return parameterSQL;

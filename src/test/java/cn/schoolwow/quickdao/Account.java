@@ -33,4 +33,13 @@ public interface Account extends Config {
 
     @Key("sqlserver.password")
     String sqlserverPassword();
+
+    @Key("oracle.jdbc")
+    String oracleJdbc();
+
+    @Key("oracle.username")
+    String oracleUsername();
+
+    @Key("oracle.password")
+    String oraclePassword();
 }

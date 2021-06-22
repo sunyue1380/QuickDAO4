@@ -85,9 +85,6 @@ public class H2DDLBuilder extends MySQLDDLBuilder {
         return fieldTypeMapping;
     }
 
-    /**
-     * 提取索引信息
-     * */
     @Override
     protected void getIndex(Entity entity) throws SQLException {
         String getIndexSQL = "select sql from information_schema.indexes where table_name ='" + entity.tableName+"'";
@@ -111,9 +108,6 @@ public class H2DDLBuilder extends MySQLDDLBuilder {
         resultSet.close();
     }
 
-    /**
-     * 提取表字段信息
-     * */
     @Override
     protected void getEntityPropertyList(Entity entity) throws SQLException {
         String getEntityPropertyListSQL = "show columns from " + quickDAOConfig.database.escape(entity.tableName);
@@ -142,9 +136,6 @@ public class H2DDLBuilder extends MySQLDDLBuilder {
         entity.properties = propertyList;
     }
 
-    /**
-     * 从数据库提取表信息
-     * */
     @Override
     protected List<Entity> getEntityList() throws SQLException {
         String getEntityListSQL = "show tables;";

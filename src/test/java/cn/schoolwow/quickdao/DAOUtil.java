@@ -259,4 +259,45 @@ public class DAOUtil {
                 .build();
         return dao;
     }
+
+    /**
+     * 获取mysql接口对象
+     */
+    public static HikariDataSource getOracleDataSource() {
+        HikariDataSource hikariDataSource = new HikariDataSource();
+        hikariDataSource.setDriverClassName("oracle.jdbc.OracleDriver");
+        hikariDataSource.setJdbcUrl(account.oracleJdbc());
+        hikariDataSource.setUsername(account.oracleUsername());
+        hikariDataSource.setPassword(account.oraclePassword());
+        return hikariDataSource;
+    }
+
+    /**
+     * 获取mysql接口对象
+     */
+    public static DAO getOracleDAO() {
+        return getOracleDAO(null);
+    }
+
+    /**
+     * 获取mysql接口对象
+     */
+    public static DAO getOracleDAO(HikariDataSource hikariDataSource) {
+        if(hikariDataSource==null){
+            hikariDataSource = getOracleDataSource();
+        }
+        DAO dao = QuickDAO.newInstance()
+                .dataSource(hikariDataSource)
+                .packageName("cn.schoolwow.quickdao.oracle.entity")
+                .foreignKey(false)
+                .columnTypeMapping((property) -> {
+                    if (property.column.equalsIgnoreCase("created_at") ||
+                            property.column.equalsIgnoreCase("updated_at")) {
+                        return LocalDateTime.class;
+                    }
+                    return null;
+                })
+                .build();
+        return dao;
+    }
 }
