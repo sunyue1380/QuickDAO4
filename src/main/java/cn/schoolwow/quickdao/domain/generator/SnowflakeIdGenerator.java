@@ -19,7 +19,7 @@ public class SnowflakeIdGenerator implements IDGenerator {
     private long sequence = 0L;
 
     @Override
-    public synchronized long getNextId() {
+    public synchronized String getNextId() {
         long timestamp = timeGen();
         if (timestamp < lastTimestamp) {
             throw new RuntimeException("时钟回拨!当前时间戳:" + timestamp + ",上次id时间戳:" + lastTimestamp);
@@ -38,7 +38,7 @@ public class SnowflakeIdGenerator implements IDGenerator {
         lastTimestamp = timestamp;
         // ID偏移组合生成最终的ID
         long nextId = ((timestamp - twepoch) << timestampLeftShift) | sequence;
-        return nextId;
+        return nextId+"";
     }
 
     private long tilNextMillis(final long lastTimestamp) {

@@ -198,13 +198,13 @@ public class  AbstractDMLBuilder extends AbstractSQLBuilder implements DMLBuilde
             if(property.id&&property.strategy== IdStrategy.IdGenerator){
                 Field idField = instance.getClass().getDeclaredField(property.name);
                 idField.setAccessible(true);
-                long value = quickDAOConfig.idGenerator.getNextId();
+                String value = quickDAOConfig.idGenerator.getNextId();
                 switch (idField.getType().getName()){
-                    case "int":{idField.setInt(instance, (int) value);}break;
-                    case "java.lang.Integer":{idField.set(instance, (int)value);}break;
-                    case "long":{idField.setLong(instance, value);}break;
-                    case "java.lang.Long":{idField.set(instance, value);}break;
-                    case "java.lang.String":{idField.set(instance, value+"");}break;
+                    case "int":{idField.setInt(instance, Integer.parseInt(value));}break;
+                    case "java.lang.Integer":{idField.set(instance, Integer.parseInt(value));}break;
+                    case "long":{idField.setLong(instance, Long.parseLong(value));}break;
+                    case "java.lang.Long":{idField.set(instance, Long.parseLong(value));}break;
+                    case "java.lang.String":{idField.set(instance, value);}break;
                     default:{
                         throw new IllegalArgumentException("当前仅支持int,long,String类型的自增主键!自增字段名称:"+idField.getName()+",类型:"+idField.getType().getName()+"!");
                     }
