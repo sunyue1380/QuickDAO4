@@ -199,25 +199,15 @@ public class  AbstractDMLBuilder extends AbstractSQLBuilder implements DMLBuilde
                 Field idField = instance.getClass().getDeclaredField(property.name);
                 idField.setAccessible(true);
                 long value = quickDAOConfig.idGenerator.getNextId();
-                switch(idField.getType().getSimpleName().toLowerCase()){
-                    case "int":
-                    case "integer":{
-                        if(idField.getType().isPrimitive()){
-                            idField.setInt(instance, (int) value);
-                        }else{
-                            idField.set(instance,Integer.valueOf(value+""));
-                        }
-                    }break;
-                    case "long":{
-                        if(idField.getType().isPrimitive()){
-                            idField.setLong(instance,value);
-                        }else{
-                            idField.set(instance,Long.valueOf(value));
-                        }
-                    }break;
-                    case "string":{
-                        idField.set(instance,value+"");
-                    }break;
+                switch (idField.getType().getName()){
+                    case "int":{idField.setInt(instance, (int) value);}break;
+                    case "java.lang.Integer":{idField.set(instance, (int)value);}break;
+                    case "long":{idField.setLong(instance, value);}break;
+                    case "java.lang.Long":{idField.set(instance, value);}break;
+                    case "java.lang.String":{idField.set(instance, value+"");}break;
+                    default:{
+                        throw new IllegalArgumentException("当前仅支持int,long,String类型的自增主键!自增字段名称:"+idField.getName()+",类型:"+idField.getType().getName()+"!");
+                    }
                 }
             }
             if(property.createdAt||property.updateAt){

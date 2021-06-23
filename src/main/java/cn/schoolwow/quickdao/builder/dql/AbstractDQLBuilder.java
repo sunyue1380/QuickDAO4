@@ -254,6 +254,9 @@ public class AbstractDQLBuilder extends AbstractSQLBuilder implements DQLBuilder
                     case UnionAll:{
                         builder.append(" union all ");
                     }break;
+                    default:{
+                        throw new IllegalArgumentException("不支持的Union类型!当前类型:"+abstractCondition.query.unionType);
+                    }
                 }
                 builder.append(getUnionArraySQL(abstractCondition.query));
             }

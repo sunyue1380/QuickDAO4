@@ -96,7 +96,7 @@ public class AbstractSQLBuilder implements SQLBuilder{
      * @param sqlBuilder 记录SQL日志
      */
     protected void setParameter(Object parameter, PreparedStatement ps, int parameterIndex, StringBuilder sqlBuilder) throws SQLException {
-        String parameterSQL = setPrepareStatementParameter(parameter,null,ps,parameterIndex);
+        String parameterSQL = setPrepareStatementParameter(parameter,ps,parameterIndex);
         replaceFirst(sqlBuilder,parameterSQL);
     }
 
@@ -110,7 +110,7 @@ public class AbstractSQLBuilder implements SQLBuilder{
      */
     protected void setParameter(Object instance, Property property, PreparedStatement ps, int parameterIndex, StringBuilder sqlBuilder) throws Exception {
         Field field = getFieldFromInstance(instance,property);
-        String parameterSQL = setPrepareStatementParameter(field.get(instance),property,ps,parameterIndex);
+        String parameterSQL = setPrepareStatementParameter(field.get(instance),ps,parameterIndex);
         replaceFirst(sqlBuilder,parameterSQL);
     }
 
@@ -119,7 +119,7 @@ public class AbstractSQLBuilder implements SQLBuilder{
      * @param instance 实例
      * @param property 字段信息
      * */
-    protected Field getFieldFromInstance(Object instance, Property property) throws IllegalAccessException {
+    protected Field getFieldFromInstance(Object instance, Property property) {
         Class tempClass = instance.getClass();
         Field field = null;
         while(null==field&&null!=tempClass){
@@ -142,12 +142,11 @@ public class AbstractSQLBuilder implements SQLBuilder{
     /**
      * 设置参数
      * @param parameter 参数
-     * @param property 字段信息
      * @param ps PrepareStatement对象
      * @param parameterIndex 参数索引
      * @return SQL字段信息
      * */
-    protected String setPrepareStatementParameter(Object parameter, Property property, PreparedStatement ps, int parameterIndex) throws SQLException{
+    protected String setPrepareStatementParameter(Object parameter, PreparedStatement ps, int parameterIndex) throws SQLException{
         if(null==parameter){
             ps.setObject(parameterIndex,null);
             return "null";
@@ -273,7 +272,6 @@ public class AbstractSQLBuilder implements SQLBuilder{
                     ps.setObject(parameterIndex,parameter);
                 }catch (SQLException e){
                     e.printStackTrace();
-                    System.out.println(parameter);
                 }
             }
         }
