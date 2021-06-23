@@ -159,6 +159,22 @@ public class DMLTest extends SQLiteTest {
                 }
             }
         }
+        //关联更新
+        {
+            int effect = dao.query(Order.class)
+                    .tableAliasName("o")
+                    .addSubQuery("person_id","=",
+                            dao.query(Person.class)
+                                    .addColumn("id")
+                                    .tableAliasName("p")
+                                    .addQuery("id",1)
+                                    .addRawQuery("o.person_id = p.id")
+                    )
+                    .addUpdate("orderNo",1)
+                    .execute()
+                    .update();
+            Assert.assertEquals(0, effect);
+        }
     }
 
     private void save() {

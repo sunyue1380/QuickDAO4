@@ -164,9 +164,14 @@ public class DMLTest extends MySQLTest {
         //关联更新
         {
             int effect = dao.query(Order.class)
-                    .joinTable(Person.class,"person_id","id")
-                    .addQuery("id",1)
-                    .done()
+                    .tableAliasName("o")
+                    .addSubQuery("person_id","=",
+                            dao.query(Person.class)
+                                    .addColumn("id")
+                                    .tableAliasName("p")
+                                    .addQuery("id",1)
+                                    .addRawQuery("o.person_id = p.id")
+                    )
                     .addUpdate("orderNo",1)
                     .execute()
                     .update();

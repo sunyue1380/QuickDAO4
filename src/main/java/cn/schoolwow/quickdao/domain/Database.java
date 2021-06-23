@@ -6,7 +6,6 @@ import cn.schoolwow.quickdao.builder.dcl.OracleDCLBuilder;
 import cn.schoolwow.quickdao.builder.dcl.PostgreDCLBuilder;
 import cn.schoolwow.quickdao.builder.ddl.*;
 import cn.schoolwow.quickdao.builder.dql.AbstractDQLBuilder;
-import cn.schoolwow.quickdao.builder.dql.SQLiteDQLBuilder;
 import cn.schoolwow.quickdao.query.condition.*;
 import cn.schoolwow.quickdao.query.subCondition.AbstractSubCondition;
 import cn.schoolwow.quickdao.query.subCondition.SQLiteSubCondition;
@@ -151,7 +150,7 @@ public enum Database {
             case SQLite:
             case SQLServer:
             case Postgre:
-            case Oracle:{return new SQLiteDQLBuilder(quickDAOConfig);}
+            case Oracle:
             case MariaDB:
             case Mysql:
             case H2:{return new AbstractDQLBuilder(quickDAOConfig);}

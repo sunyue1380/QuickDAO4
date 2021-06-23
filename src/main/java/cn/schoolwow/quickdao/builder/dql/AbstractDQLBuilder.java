@@ -210,9 +210,8 @@ public class AbstractDQLBuilder extends AbstractSQLBuilder implements DQLBuilder
 
     @Override
     public ConnectionExecutorItem update(Query query) throws SQLException {
-        StringBuilder builder = new StringBuilder("update " + query.entity.escapeTableName + " " + query.tableAliasName +" ");
-        addJoinTableStatement(query,builder);
-        builder.append(query.setBuilder.toString() + " " + query.where);
+        StringBuilder builder = new StringBuilder("update " + query.entity.escapeTableName + " ");
+        builder.append(query.setBuilder.toString() + " " + query.where.replace(query.tableAliasName + ".",""));
 
         String sql = builder.toString();
         ConnectionExecutorItem connectionExecutorItem = connectionExecutor.newConnectionExecutorItem("批量更新",sql);
@@ -227,9 +226,8 @@ public class AbstractDQLBuilder extends AbstractSQLBuilder implements DQLBuilder
 
     @Override
     public ConnectionExecutorItem delete(Query query) throws SQLException {
-        StringBuilder builder = new StringBuilder("delete t from " + query.entity.escapeTableName + " as t");
-        addJoinTableStatement(query,builder);
-        builder.append(" " + query.where);
+        StringBuilder builder = new StringBuilder("delete from " + query.quickDAOConfig.database.escape(query.entity.tableName));
+        builder.append(" " + query.where.replace(query.tableAliasName+".",""));
 
         String sql = builder.toString();
         ConnectionExecutorItem connectionExecutorItem = connectionExecutor.newConnectionExecutorItem("批量删除",sql);
