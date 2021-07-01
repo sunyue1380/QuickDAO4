@@ -34,7 +34,7 @@ public class Entity implements Serializable, Cloneable{
     /**
      * 属性字段(排除ignore字段和实体包内字段)
      */
-    public List<Property> properties;
+    public List<Property> properties = new ArrayList<>();
     /**
      * 外键约束字段
      */

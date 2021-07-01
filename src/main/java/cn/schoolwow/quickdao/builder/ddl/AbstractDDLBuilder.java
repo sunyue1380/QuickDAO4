@@ -21,17 +21,22 @@ public abstract class AbstractDDLBuilder extends AbstractSQLBuilder implements D
     }
 
     @Override
-    public String getDatabaseName() throws SQLException{
-        return null;
+    public void getDatabaseName() throws SQLException{
     }
 
     @Override
     public List<Entity> getDatabaseEntity() throws SQLException{
         List<Entity> entityList = getEntityList();
+        //清空表字段信息
         for(Entity entity:entityList){
-            getEntityPropertyList(entity);
-            getIndex(entity);
+            entity.properties.clear();
         }
+        getEntityPropertyList(entityList);
+        //清空表索引信息
+        for(Entity entity:entityList){
+            entity.indexFieldList.clear();
+        }
+        getIndex(entityList);
         return entityList;
     }
 
@@ -205,6 +210,7 @@ public abstract class AbstractDDLBuilder extends AbstractSQLBuilder implements D
 
     @Override
     public void refreshDbEntityList() throws SQLException {
+        getDatabaseName();
         List<Entity> dbEntityList = getDatabaseEntity();
         for (Entity dbEntity : dbEntityList) {
             dbEntity.escapeTableName = quickDAOConfig.database.escape(dbEntity.tableName);
@@ -239,12 +245,12 @@ public abstract class AbstractDDLBuilder extends AbstractSQLBuilder implements D
     /**
      * 提取索引信息
      * */
-    protected abstract void getIndex(Entity entity) throws SQLException;
+    protected abstract void getIndex(List<Entity> entityList) throws SQLException;
 
     /**
      * 提取表字段信息
      * */
-    protected abstract void getEntityPropertyList(Entity entity) throws SQLException;
+    protected abstract void getEntityPropertyList(List<Entity> entityList) throws SQLException;
 
     /**
      * 从数据库提取表信息

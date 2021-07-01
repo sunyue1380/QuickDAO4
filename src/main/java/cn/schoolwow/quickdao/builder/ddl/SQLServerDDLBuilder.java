@@ -152,70 +152,73 @@ public class SQLServerDDLBuilder extends AbstractDDLBuilder {
     }
 
     @Override
-    protected void getIndex(Entity entity) throws SQLException {
-        String getIndexSQL = "select i.is_unique,i.name,col.name col_name from sys.indexes i left join sys.index_columns ic on ic.object_id = i.object_id and ic.index_id = i.index_id left join (select * from sys.all_columns where object_id = object_id( '"+entity.tableName+"', N'U' )) col on ic.column_id = col.column_id where i.object_id = object_id('"+entity.tableName+"', N'U' ) and i.index_id > 0";
-        ResultSet resultSet = connectionExecutor.executeQuery("获取索引信息",getIndexSQL);
-        while (resultSet.next()) {
-            IndexField indexField = new IndexField();
-            if(resultSet.getBoolean("is_unique")){
-                indexField.indexType = IndexType.UNIQUE;
-            }else{
-                indexField.indexType = IndexType.NORMAL;
+    protected void getIndex(List<Entity> entityList) throws SQLException {
+        for(Entity entity:entityList){
+            String getIndexSQL = "select i.is_unique,i.name,col.name col_name from sys.indexes i left join sys.index_columns ic on ic.object_id = i.object_id and ic.index_id = i.index_id left join (select * from sys.all_columns where object_id = object_id( '"+entity.tableName+"', N'U' )) col on ic.column_id = col.column_id where i.object_id = object_id('"+entity.tableName+"', N'U' ) and i.index_id > 0";
+            ResultSet resultSet = connectionExecutor.executeQuery("获取索引信息",getIndexSQL);
+            while (resultSet.next()) {
+                IndexField indexField = new IndexField();
+                if(resultSet.getBoolean("is_unique")){
+                    indexField.indexType = IndexType.UNIQUE;
+                }else{
+                    indexField.indexType = IndexType.NORMAL;
+                }
+                indexField.indexName = resultSet.getString("name");
+                //判断是否已经存在该索引
+                IndexField existIndexField = entity.indexFieldList.stream().filter(indexField1 -> indexField1.indexName.equals(indexField.indexName)).findFirst().orElse(null);
+                if(null!=existIndexField){
+                    existIndexField.columns.add(resultSet.getNString("col_name"));
+                }else{
+                    indexField.columns.add(resultSet.getNString("col_name"));
+                    entity.indexFieldList.add(indexField);
+                }
             }
-            indexField.indexName = resultSet.getString("name");
-            //判断是否已经存在该索引
-            IndexField existIndexField = entity.indexFieldList.stream().filter(indexField1 -> indexField1.indexName.equals(indexField.indexName)).findFirst().orElse(null);
-            if(null!=existIndexField){
-                existIndexField.columns.add(resultSet.getNString("col_name"));
-            }else{
-                indexField.columns.add(resultSet.getNString("col_name"));
-                entity.indexFieldList.add(indexField);
-            }
+            resultSet.close();
         }
-        resultSet.close();
     }
 
     @Override
-    protected void getEntityPropertyList(Entity entity) throws SQLException {
-        {
-            //获取表注释
-            String getEntityCommentSQL = "select isnull(convert(varchar(255),value),'') comment from sys.extended_properties ex_p where ex_p.minor_id=0 and ex_p.major_id in (select id from sys.sysobjects a where a.name='"+entity.tableName+"')";
-            ResultSet resultSet = connectionExecutor.executeQuery("获取表注释",getEntityCommentSQL);
-            if(resultSet.next()){
-                entity.comment = resultSet.getString("comment");
-            }
-            resultSet.close();
-        }
+    protected void getEntityPropertyList(List<Entity> entityList) throws SQLException {
         {
             //获取字段信息
-            String getEntityPropertyTypeListSQL = "select ordinal_position,column_name,data_type,is_nullable from information_schema.columns where table_name = '" + entity.tableName + "'";
+            String getEntityPropertyTypeListSQL = "select table_name, ordinal_position,column_name,data_type,is_nullable from information_schema.columns";
             ResultSet resultSet = connectionExecutor.executeQuery("获取表字段类型信息", getEntityPropertyTypeListSQL);
-            List<Property> propertyList = new ArrayList<>();
             while (resultSet.next()) {
-                Property property = new Property();
-                property.column = resultSet.getString("column_name");
-                property.columnType = resultSet.getString("data_type");
-                if(resultSet.getInt("ordinal_position")==1&&"bigint".equalsIgnoreCase(property.columnType)){
-                    property.id = true;
-                    property.strategy = IdStrategy.AutoIncrement;
+                for(Entity entity:entityList) {
+                    if (!entity.tableName.equalsIgnoreCase(resultSet.getString("table_name"))) {
+                        continue;
+                    }
+                    Property property = new Property();
+                    property.column = resultSet.getString("column_name");
+                    property.columnType = resultSet.getString("data_type");
+                    if(resultSet.getInt("ordinal_position")==1&&"bigint".equalsIgnoreCase(property.columnType)){
+                        property.id = true;
+                        property.strategy = IdStrategy.AutoIncrement;
+                    }
+                    property.notNull = "NO".equals(resultSet.getString("is_nullable"));
+                    entity.properties.add(property);
+                    break;
                 }
-                property.notNull = "NO".equals(resultSet.getString("is_nullable"));
-                propertyList.add(property);
+
             }
             resultSet.close();
-            entity.properties = propertyList;
         }
         {
             //获取字段注释
-            String getPropertyCommentList = "select c.name ,convert(varchar(255),a.value) value from sys.extended_properties a, sysobjects b, sys.columns c where a.major_id = b.id and c.object_id = b.id and c.column_id = a.minor_id and b.name = '"+entity.tableName+"'";
+            String getPropertyCommentList = "select b.name table_name, c.name, convert(varchar(255),a.value) value from sys.extended_properties a, sysobjects b, sys.columns c where a.major_id = b.id and c.object_id = b.id and c.column_id = a.minor_id";
             ResultSet resultSet = connectionExecutor.executeQuery("获取字段注释", getPropertyCommentList);
             while(resultSet.next()){
-                String name = resultSet.getString("name");
-                for(Property property:entity.properties){
-                    if(property.column.equalsIgnoreCase(name)){
-                        property.comment = resultSet.getString("value");
-                        break;
+                for(Entity entity:entityList) {
+                    if (!entity.tableName.equalsIgnoreCase(resultSet.getString("table_name"))) {
+                        continue;
                     }
+                    for(Property property:entity.properties){
+                        if(property.column.equalsIgnoreCase(resultSet.getString("name"))){
+                            property.comment = resultSet.getString("value");
+                            break;
+                        }
+                    }
+                    break;
                 }
             }
             resultSet.close();
@@ -224,16 +227,34 @@ public class SQLServerDDLBuilder extends AbstractDDLBuilder {
 
     @Override
     protected List<Entity> getEntityList() throws SQLException {
-        String getEntityListSQL = "select name from sysobjects where xtype='u' order by name;";
-        ResultSet resultSet = connectionExecutor.executeQuery("获取表列表",getEntityListSQL);
-
         List<Entity> entityList = new ArrayList<>();
-        while (resultSet.next()) {
-            Entity entity = new Entity();
-            entity.tableName = resultSet.getString("name");
-            entityList.add(entity);
+        {
+            //获取所有表
+            String getEntityListSQL = "select name from sysobjects where xtype='u' order by name;";
+            ResultSet resultSet = connectionExecutor.executeQuery("获取表列表",getEntityListSQL);
+
+            while (resultSet.next()) {
+                Entity entity = new Entity();
+                entity.tableName = resultSet.getString("name");
+                entityList.add(entity);
+            }
+            resultSet.close();
         }
-        resultSet.close();
+        {
+            //获取表注释
+            String getEntityCommentSQL = "select so.name table_name, isnull(convert(varchar(255),value),'') comment from sys.extended_properties ex_p left join sys.sysobjects so on ex_p.major_id = so.id where ex_p.minor_id=0";
+            ResultSet resultSet = connectionExecutor.executeQuery("获取表注释",getEntityCommentSQL);
+            if(resultSet.next()){
+                for(Entity entity:entityList) {
+                    if (!entity.tableName.equalsIgnoreCase(resultSet.getString("table_name"))) {
+                        continue;
+                    }
+                    entity.comment = resultSet.getString("comment");
+                    break;
+                }
+            }
+            resultSet.close();
+        }
         return entityList;
     }
 }

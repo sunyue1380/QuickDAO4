@@ -17,15 +17,13 @@ public class MySQLDDLBuilder extends AbstractDDLBuilder {
     }
 
     @Override
-    public String getDatabaseName() throws SQLException{
+    public void getDatabaseName() throws SQLException{
         String getDatabaseNameSQL = "select database();";
         ResultSet resultSet = connectionExecutor.executeQuery("获取数据库名称",getDatabaseNameSQL);
-        String databaseName = null;
         if(resultSet.next()){
-            databaseName = resultSet.getString(1);
+            quickDAOConfig.databaseName = resultSet.getString(1);
         }
         resultSet.close();
-        return databaseName;
     }
 
     @Override
@@ -199,65 +197,80 @@ public class MySQLDDLBuilder extends AbstractDDLBuilder {
     }
 
     @Override
-    protected void getIndex(Entity entity) throws SQLException {
-        String getIndexSQL = "show index from " + quickDAOConfig.database.escape(entity.tableName);
+    protected void getIndex(List<Entity> entityList) throws SQLException {
+        String getIndexSQL = "select table_name, index_name, non_unique, column_name, index_type, index_comment from information_schema.`statistics` where table_schema = '" + quickDAOConfig.databaseName + "'";
         ResultSet resultSet = connectionExecutor.executeQuery("获取索引信息",getIndexSQL);
         while (resultSet.next()) {
-            String indexName = resultSet.getString("Key_name");
-            IndexField indexField = null;
-            for(IndexField indexField1:entity.indexFieldList){
-                if(indexField1.indexName.equals(indexName)){
-                    indexField = indexField1;
-                    break;
+            for(Entity entity : entityList) {
+                if (!entity.tableName.equalsIgnoreCase(resultSet.getString("table_name"))) {
+                    continue;
                 }
+                String indexName = resultSet.getString("index_name");
+                IndexField indexField = null;
+                for(IndexField indexField1:entity.indexFieldList){
+                    if(indexField1.indexName.equals(indexName)){
+                        indexField = indexField1;
+                        break;
+                    }
+                }
+                if(null==indexField) {
+                    indexField = new IndexField();
+                    indexField.indexType = resultSet.getInt("non_unique")==0?IndexType.UNIQUE:IndexType.NORMAL;
+                    indexField.indexName = resultSet.getString("index_name");
+                    indexField.columns.add(resultSet.getString("column_name"));
+                    indexField.using = resultSet.getString("index_type");
+                    indexField.comment = resultSet.getString("index_comment");
+                    entity.indexFieldList.add(indexField);
+                }else{
+                    indexField.columns.add(resultSet.getString("column_name"));
+                }
+                break;
             }
-            if(null==indexField) {
-                indexField = new IndexField();
-                indexField.indexType = resultSet.getInt("Non_unique")==0?IndexType.UNIQUE:IndexType.NORMAL;
-                indexField.indexName = resultSet.getString("Key_name");
-                indexField.columns.add(resultSet.getString("Column_name"));
-                indexField.using = resultSet.getString("Index_type");
-                indexField.comment = resultSet.getString("Index_comment");
-                entity.indexFieldList.add(indexField);
-            }else{
-                indexField.columns.add(resultSet.getString("Column_name"));
-            }
+
         }
         resultSet.close();
     }
 
     @Override
-    protected void getEntityPropertyList(Entity entity) throws SQLException {
-        String getEntityPropertyListSQL = "show full columns from " + quickDAOConfig.database.escape(entity.tableName);
+    protected void getEntityPropertyList(List<Entity> entityList) throws SQLException {
+        String getEntityPropertyListSQL = "select table_name, column_name, data_type, character_maximum_length, is_nullable, column_key, extra, column_default, column_comment from information_schema.`columns` where table_schema = '" + quickDAOConfig.databaseName + "'";
         ResultSet resultSet = connectionExecutor.executeQuery("获取表字段信息",getEntityPropertyListSQL);
-        List<Property> propertyList = new ArrayList<>();
         while (resultSet.next()) {
-            Property property = new Property();
-            property.column = resultSet.getString("Field");
-            //无符号填充0 => float unsigned zerofill
-            property.columnType = resultSet.getString("Type");
-            if(property.columnType.contains(" ")){
-                property.columnType = property.columnType.substring(0,property.columnType.indexOf(" "));
+            for(Entity entity : entityList){
+                if(!entity.tableName.equalsIgnoreCase(resultSet.getString("table_name"))){
+                    continue;
+                }
+                //添加字段信息
+                Property property = new Property();
+                property.column = resultSet.getString("column_name");
+                //无符号填充0 => float unsigned zerofill
+                property.columnType = resultSet.getString("data_type");
+                if(property.columnType.contains(" ")){
+                    property.columnType = property.columnType.substring(0,property.columnType.indexOf(" "));
+                }
+                if(null!=resultSet.getString("character_maximum_length")){
+                    property.columnType += "("+resultSet.getString("character_maximum_length")+")";
+                }
+                property.notNull = "NO".equals(resultSet.getString("is_nullable"));
+                String key = resultSet.getString("column_key");
+                if("PRI".equals(key)){
+                    property.id = true;
+                }
+                if("auto_increment".equals(resultSet.getString("extra"))){
+                    property.id = true;
+                    property.strategy = IdStrategy.AutoIncrement;
+                }else{
+                    property.strategy = IdStrategy.None;
+                }
+                if (null != resultSet.getString("column_default")) {
+                    property.defaultValue = resultSet.getString("column_default");
+                }
+                property.comment = resultSet.getString("column_comment");
+                entity.properties.add(property);
+                break;
             }
-            property.notNull = "NO".equals(resultSet.getString("Null"));
-            String key = resultSet.getString("Key");
-            if("PRI".equals(key)){
-                property.id = true;
-            }
-            if("auto_increment".equals(resultSet.getString("Extra"))){
-                property.id = true;
-                property.strategy = IdStrategy.AutoIncrement;
-            }else{
-                property.strategy = IdStrategy.None;
-            }
-            if (null != resultSet.getString("Default")) {
-                property.defaultValue = resultSet.getString("Default");
-            }
-            property.comment = resultSet.getString("Comment");
-            propertyList.add(property);
         }
         resultSet.close();
-        entity.properties = propertyList;
     }
 
     @Override
@@ -268,10 +281,10 @@ public class MySQLDDLBuilder extends AbstractDDLBuilder {
         List<Entity> entityList = new ArrayList<>();
         while (resultSet.next()) {
             Entity entity = new Entity();
-            entity.tableName = resultSet.getString("Name");
-            entity.comment = resultSet.getString("Comment");
-            entity.engine = resultSet.getString("Engine");
-            entity.charset = resultSet.getString("Collation");
+            entity.tableName = resultSet.getString("name");
+            entity.comment = resultSet.getString("comment");
+            entity.engine = resultSet.getString("engine");
+            entity.charset = resultSet.getString("collation");
             entityList.add(entity);
         }
         resultSet.close();

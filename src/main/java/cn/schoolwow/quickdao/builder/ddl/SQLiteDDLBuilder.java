@@ -149,49 +149,55 @@ public class SQLiteDDLBuilder extends AbstractDDLBuilder {
     }
 
     @Override
-    protected void getIndex(Entity entity) throws SQLException {
-        String getIndexSQL = "select sql from sqlite_master where type='index' and sql is not null and tbl_name = '" + entity.tableName+"'";
+    protected void getIndex(List<Entity> entityList) throws SQLException {
+        String getIndexSQL = "select tbl_name, sql from sqlite_master where type='index' and sql is not null";
         ResultSet resultSet = connectionExecutor.executeQuery("获取索引信息",getIndexSQL);
         while (resultSet.next()) {
-            String sql = resultSet.getString("sql");
-            String[] tokens = sql.split("`");
-            IndexField indexField = new IndexField();
-            if(tokens[0].contains("UNIQUE")){
-                indexField.indexType = IndexType.UNIQUE;
-            }else{
-                indexField.indexType = IndexType.NORMAL;
+            for(Entity entity:entityList) {
+                if (!entity.tableName.equalsIgnoreCase(resultSet.getString("tbl_name"))) {
+                    continue;
+                }
+                String sql = resultSet.getString("sql");
+                String[] tokens = sql.split("`");
+                IndexField indexField = new IndexField();
+                if(tokens[0].contains("UNIQUE")){
+                    indexField.indexType = IndexType.UNIQUE;
+                }else{
+                    indexField.indexType = IndexType.NORMAL;
+                }
+                indexField.indexName = tokens[1];
+                indexField.tableName = tokens[3];
+                for(int i=5;i<tokens.length-1;i++){
+                    indexField.columns.add(tokens[i]);
+                }
+                entity.indexFieldList.add(indexField);
+                break;
             }
-            indexField.indexName = tokens[1];
-            indexField.tableName = tokens[3];
-            for(int i=5;i<tokens.length-1;i++){
-                indexField.columns.add(tokens[i]);
-            }
-            entity.indexFieldList.add(indexField);
         }
         resultSet.close();
     }
 
     @Override
-    protected void getEntityPropertyList(Entity entity) throws SQLException {
-        String getEntityPropertyListSQL = "PRAGMA table_info(`" + entity.tableName + "`)";
-        ResultSet resultSet = connectionExecutor.executeQuery("获取表字段信息",getEntityPropertyListSQL);
-        List<Property> propertyList = new ArrayList<>();
-        while (resultSet.next()) {
-            Property property = new Property();
-            property.column = resultSet.getString("name");
-            property.columnType = resultSet.getString("type");
-            property.notNull = "1".equals(resultSet.getString("notnull"));
-            if (null != resultSet.getString("dflt_value")) {
-                property.defaultValue = resultSet.getString("dflt_value");
+    protected void getEntityPropertyList(List<Entity> entityList) throws SQLException {
+        for(Entity entity:entityList){
+            String getEntityPropertyListSQL = "PRAGMA table_info(`" + entity.tableName + "`)";
+            ResultSet resultSet = connectionExecutor.executeQuery("获取表字段信息",getEntityPropertyListSQL);
+            while (resultSet.next()) {
+                Property property = new Property();
+                property.column = resultSet.getString("name");
+                property.columnType = resultSet.getString("type");
+                property.notNull = "1".equals(resultSet.getString("notnull"));
+                if (null != resultSet.getString("dflt_value")) {
+                    property.defaultValue = resultSet.getString("dflt_value");
+                }
+                if(1==resultSet.getInt("pk")){
+                    property.id = true;
+                    property.strategy = IdStrategy.AutoIncrement;
+                }
+                entity.properties.add(property);
             }
-            if(1==resultSet.getInt("pk")){
-                property.id = true;
-                property.strategy = IdStrategy.AutoIncrement;
-            }
-            propertyList.add(property);
+            resultSet.close();
         }
-        resultSet.close();
-        entity.properties = propertyList;
     }
 
     @Override

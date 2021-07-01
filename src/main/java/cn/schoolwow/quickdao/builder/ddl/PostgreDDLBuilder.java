@@ -154,90 +154,108 @@ public class PostgreDDLBuilder extends AbstractDDLBuilder {
     }
 
     @Override
-    protected void getIndex(Entity entity) throws SQLException {
-        String getIndexSQL = "select tablename,indexname,indexdef from pg_indexes where tablename = '"+entity.tableName+"'";
+    protected void getIndex(List<Entity> entityList) throws SQLException {
+        String getIndexSQL = "select tablename,indexname,indexdef from pg_indexes";
         ResultSet resultSet = connectionExecutor.executeQuery("获取索引信息",getIndexSQL);
         while (resultSet.next()) {
-            IndexField indexField = new IndexField();
-            indexField.tableName = resultSet.getString("tablename");
-            indexField.indexName = resultSet.getString("indexname");
+            for(Entity entity : entityList) {
+                if (!entity.tableName.equalsIgnoreCase(resultSet.getString("tablename"))) {
+                    continue;
+                }
+                IndexField indexField = new IndexField();
+                indexField.tableName = resultSet.getString("tablename");
+                indexField.indexName = resultSet.getString("indexname");
 
-            String def = resultSet.getString("indexdef");
-            if(def.contains("UNIQUE INDEX")){
-                indexField.indexType = IndexType.UNIQUE;
-            }else{
-                indexField.indexType = IndexType.NORMAL;
+                String def = resultSet.getString("indexdef");
+                if(def.contains("UNIQUE INDEX")){
+                    indexField.indexType = IndexType.UNIQUE;
+                }else{
+                    indexField.indexType = IndexType.NORMAL;
+                }
+                indexField.using = def.substring(def.indexOf("USING")+"USING".length(),def.indexOf("(")).replace("\"","");
+                String[] columns = def.substring(def.indexOf("(")+1,def.indexOf(")")).split(",");
+                for(int i=0;i<columns.length;i++){
+                    indexField.columns.add(columns[i]);
+                }
+                entity.indexFieldList.add(indexField);
+                break;
             }
-            indexField.using = def.substring(def.indexOf("USING")+"USING".length(),def.indexOf("(")).replace("\"","");
-            String[] columns = def.substring(def.indexOf("(")+1,def.indexOf(")")).split(",");
-            for(int i=0;i<columns.length;i++){
-                indexField.columns.add(columns[i]);
-            }
-            entity.indexFieldList.add(indexField);
         }
         resultSet.close();
     }
 
     @Override
-    protected void getEntityPropertyList(Entity entity) throws SQLException {
-        List<Property> propertyList = new ArrayList<>();
+    protected void getEntityPropertyList(List<Entity> entityList) throws SQLException {
         {
             //获取表字段信息
-            String getEntityPropertyListSQL = "select attname as column_name , attnum as oridinal_position, attnotnull as notnull, format_type(atttypid,atttypmod) as type, col_description(attrelid, attnum) as comment from pg_attribute join pg_class on pg_attribute.attrelid = pg_class.oid where attnum > 0 and atttypid > 0 and pg_class.relname='" + entity.tableName+"'";
+            String getEntityPropertyListSQL = "select pg_class.relname as table_name, attname as column_name, attnum as oridinal_position, attnotnull as notnull, format_type(atttypid,atttypmod) as type, col_description(attrelid, attnum) as comment from pg_attribute join pg_class on pg_attribute.attrelid = pg_class.oid where attnum > 0 and atttypid > 0";
             ResultSet resultSet = connectionExecutor.executeQuery("获取表字段信息",getEntityPropertyListSQL);
             while (resultSet.next()) {
-                Property property = new Property();
-                property.column = resultSet.getString("column_name");
-                property.columnType = resultSet.getString("type");
-                property.notNull = "t".equals(resultSet.getString("notnull"));
-                property.comment = resultSet.getString("comment");
-                property.position = resultSet.getInt("oridinal_position");
-                propertyList.add(property);
+                for(Entity entity : entityList) {
+                    if (!entity.tableName.equalsIgnoreCase(resultSet.getString("table_name"))) {
+                        continue;
+                    }
+                    Property property = new Property();
+                    property.column = resultSet.getString("column_name");
+                    property.columnType = resultSet.getString("type");
+                    property.notNull = "t".equals(resultSet.getString("notnull"));
+                    property.comment = resultSet.getString("comment");
+                    property.position = resultSet.getInt("oridinal_position");
+                    entity.properties.add(property);
+                    break;
+                }
             }
             resultSet.close();
         }
         {
             //提取默认值和主键信息
-            String getEntityPropertyTypeListSQL = "select ordinal_position,column_name,column_default,is_nullable,udt_name,character_maximum_length,column_default from information_schema.columns where table_name = '" + entity.tableName + "'";
+            String getEntityPropertyTypeListSQL = "select table_name, ordinal_position,column_name,column_default,is_nullable,udt_name,character_maximum_length,column_default from information_schema.columns";
             ResultSet resultSet = connectionExecutor.executeQuery("获取表字段类型信息", getEntityPropertyTypeListSQL);
             while (resultSet.next()) {
-                Property property = propertyList.stream().filter(property1 -> {
-                    try {
-                        return property1.column.equals(resultSet.getString("column_name"));
-                    } catch (SQLException e) {
-                        e.printStackTrace();
-                        return false;
+                for(Entity entity : entityList) {
+                    if (!entity.tableName.equalsIgnoreCase(resultSet.getString("table_name"))) {
+                        continue;
                     }
-                }).findFirst().orElse(null);
-                if(null==property){
-                    continue;
-                }
-                property.columnType = resultSet.getString("udt_name");
-                if(null!=resultSet.getObject("character_maximum_length")){
-                    property.columnType += "("+resultSet.getInt("character_maximum_length")+")";
-                }
-                if (null != resultSet.getString("column_default")) {
-                    property.defaultValue = resultSet.getString("column_default");
+                    //匹配属性
+                    for(Property property : entity.properties){
+                        if(!property.column.equalsIgnoreCase(resultSet.getString("column_name"))){
+                            continue;
+                        }
+                        property.columnType = resultSet.getString("udt_name");
+                        if(null!=resultSet.getObject("character_maximum_length")){
+                            property.columnType += "("+resultSet.getInt("character_maximum_length")+")";
+                        }
+                        if (null != resultSet.getString("column_default")) {
+                            property.defaultValue = resultSet.getString("column_default");
+                        }
+                        break;
+                    }
+                    break;
                 }
             }
             resultSet.close();
         }
         {
             //获取主键约束
-            String getPrimaryKeySQL = "select conkey from pg_constraint join pg_class on pg_class.oid = pg_constraint.conrelid where contype = 'p' and relname = '" + entity.tableName + "'";
+            String getPrimaryKeySQL = "select relname, conkey from pg_constraint join pg_class on pg_class.oid = pg_constraint.conrelid where contype = 'p'";
             ResultSet resultSet = connectionExecutor.executeQuery("获取主键约束", getPrimaryKeySQL);
             while (resultSet.next()) {
-                String conkey = resultSet.getString("conkey");
-                for(Property property:propertyList){
-                    if(conkey.contains(property.position+"")){
-                        property.id = true;
-                        property.strategy = IdStrategy.AutoIncrement;
+                for(Entity entity : entityList) {
+                    if (!entity.tableName.equalsIgnoreCase(resultSet.getString("relname"))) {
+                        continue;
                     }
+                    String conkey = resultSet.getString("conkey");
+                    for(Property property:entity.properties){
+                        if(conkey.contains(property.position+"")){
+                            property.id = true;
+                            property.strategy = IdStrategy.AutoIncrement;
+                        }
+                    }
+                    break;
                 }
             }
             resultSet.close();
         }
-        entity.properties = propertyList;
     }
 
     @Override

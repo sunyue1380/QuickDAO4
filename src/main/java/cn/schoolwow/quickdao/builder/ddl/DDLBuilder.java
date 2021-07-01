@@ -15,7 +15,7 @@ public interface DDLBuilder {
     /**
      * 获取数据库名称
      */
-    String getDatabaseName() throws SQLException;
+    void getDatabaseName() throws SQLException;
 
     /**
      * 获取数据库信息

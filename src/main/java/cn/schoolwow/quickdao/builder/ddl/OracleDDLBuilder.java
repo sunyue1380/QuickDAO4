@@ -105,75 +105,96 @@ public class OracleDDLBuilder extends PostgreDDLBuilder{
     }
 
     @Override
-    protected void getIndex(Entity entity) throws SQLException {
+    protected void getIndex(List<Entity> entityList) throws SQLException {
         {
-            String getIndexSQL = "select index_name,uniqueness from user_indexes where table_name = '" + entity.tableName + "'";
+            String getIndexSQL = "select table_name, index_name,uniqueness from user_indexes";
             ResultSet resultSet = connectionExecutor.executeQuery("获取索引信息",getIndexSQL);
             while (resultSet.next()) {
-                IndexField indexField = new IndexField();
-                if("UNIQUE".equalsIgnoreCase(resultSet.getString("uniqueness"))){
-                    indexField.indexType = IndexType.UNIQUE;
-                }else{
-                    indexField.indexType = IndexType.NORMAL;
+                for(Entity entity:entityList) {
+                    if (!entity.tableName.equalsIgnoreCase(resultSet.getString("table_name"))) {
+                        continue;
+                    }
+                    IndexField indexField = new IndexField();
+                    if("UNIQUE".equalsIgnoreCase(resultSet.getString("uniqueness"))){
+                        indexField.indexType = IndexType.UNIQUE;
+                    }else{
+                        indexField.indexType = IndexType.NORMAL;
+                    }
+                    indexField.indexName = resultSet.getString("index_name");
+                    entity.indexFieldList.add(indexField);
+                    break;
                 }
-                indexField.indexName = resultSet.getString("index_name");
-                entity.indexFieldList.add(indexField);
             }
             resultSet.close();
         }
         {
-            String getIndexSQL = "select index_name,column_name from user_ind_columns where table_name= '" + entity.tableName + "'";
+            String getIndexSQL = "select table_name, index_name,column_name from user_ind_columns";
             ResultSet resultSet = connectionExecutor.executeQuery("获取索引字段信息",getIndexSQL);
             while (resultSet.next()) {
                 String indexName = resultSet.getString("index_name");
-                IndexField existIndexField = entity.indexFieldList.stream().filter(indexField1 -> indexField1.indexName.equals(indexName)).findFirst().orElse(null);
-                if(null==existIndexField){
-                    continue;
+                for(Entity entity:entityList) {
+                    if (!entity.tableName.equalsIgnoreCase(resultSet.getString("table_name"))) {
+                        continue;
+                    }
+                    IndexField existIndexField = entity.indexFieldList.stream().filter(indexField1 -> indexField1.indexName.equals(indexName)).findFirst().orElse(null);
+                    if(null==existIndexField){
+                        continue;
+                    }
+                    existIndexField.columns.add(resultSet.getString("column_name"));
+                    break;
                 }
-                existIndexField.columns.add(resultSet.getString("column_name"));
             }
             resultSet.close();
         }
     }
 
     @Override
-    protected void getEntityPropertyList(Entity entity) throws SQLException {
-        List<Property> propertyList = new ArrayList<>();
+    protected void getEntityPropertyList(List<Entity> entityList) throws SQLException {
         {
-            String getEntityPropertyListSQL = "select column_name,data_type,nullable,data_length from user_tab_columns where table_name = '" + entity.tableName + "'";
+            String getEntityPropertyListSQL = "select table_name, column_name, data_type, nullable, data_length from user_tab_columns";
             ResultSet resultSet = connectionExecutor.executeQuery("获取表字段信息",getEntityPropertyListSQL);
             while (resultSet.next()) {
-                Property property = new Property();
-                property.column = resultSet.getString("column_name");
-                property.columnType = resultSet.getString("data_type");
-                if(property.columnType.contains(" ")){
-                    property.columnType = property.columnType.substring(0,property.columnType.indexOf(" "));
+                for(Entity entity : entityList) {
+                    if (!entity.tableName.equalsIgnoreCase(resultSet.getString("table_name"))) {
+                        continue;
+                    }
+                    Property property = new Property();
+                    property.column = resultSet.getString("column_name");
+                    property.columnType = resultSet.getString("data_type");
+                    if(property.columnType.contains(" ")){
+                        property.columnType = property.columnType.substring(0,property.columnType.indexOf(" "));
+                    }
+                    String dataLength = resultSet.getString("data_length");
+                    if(null!=dataLength&&!dataLength.isEmpty()){
+                        property.columnType += "(" + dataLength + ")";
+                    }
+                    property.notNull = "N".equals(resultSet.getString("nullable"));
+                    entity.properties.add(property);
+                    break;
                 }
-                String dataLength = resultSet.getString("data_length");
-                if(null!=dataLength&&!dataLength.isEmpty()){
-                    property.columnType += "(" + dataLength + ")";
-                }
-                property.notNull = "N".equals(resultSet.getString("nullable"));
-                propertyList.add(property);
             }
             resultSet.close();
         }
         {
             //获取字段注释
-            String getPropertyCommentList = "select column_name, comments from user_col_comments where table_name = '"+entity.tableName+"'";
+            String getPropertyCommentList = "select table_name, column_name, comments from user_col_comments";
             ResultSet resultSet = connectionExecutor.executeQuery("获取字段注释", getPropertyCommentList);
             while(resultSet.next()){
-                String name = resultSet.getString("column_name");
-                for(Property property:propertyList){
-                    if(property.column.equalsIgnoreCase(name)){
-                        property.comment = resultSet.getString("comments");
-                        break;
+                for(Entity entity : entityList) {
+                    if (!entity.tableName.equalsIgnoreCase(resultSet.getString("table_name"))) {
+                        continue;
                     }
+                    for(Property property : entity.properties){
+                        if(property.column.equalsIgnoreCase(resultSet.getString("column_name"))){
+                            property.comment = resultSet.getString("comments");
+                            break;
+                        }
+                    }
+                    break;
                 }
             }
             resultSet.close();
         }
-        entity.properties = propertyList;
     }
 
     @Override
