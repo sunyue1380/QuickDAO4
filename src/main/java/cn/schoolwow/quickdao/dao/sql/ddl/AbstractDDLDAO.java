@@ -185,6 +185,7 @@ public class AbstractDDLDAO extends AbstractSQLDAO implements DDLDAO {
     @Override
     public void automaticCreateTableAndColumn(){
         try {
+            refreshDbEntityList();
             ddlBuilder.automaticCreateTableAndColumn();
         } catch (SQLException e) {
             throw new SQLRuntimeException(e);

@@ -235,7 +235,6 @@ public class QuickDAO {
         DAO daoProxy = (DAO) Proxy.newProxyInstance(Thread.currentThread().getContextClassLoader(), new Class<?>[]{DAO.class},daoInvocationHandler);
         quickDAOConfig.dao = daoProxy;
         //自动建表和新增字段
-        daoProxy.refreshDbEntityList();
         daoProxy.automaticCreateTableAndColumn();
         return daoProxy;
     }

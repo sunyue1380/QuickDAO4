@@ -71,9 +71,11 @@ public class DAOInvocationHandler implements InvocationHandler {
             instance.sqlBuilder.connectionExecutor = new ConnectionExecutor(quickDAOConfig);
             instance.sqlBuilder.connectionExecutor.connection = quickDAOConfig.dataSource.getConnection();
             result = method.invoke(instance, args);
-            if("DDLDAO".equals(interfaceName)){
-                DDLDAO ddldao = (DDLDAO) instance;
-                ddldao.refreshDbEntityList();
+            if("DDLDAO".equals(interfaceName)&&!method.getName().equals("refreshDbEntityList")){
+                if(!"refreshDbEntityList".equals(method.getName())&&!"automaticCreateTableAndColumn".equals(method.getName())){
+                    DDLDAO ddldao = (DDLDAO) instance;
+                    ddldao.refreshDbEntityList();
+                }
             }
             return result;
         } catch (InvocationTargetException e){
