@@ -323,6 +323,7 @@ public class DefaultEntityHandler implements EntityHandler{
                 }
                 if(null==property.className){
                     logger.warn("[字段类型匹配失败]表名:{}字段名称:{},类型:{}",dbEntity.tableName,property.column,property.columnType);
+                    property.className = "{{"+property.columnType+"}}";
                 }
                 property.name = underline2Camel(property.column);
                 builder.append("\tprivate "+property.className+" "+property.name+";\n\n");
