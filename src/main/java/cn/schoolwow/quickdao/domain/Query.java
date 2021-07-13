@@ -130,6 +130,10 @@ public class Query implements Serializable,Cloneable {
      */
     public List<SubQuery> subQueryList = new ArrayList<>();
     /**
+     * 单次批量插入个数
+     */
+    public int perBatchCommit;
+    /**
      * DQLBuilder实例
      * */
     public transient AbstractDQLBuilder dqlBuilder;

@@ -10,6 +10,7 @@ import cn.schoolwow.quickdao.domain.QuickDAOConfig;
 import java.lang.reflect.Field;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
+import java.sql.Statement;
 import java.sql.Timestamp;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -48,19 +49,35 @@ public class  AbstractDMLBuilder extends AbstractSQLBuilder implements DMLBuilde
     }
 
     @Override
-    public ConnectionExecutorItem insertBatch(Object[] instances) throws Exception {
+    public int insertBatch(Object[] instances) throws Exception {
         String sql = insert(instances[0].getClass());
         ConnectionExecutorItem connectionExecutorItem = connectionExecutor.newConnectionExecutorItem("批量插入对象",sql);
         connectionExecutor.connection.setAutoCommit(false);
-        StringBuilder builder = new StringBuilder();
-        for(Object instance : instances){
+        int effect = 0;
+        for(int i=0;i<instances.length;i++){
+            Object instance = instances[i];
             StringBuilder sqlBuilder = new StringBuilder(sql.replace("?", PLACEHOLDER));
             insert(connectionExecutorItem.preparedStatement,instance,sqlBuilder);
-            builder.append(sqlBuilder.toString()+";");
             connectionExecutorItem.preparedStatement.addBatch();
+            if((i!=0&&i%quickDAOConfig.perBatchCommit==0)||i==instances.length-1){
+                int[] batches = connectionExecutorItem.preparedStatement.executeBatch();
+                for(int batch:batches){
+                    switch (batch){
+                        case Statement.SUCCESS_NO_INFO:{
+                            effect += 1;
+                        }break;
+                        case Statement.EXECUTE_FAILED:{}break;
+                        default:{
+                            effect += batch;
+                        };
+                    }
+                }
+                connectionExecutor.connection.commit();
+                connectionExecutorItem.preparedStatement.clearBatch();
+            }
         }
-        connectionExecutorItem.sql = builder.toString();
-        return connectionExecutorItem;
+        connectionExecutorItem.preparedStatement.close();
+        return effect;
     }
 
     @Override

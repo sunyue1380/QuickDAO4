@@ -532,6 +532,12 @@ public class AbstractCondition<T> implements Condition<T>, Serializable,Cloneabl
     }
 
     @Override
+    public Condition<T> perBatchCommit(int perBatchCommit) {
+        query.perBatchCommit = perBatchCommit;
+        return this;
+    }
+
+    @Override
     public LambdaCondition<T> lambdaCondition() {
         LambdaConditionInvocationHandler<T> invocationHandler = new LambdaConditionInvocationHandler<T>(this);
         LambdaCondition<T> lambdaCondition = (LambdaCondition<T>) Proxy.newProxyInstance(Thread.currentThread().getContextClassLoader(),new Class<?>[]{LambdaCondition.class},invocationHandler);

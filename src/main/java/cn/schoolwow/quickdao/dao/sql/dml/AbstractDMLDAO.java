@@ -111,19 +111,11 @@ public class AbstractDMLDAO extends AbstractSQLDAO implements DMLDAO{
         if(null==instances||instances.length==0){
             return 0;
         }
-        int effect = 0;
         try {
-            ConnectionExecutorItem connectionExecutorItem = dmlBuilder.insertBatch(instances);
-            int[] batches = connectionExecutorItem.preparedStatement.executeBatch();
-            for (int batch : batches) {
-                effect += batch;
-            }
-            connectionExecutorItem.preparedStatement.close();
-            dmlBuilder.connectionExecutor.connection.commit();
+            return dmlBuilder.insertBatch(instances);
         } catch (Exception e) {
             throw new SQLRuntimeException(e);
         }
-        return effect;
     }
 
     @Override

@@ -191,10 +191,6 @@ public class SQLServerDDLBuilder extends AbstractDDLBuilder {
                     Property property = new Property();
                     property.column = resultSet.getString("column_name");
                     property.columnType = resultSet.getString("data_type");
-                    if(resultSet.getInt("ordinal_position")==1&&"bigint".equalsIgnoreCase(property.columnType)){
-                        property.id = true;
-                        property.strategy = IdStrategy.AutoIncrement;
-                    }
                     property.notNull = "NO".equals(resultSet.getString("is_nullable"));
                     entity.properties.add(property);
                     break;

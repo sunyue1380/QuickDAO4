@@ -43,13 +43,13 @@ public class AbstractResponse<T> implements Response<T>{
 
     @Override
     public int insert() {
-        int count = 0;
+        int effect = 0;
         try {
             if(null!=query.insertArray){
                 ConnectionExecutorItem[] connectionExecutorItems = query.dqlBuilder.insertArray(query);
                 for(int i=0;i<connectionExecutorItems.length;i++){
-                    count += query.dqlBuilder.connectionExecutor.executeUpdate(connectionExecutorItems[i]);
-                    if(count>0){
+                    effect += query.dqlBuilder.connectionExecutor.executeUpdate(connectionExecutorItems[i]);
+                    if(effect>0){
                         setGeneratedKeys(query.insertArray.getJSONObject(i),connectionExecutorItems[i].preparedStatement);
                     }
                     connectionExecutorItems[i].preparedStatement.close();
@@ -57,8 +57,8 @@ public class AbstractResponse<T> implements Response<T>{
                 query.dqlBuilder.connectionExecutor.connection.commit();
             }else{
                 ConnectionExecutorItem connectionExecutorItem = query.dqlBuilder.insert(query);
-                count = query.dqlBuilder.connectionExecutor.executeUpdate(connectionExecutorItem);
-                if (count>0&&null!=query.insertValue) {
+                effect = query.dqlBuilder.connectionExecutor.executeUpdate(connectionExecutorItem);
+                if (effect>0&&null!=query.insertValue) {
                     setGeneratedKeys(query.insertValue,connectionExecutorItem.preparedStatement);
                 }
                 connectionExecutorItem.preparedStatement.close();
@@ -66,7 +66,16 @@ public class AbstractResponse<T> implements Response<T>{
         } catch (SQLException e) {
             throw new SQLRuntimeException(e);
         }
-        return count;
+        return effect;
+    }
+
+    @Override
+    public int insertBatch() {
+        try {
+            return query.dqlBuilder.insertArrayBatch(query);
+        } catch (SQLException e) {
+            throw new SQLRuntimeException(e);
+        }
     }
 
     @Override

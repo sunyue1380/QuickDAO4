@@ -473,6 +473,12 @@ public interface Condition<T> extends Serializable {
     Condition<T> compositField();
 
     /**
+     * 批量插入时单次批量插入个数
+     * @param perBatchCommit 指定单次批量插入个数
+     */
+    Condition<T> perBatchCommit(int perBatchCommit);
+
+    /**
      * 获取lambdaCondition对象
      */
     LambdaCondition<T> lambdaCondition();

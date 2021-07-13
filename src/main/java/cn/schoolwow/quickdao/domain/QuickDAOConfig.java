@@ -79,6 +79,10 @@ public class QuickDAOConfig {
      */
     public ColumnTypeMapping columnTypeMapping;
     /**
+     * 单次批量插入个数
+     */
+    public int perBatchCommit = 1000;
+    /**
      * 扫描后的实体类信息
      * */
     public final Map<String, Entity> entityMap = new HashMap<>();

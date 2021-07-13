@@ -55,6 +55,11 @@ public interface DQLBuilder {
     ConnectionExecutorItem[] insertArray(Query query) throws SQLException;
 
     /**
+     * 批量插入记录
+     */
+    int insertArrayBatch(Query query) throws SQLException;
+
+    /**
      * 更新符合条件的记录
      */
     ConnectionExecutorItem update(Query query) throws SQLException;

@@ -9,6 +9,7 @@ import com.alibaba.fastjson.JSONObject;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -166,36 +167,17 @@ public class AbstractDQLBuilder extends AbstractSQLBuilder implements DQLBuilder
 
     @Override
     public ConnectionExecutorItem[] insertArray(Query query) throws SQLException {
-        StringBuilder builder = new StringBuilder("insert into " + query.entity.escapeTableName + "(");
-        List<Property> properties = query.entity.properties;
-        for(Property property:properties){
-            if(property.id&&property.strategy.equals(IdStrategy.AutoIncrement)){
-                continue;
-            }
-            builder.append(query.quickDAOConfig.database.escape(property.column) + ",");
-        }
-        builder.deleteCharAt(builder.length()-1);
-        builder.append(") values(");
-        for(Property property:properties){
-            if(property.id&&property.strategy.equals(IdStrategy.AutoIncrement)){
-                continue;
-            }
-            builder.append("?,");
-        }
-        builder.deleteCharAt(builder.length()-1);
-        builder.append(")");
-
-        String sql = builder.toString();
+        String sql = insertArraySQL(query);
         connectionExecutor.connection.setAutoCommit(false);
         ConnectionExecutorItem[] connectionExecutorItems = new ConnectionExecutorItem[query.insertArray.size()];
-        builder.setLength(0);
+        StringBuilder builder = new StringBuilder();
         for(int i=0;i<connectionExecutorItems.length;i++){
             ConnectionExecutorItem connectionExecutorItem = connectionExecutor.newConnectionExecutorItem("插入记录",sql);
             StringBuilder sqlBuilder = new StringBuilder(sql.replace("?",PLACEHOLDER));
             JSONObject o = query.insertArray.getJSONObject(i);
             int parameterIndex = 1;
-            for(int j=0;j<properties.size();j++){
-                Property property = properties.get(j);
+            for(int j=0;j<query.entity.properties.size();j++){
+                Property property = query.entity.properties.get(j);
                 if(property.id&&property.strategy.equals(IdStrategy.AutoIncrement)){
                     continue;
                 }
@@ -206,6 +188,48 @@ public class AbstractDQLBuilder extends AbstractSQLBuilder implements DQLBuilder
             connectionExecutorItems[i] = connectionExecutorItem;
         }
         return connectionExecutorItems;
+    }
+
+    @Override
+    public int insertArrayBatch(Query query) throws SQLException {
+        String sql = insertArraySQL(query);
+
+        connectionExecutor.connection.setAutoCommit(false);
+        ConnectionExecutorItem connectionExecutorItem = connectionExecutor.newConnectionExecutorItem("批量插入记录",sql);
+        int effect = 0;
+        int perBatchCommit = Math.max(query.perBatchCommit,quickDAOConfig.perBatchCommit);
+        int length = query.insertArray.size();
+        for(int i=0;i<length;i++){
+            StringBuilder sqlBuilder = new StringBuilder(sql.replace("?",PLACEHOLDER));
+            JSONObject o = query.insertArray.getJSONObject(i);
+            int parameterIndex = 1;
+            for(int j=0;j<query.entity.properties.size();j++){
+                Property property = query.entity.properties.get(j);
+                if(property.id&&property.strategy.equals(IdStrategy.AutoIncrement)){
+                    continue;
+                }
+                setParameter(o.get(property.column),connectionExecutorItem.preparedStatement,parameterIndex++,sqlBuilder);
+            }
+            connectionExecutorItem.preparedStatement.addBatch();
+            if((i!=0&&i%perBatchCommit==0)||i==length-1){
+                int[] batches = connectionExecutorItem.preparedStatement.executeBatch();
+                for(int batch:batches){
+                    switch (batch){
+                        case Statement.SUCCESS_NO_INFO:{
+                            effect += 1;
+                        }break;
+                        case Statement.EXECUTE_FAILED:{}break;
+                        default:{
+                            effect += batch;
+                        };
+                    }
+                }
+                connectionExecutor.connection.commit();
+                connectionExecutorItem.preparedStatement.clearBatch();
+            }
+        }
+        connectionExecutorItem.preparedStatement.close();
+        return effect;
     }
 
     @Override
@@ -382,6 +406,31 @@ public class AbstractDQLBuilder extends AbstractSQLBuilder implements DQLBuilder
         for (Object parameter : query.havingParameterList) {
             setParameter(parameter,ps,mainQuery.parameterIndex++,sqlBuilder);
         }
+    }
+
+    /**
+     * 获取批量插入SQL语句
+     * */
+    private String insertArraySQL(Query query){
+        StringBuilder builder = new StringBuilder("insert into " + query.entity.escapeTableName + "(");
+        List<Property> properties = query.entity.properties;
+        for(Property property:properties){
+            if(property.id&&property.strategy.equals(IdStrategy.AutoIncrement)){
+                continue;
+            }
+            builder.append(query.quickDAOConfig.database.escape(property.column) + ",");
+        }
+        builder.deleteCharAt(builder.length()-1);
+        builder.append(") values(");
+        for(Property property:properties){
+            if(property.id&&property.strategy.equals(IdStrategy.AutoIncrement)){
+                continue;
+            }
+            builder.append("?,");
+        }
+        builder.deleteCharAt(builder.length()-1);
+        builder.append(")");
+        return builder.toString();
     }
 
     /**

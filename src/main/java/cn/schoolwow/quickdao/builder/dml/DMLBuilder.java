@@ -21,7 +21,7 @@ public interface DMLBuilder {
     /**
      * 批量插入语句
      */
-    ConnectionExecutorItem insertBatch(Object[] instances) throws Exception;
+    int insertBatch(Object[] instances) throws Exception;
 
     /**
      * 根据唯一性约束更新

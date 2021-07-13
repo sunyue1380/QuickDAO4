@@ -199,6 +199,15 @@ public class QuickDAO {
         return this;
     }
 
+    /**
+     * 指定单次批量插入个数
+     * @param perBatchCommit 单次批量插入个数
+     * */
+    public QuickDAO perBatchCommit(int perBatchCommit) {
+        quickDAOConfig.perBatchCommit = perBatchCommit;
+        return this;
+    }
+
     /**自定义表和列*/
     public TableDefiner define(Class clazz) {
         if(quickDAOConfig.entityMap.isEmpty()){
