@@ -178,7 +178,7 @@ public class AbstractDAOOperation implements DAOOperation{
                     continue;
                 }
 
-                if(hasTable(entity.tableName)){
+                if(target.hasTable(entity.tableName)){
                     logger.debug("[数据迁移]删除表:{}",entity.tableName);
                     transaction.dropTable(entity.tableName);
                 }

@@ -60,7 +60,6 @@ public class ConnectionExecutor {
     public ResultSet executeQuery(String name, String sql) throws SQLException{
         try {
             PreparedStatement preparedStatement = connection.prepareStatement(sql);
-            preparedStatement.closeOnCompletion();
             ResultSet resultSet = executeQuery(name, sql, preparedStatement);
             return resultSet;
         }catch (SQLException e){
@@ -110,7 +109,6 @@ public class ConnectionExecutor {
     private ResultSet executeQuery(String name, String sql, PreparedStatement preparedStatement) throws SQLException {
         try {
             long startTime = System.currentTimeMillis();
-            preparedStatement.closeOnCompletion();
             ResultSet resultSet = preparedStatement.executeQuery();
             long endTime = System.currentTimeMillis();
             if(!"获取行数".equals(name)){
@@ -155,9 +153,9 @@ public class ConnectionExecutor {
             long endTime = System.currentTimeMillis();
             StackTraceElement[] stackTraceElements = Thread.currentThread().getStackTrace();
             if(stackTraceElements[3].getClassName().startsWith("cn.schoolwow.quickdao.builder.ddl")){
-                logger.trace("[{}]耗时:{}ms,执行SQL:{}", name, endTime - startTime, sql);
+                logger.trace("[{}]耗时:{}ms,影响行数:{},执行SQL:{}", name, endTime - startTime, count, sql);
             }else{
-                logger.debug("[{}]耗时:{}ms,执行SQL:{}", name, endTime - startTime, sql);
+                logger.debug("[{}]耗时:{}ms,影响行数:{},执行SQL:{}", name, endTime - startTime, count, sql);
             }
             for(Interceptor interceptor:quickDAOConfig.interceptorList){
                 interceptor.afterExecuteConnection(SQLStatementType.UPDATE, name, sql);
