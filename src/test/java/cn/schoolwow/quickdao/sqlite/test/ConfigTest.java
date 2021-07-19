@@ -4,6 +4,7 @@ import cn.schoolwow.quickdao.QuickDAO;
 import cn.schoolwow.quickdao.annotation.IdStrategy;
 import cn.schoolwow.quickdao.dao.DAO;
 import cn.schoolwow.quickdao.domain.Entity;
+import cn.schoolwow.quickdao.domain.GenerateEntityFileOption;
 import cn.schoolwow.quickdao.domain.Property;
 import cn.schoolwow.quickdao.domain.QuickDAOConfig;
 import cn.schoolwow.quickdao.sqlite.SQLiteTest;
@@ -150,7 +151,11 @@ public class ConfigTest extends SQLiteTest {
         };
         Path dir = Paths.get(directory);
         Files.walkFileTree(dir,fileVisitor);
-        dao.generateEntityFile(directory);
+        GenerateEntityFileOption generateEntityFileOption = new GenerateEntityFileOption();
+        generateEntityFileOption.sourceClassPath = directory;
+        generateEntityFileOption.tableFilter = (entity)->{return true;};
+        generateEntityFileOption.columnFieldTypeMapping = (columnType)->{return "String";};
+        dao.generateEntityFile(generateEntityFileOption);
         Files.walkFileTree(dir,fileVisitor);
     }
 

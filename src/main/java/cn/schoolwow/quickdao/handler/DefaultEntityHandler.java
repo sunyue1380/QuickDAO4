@@ -1,10 +1,7 @@
 package cn.schoolwow.quickdao.handler;
 
 import cn.schoolwow.quickdao.annotation.*;
-import cn.schoolwow.quickdao.domain.Entity;
-import cn.schoolwow.quickdao.domain.IndexField;
-import cn.schoolwow.quickdao.domain.Property;
-import cn.schoolwow.quickdao.domain.QuickDAOConfig;
+import cn.schoolwow.quickdao.domain.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -249,34 +246,31 @@ public class DefaultEntityHandler implements EntityHandler{
     }
 
     @Override
-    public void generateEntityFile(String sourcePath, String[] tableNames) {
+    public void generateEntityFile(GenerateEntityFileOption generateEntityFileOption) {
         if(quickDAOConfig.packageNameMap.isEmpty()){
             throw new IllegalArgumentException("请先调用packageName方法指定包名");
         }
         quickDAOConfig.autoCreateTable = false;
         quickDAOConfig.autoCreateProperty = false;
-        List<Entity> dbEntityList;
-        if(null==tableNames||tableNames.length==0){
-            dbEntityList = quickDAOConfig.dbEntityList;
-        }else{
-            dbEntityList = new ArrayList<>(tableNames.length);
-            for(String tableName:tableNames){
-                for(Entity dbEntity:quickDAOConfig.dbEntityList){
-                    if(dbEntity.tableName.equals(tableName)){
-                        dbEntityList.add(dbEntity);
-                        break;
-                    }
-                }
-            }
+        List<Entity> dbEntityList = quickDAOConfig.dbEntityList;
+        if(null!=generateEntityFileOption.tableFilter){
+            dbEntityList = dbEntityList.stream().filter(generateEntityFileOption.tableFilter).collect(Collectors.toList());
         }
+
         StringBuilder builder = new StringBuilder();
         String packageName = quickDAOConfig.packageNameMap.keySet().iterator().next();
         final Set<Map.Entry<String,String>> typeFieldMappingEntrySet = quickDAOConfig.database.getDDLBuilderInstance(quickDAOConfig).getTypeFieldMapping().entrySet();
         for(Entity dbEntity:dbEntityList){
             String entityClassName = underline2Camel(dbEntity.tableName);
             entityClassName = entityClassName.toUpperCase().charAt(0)+entityClassName.substring(1);
+            if(null!=generateEntityFileOption.entityClassNameMapping){
+                String newEntityClassName = generateEntityFileOption.entityClassNameMapping.apply(dbEntity,entityClassName);
+                if(null!=newEntityClassName&&!newEntityClassName.isEmpty()){
+                    entityClassName = newEntityClassName;
+                }
+            }
 
-            Path target = Paths.get(sourcePath+"/"+ packageName.replace(".","/") + "/" + entityClassName+".java");
+            Path target = Paths.get(generateEntityFileOption.sourceClassPath+"/"+ packageName.replace(".","/") + "/" + entityClassName.replace(".","/")+".java");
             try {
                 Files.createDirectories(target.getParent());
             } catch (IOException e) {
@@ -290,7 +284,7 @@ public class DefaultEntityHandler implements EntityHandler{
 
             builder.setLength(0);
             //新建Java类
-            builder.append("package "+packageName+";\n");
+            builder.append("package " + packageName + (entityClassName.contains(".")?"."+entityClassName.substring(0,entityClassName.lastIndexOf(".")):"") +";\n");
             builder.append("import cn.schoolwow.quickdao.annotation.*;\n\n");
             if(null!=dbEntity.comment){
                 builder.append("@Comment(\""+dbEntity.comment+"\")\n");
@@ -298,7 +292,7 @@ public class DefaultEntityHandler implements EntityHandler{
             if(null!=dbEntity.tableName){
                 builder.append("@TableName(\""+dbEntity.tableName+"\")\n");
             }
-            builder.append("public class "+entityClassName+"{\n\n");
+            builder.append("public class "+(entityClassName.contains(".")?entityClassName.substring(entityClassName.lastIndexOf(".")+1):entityClassName)+"{\n\n");
             for(Property property:dbEntity.properties){
                 if(null!=property.comment&&!property.comment.isEmpty()){
                     builder.append("\t@Comment(\""+property.comment.replaceAll("\r\n","")+"\")\n");
@@ -320,6 +314,9 @@ public class DefaultEntityHandler implements EntityHandler{
                         property.className = entry.getKey().replace("java.lang.","");
                         break;
                     }
+                }
+                if(null==property.className&&null!=generateEntityFileOption.columnFieldTypeMapping){
+                    property.className = generateEntityFileOption.columnFieldTypeMapping.apply(property.columnType);
                 }
                 if(null==property.className){
                     logger.warn("[字段类型匹配失败]表名:{}字段名称:{},类型:{}",dbEntity.tableName,property.column,property.columnType);

@@ -1,9 +1,6 @@
 package cn.schoolwow.quickdao.dao;
 
-import cn.schoolwow.quickdao.domain.Entity;
-import cn.schoolwow.quickdao.domain.Interceptor;
-import cn.schoolwow.quickdao.domain.Property;
-import cn.schoolwow.quickdao.domain.QuickDAOConfig;
+import cn.schoolwow.quickdao.domain.*;
 import cn.schoolwow.quickdao.transaction.Transaction;
 
 import javax.sql.DataSource;
@@ -86,17 +83,9 @@ public interface DAOOperation {
     /**
      * 生成entity的java文件
      *
-     * @param sourcePath 生成文件夹路径
+     * @param generateEntityFileOption 生成实体类文件选项
      */
-    void generateEntityFile(String sourcePath);
-
-    /**
-     * 生成entity的java文件
-     *
-     * @param sourcePath 生成文件夹路径
-     * @param tableNames 指定需要生成实体类的对应的表名
-     */
-    void generateEntityFile(String sourcePath, String[] tableNames);
+    void generateEntityFile(GenerateEntityFileOption generateEntityFileOption);
 
     /**
      * 从指定数据源迁移

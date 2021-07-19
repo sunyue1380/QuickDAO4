@@ -17,7 +17,7 @@ import java.time.LocalDateTime;
 import java.util.Calendar;
 import java.util.Date;
 
-public class  AbstractDMLBuilder extends AbstractSQLBuilder implements DMLBuilder {
+public class AbstractDMLBuilder extends AbstractSQLBuilder implements DMLBuilder {
 
     public AbstractDMLBuilder(QuickDAOConfig quickDAOConfig) {
         super(quickDAOConfig);
@@ -163,6 +163,16 @@ public class  AbstractDMLBuilder extends AbstractSQLBuilder implements DMLBuilde
         if (!quickDAOConfig.sqlCache.containsKey(key)) {
             Entity entity = quickDAOConfig.getEntityByClassName(clazz.getName());
             quickDAOConfig.sqlCache.put(key, "delete from "+entity.escapeTableName);
+        }
+        ConnectionExecutorItem connectionExecutorItem = connectionExecutor.newConnectionExecutorItem("清空表",quickDAOConfig.sqlCache.get(key));
+        return connectionExecutorItem;
+    }
+
+    @Override
+    public ConnectionExecutorItem clear(String tableName) throws SQLException {
+        String key = "clear_" + tableName+"_"+quickDAOConfig.database.getClass().getSimpleName();
+        if (!quickDAOConfig.sqlCache.containsKey(key)) {
+            quickDAOConfig.sqlCache.put(key, "delete from " + tableName);
         }
         ConnectionExecutorItem connectionExecutorItem = connectionExecutor.newConnectionExecutorItem("清空表",quickDAOConfig.sqlCache.get(key));
         return connectionExecutorItem;
