@@ -3,10 +3,7 @@ package cn.schoolwow.quickdao;
 import cn.schoolwow.quickdao.annotation.IdStrategy;
 import cn.schoolwow.quickdao.dao.DAO;
 import cn.schoolwow.quickdao.dao.DAOInvocationHandler;
-import cn.schoolwow.quickdao.domain.ColumnTypeMapping;
-import cn.schoolwow.quickdao.domain.Database;
-import cn.schoolwow.quickdao.domain.Entity;
-import cn.schoolwow.quickdao.domain.QuickDAOConfig;
+import cn.schoolwow.quickdao.domain.*;
 import cn.schoolwow.quickdao.domain.generator.IDGenerator;
 import cn.schoolwow.quickdao.exception.SQLRuntimeException;
 import cn.schoolwow.quickdao.handler.DefaultEntityHandler;
@@ -19,6 +16,7 @@ import javax.sql.DataSource;
 import java.lang.reflect.Proxy;
 import java.sql.Connection;
 import java.util.ArrayList;
+import java.util.function.Function;
 import java.util.function.Predicate;
 
 public class QuickDAO {
@@ -205,6 +203,24 @@ public class QuickDAO {
      * */
     public QuickDAO perBatchCommit(int perBatchCommit) {
         quickDAOConfig.perBatchCommit = perBatchCommit;
+        return this;
+    }
+
+    /**
+     * 插入时设置字段值
+     * @param insertColumnValueFunction 插入时设置字段值函数,参数为字段信息,返回值为该字段对应值,若为null则忽略该值
+     * */
+    public QuickDAO insertColumnValueFunction(Function<Property,Object> insertColumnValueFunction) {
+        quickDAOConfig.insertColumnValueFunction = insertColumnValueFunction;
+        return this;
+    }
+
+    /**
+     * 更新时设置字段值
+     * @param updateColumnValueFunction 更新时设置字段值函数,参数为字段信息,返回值为该字段对应值,若为null则忽略该值
+     * */
+    public QuickDAO updateColumnValueFunction(Function<Property,Object> updateColumnValueFunction) {
+        quickDAOConfig.updateColumnValueFunction = updateColumnValueFunction;
         return this;
     }
 

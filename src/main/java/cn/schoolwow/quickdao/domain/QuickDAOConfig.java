@@ -13,6 +13,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.function.Function;
 import java.util.function.Predicate;
 
 /**数据源访问配置选项*/
@@ -82,6 +83,14 @@ public class QuickDAOConfig {
      * 单次批量插入个数
      */
     public int perBatchCommit = 1000;
+    /**
+     * 插入时设置数据
+     */
+    public Function<Property,Object> insertColumnValueFunction;
+    /**
+     * 更新时设置数据
+     */
+    public Function<Property,Object> updateColumnValueFunction;
     /**
      * 扫描后的实体类信息
      * */

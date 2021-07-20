@@ -153,9 +153,9 @@ public class ConnectionExecutor {
             long endTime = System.currentTimeMillis();
             StackTraceElement[] stackTraceElements = Thread.currentThread().getStackTrace();
             if(stackTraceElements[3].getClassName().startsWith("cn.schoolwow.quickdao.builder.ddl")){
-                logger.trace("[{}]耗时:{}ms,影响行数:{},执行SQL:{}", name, endTime - startTime, count, sql);
+                logger.trace("[{}]耗时:{}ms,影响行数:{},执行SQL:{}", name, endTime - startTime, effect, sql);
             }else{
-                logger.debug("[{}]耗时:{}ms,影响行数:{},执行SQL:{}", name, endTime - startTime, count, sql);
+                logger.debug("[{}]耗时:{}ms,影响行数:{},执行SQL:{}", name, endTime - startTime, effect, sql);
             }
             for(Interceptor interceptor:quickDAOConfig.interceptorList){
                 interceptor.afterExecuteConnection(SQLStatementType.UPDATE, name, sql);

@@ -25,6 +25,12 @@ public class Product {
     @TableField(createdAt = true)
     private Date publishTime;
 
+    @Comment("插入用户")
+    private long insertUserId;
+
+    @Comment("更新用户")
+    private long updateUserId;
+
     private Person person;
 
     public long getId() {
@@ -73,6 +79,22 @@ public class Product {
 
     public void setPublishTime(Date publishTime) {
         this.publishTime = publishTime;
+    }
+
+    public long getInsertUserId() {
+        return insertUserId;
+    }
+
+    public void setInsertUserId(long insertUserId) {
+        this.insertUserId = insertUserId;
+    }
+
+    public long getUpdateUserId() {
+        return updateUserId;
+    }
+
+    public void setUpdateUserId(long updateUserId) {
+        this.updateUserId = updateUserId;
     }
 
     public Person getPerson() {

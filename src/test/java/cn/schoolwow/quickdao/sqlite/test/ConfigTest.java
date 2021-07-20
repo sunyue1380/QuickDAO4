@@ -7,11 +7,10 @@ import cn.schoolwow.quickdao.domain.Entity;
 import cn.schoolwow.quickdao.domain.GenerateEntityFileOption;
 import cn.schoolwow.quickdao.domain.Property;
 import cn.schoolwow.quickdao.domain.QuickDAOConfig;
+import cn.schoolwow.quickdao.query.condition.Condition;
+import cn.schoolwow.quickdao.query.subCondition.SubCondition;
 import cn.schoolwow.quickdao.sqlite.SQLiteTest;
-import cn.schoolwow.quickdao.sqlite.entity.DownloadTask;
-import cn.schoolwow.quickdao.sqlite.entity.Order;
-import cn.schoolwow.quickdao.sqlite.entity.Person;
-import cn.schoolwow.quickdao.sqlite.entity.TypeEntity;
+import cn.schoolwow.quickdao.sqlite.entity.*;
 import com.alibaba.fastjson.JSONArray;
 import org.junit.Assert;
 import org.junit.Test;
@@ -191,5 +190,59 @@ public class ConfigTest extends SQLiteTest {
 
         List<TypeEntity> typeEntityList = array.toJavaList(TypeEntity.class);
         Assert.assertEquals(1,typeEntityList.size());
+    }
+
+    @Test
+    public void testColumnValueFunction(){
+        DAO dao = QuickDAO.newInstance()
+                .dataSource(dataSource)
+                .packageName("cn.schoolwow.quickdao.sqlite.entity")
+                .autoCreateTable(false)
+                .autoCreateProperty(false)
+                .insertColumnValueFunction((property)->{
+                    Object value = null;
+                    switch (property.column){
+                        case "insert_user_id":{value=1;}break;
+                    }
+                    return value;
+                })
+                .updateColumnValueFunction((property)->{
+                    Object value = null;
+                    switch (property.column){
+                        case "update_user_id":{value=2;}break;
+                    }
+                    return value;
+                })
+                .build();
+        dao.rebuild(Product.class);
+        Product product = new Product();
+        product.setName("笔记本电脑");
+        product.setType("电器");
+        product.setPrice(1000);
+        product.setPublishTime(new Date());
+        product.setPersonId(1);
+        int effect = dao.insert(product);
+        Assert.assertEquals(1,effect);
+        product = dao.fetch(Product.class,product.getId());
+        Assert.assertEquals(1,product.getInsertUserId());
+        Assert.assertEquals(0,product.getUpdateUserId());
+        product.setName("收音机");
+        effect = dao.update(product);
+        Assert.assertEquals(1,effect);
+        product = dao.fetch(Product.class,product.getId());
+        Assert.assertEquals(2,product.getUpdateUserId());
+    }
+
+    @Test
+    public void testToString(){
+        List<Entity> entityList = dao.getDbEntityList();
+        for(Entity entity:entityList){
+            System.out.println(entity);
+        }
+        Condition condition = dao.query(Person.class);
+        System.out.println(condition);
+        SubCondition subCondition = dao.query(Person.class)
+                .joinTable(Order.class,"id","personId");
+        System.out.println(subCondition);
     }
 }

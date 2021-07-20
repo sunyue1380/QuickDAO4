@@ -45,9 +45,9 @@ public class AbstractDAOOperation implements DAOOperation{
     @Override
     public boolean hasTable(final String tableName) {
         Collection<Entity> entityCollection = quickDAOConfig.entityMap.values();
-        Entity entity = entityCollection.stream().filter(entity1 -> entity1.tableName.equals(tableName)).findFirst().orElse(null);
+        Entity entity = entityCollection.stream().filter(entity1 -> entity1.tableName.equalsIgnoreCase(tableName)).findFirst().orElse(null);
         if(null==entity){
-            entity = quickDAOConfig.dbEntityList.stream().filter(entity1 -> entity1.tableName.equals(tableName)).findFirst().orElse(null);
+            entity = quickDAOConfig.dbEntityList.stream().filter(entity1 -> entity1.tableName.equalsIgnoreCase(tableName)).findFirst().orElse(null);
         }
         return null!=entity;
     }

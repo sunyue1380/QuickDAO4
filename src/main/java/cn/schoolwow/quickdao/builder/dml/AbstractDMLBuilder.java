@@ -240,7 +240,15 @@ public class AbstractDMLBuilder extends AbstractSQLBuilder implements DMLBuilder
             if(property.createdAt||property.updateAt){
                 setCurrentDateTime(property,instance);
             }
-            setParameter(instance, property, preparedStatement, parameterIndex,sqlBuilder);
+            Object value = null;
+            if(null!=quickDAOConfig.insertColumnValueFunction){
+                value = quickDAOConfig.insertColumnValueFunction.apply(property);
+            }
+            if(null!=value){
+                setParameter(value, preparedStatement, parameterIndex, sqlBuilder);
+            }else{
+                setParameter(instance, property, preparedStatement, parameterIndex, sqlBuilder);
+            }
             parameterIndex++;
         }
     }
@@ -296,7 +304,15 @@ public class AbstractDMLBuilder extends AbstractSQLBuilder implements DMLBuilder
             if(property.updateAt){
                 setCurrentDateTime(property,instance);
             }
-            setParameter(instance, property, preparedStatement, parameterIndex, sqlBuilder);
+            Object value = null;
+            if(null!=quickDAOConfig.updateColumnValueFunction){
+                value = quickDAOConfig.updateColumnValueFunction.apply(property);
+            }
+            if(null!=value){
+                setParameter(value, preparedStatement, parameterIndex, sqlBuilder);
+            }else{
+                setParameter(instance, property, preparedStatement, parameterIndex, sqlBuilder);
+            }
             parameterIndex++;
         }
         for (Property property : entity.properties) {
@@ -352,7 +368,15 @@ public class AbstractDMLBuilder extends AbstractSQLBuilder implements DMLBuilder
             if(property.updateAt){
                 setCurrentDateTime(property,instance);
             }
-            setParameter(instance, property, preparedStatement, parameterIndex,sqlBuilder);
+            Object value = null;
+            if(null!=quickDAOConfig.updateColumnValueFunction){
+                value = quickDAOConfig.updateColumnValueFunction.apply(property);
+            }
+            if(null!=value){
+                setParameter(value, preparedStatement, parameterIndex, sqlBuilder);
+            }else{
+                setParameter(instance, property, preparedStatement, parameterIndex, sqlBuilder);
+            }
             parameterIndex++;
         }
         //再设置id属性

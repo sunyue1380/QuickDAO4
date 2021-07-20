@@ -181,7 +181,11 @@ public class AbstractDQLBuilder extends AbstractSQLBuilder implements DQLBuilder
                 if(property.id&&property.strategy.equals(IdStrategy.AutoIncrement)){
                     continue;
                 }
-                setParameter(o.get(property.column),connectionExecutorItem.preparedStatement,parameterIndex++,sqlBuilder);
+                Object value = null;
+                if(null!=quickDAOConfig.insertColumnValueFunction){
+                    value = quickDAOConfig.insertColumnValueFunction.apply(property);
+                }
+                setParameter(null!=value?value:o.get(property.column),connectionExecutorItem.preparedStatement,parameterIndex++,sqlBuilder);
             }
             builder.append(sqlBuilder.toString()+";");
             connectionExecutorItem.sql = sqlBuilder.toString();
@@ -208,7 +212,11 @@ public class AbstractDQLBuilder extends AbstractSQLBuilder implements DQLBuilder
                 if(property.id&&property.strategy.equals(IdStrategy.AutoIncrement)){
                     continue;
                 }
-                setParameter(o.get(property.column),connectionExecutorItem.preparedStatement,parameterIndex++,sqlBuilder);
+                Object value = null;
+                if(null!=quickDAOConfig.insertColumnValueFunction){
+                    value = quickDAOConfig.insertColumnValueFunction.apply(property);
+                }
+                setParameter(null!=value?value:o.get(property.column),connectionExecutorItem.preparedStatement,parameterIndex++,sqlBuilder);
             }
             connectionExecutorItem.preparedStatement.addBatch();
             if((i!=0&&i%perBatchCommit==0)||i==length-1){
