@@ -5,17 +5,17 @@ package cn.schoolwow.quickdao.domain.generator;
  * 本生成器无数据中心和机器id识别,毫秒内最大生成id数2^22 = 4194304
  */
 public class SnowflakeIdGenerator implements IDGenerator {
-    //时间起始标记点 (2020-01-01)
+    /**时间起始标记点 (2020-01-01)*/
     private final static long twepoch = 1577808000000L;
-    //毫秒内自增位(js最大支持53位整型)
+    /**毫秒内自增位(js最大支持53位整型)*/
     private final static long sequenceBits = 12L;
-    //时间毫秒数需要左移22位
+    /**时间毫秒数需要左移22位*/
     private final static long timestampLeftShift = sequenceBits;
-    //序列号掩码 2^22 = 4194304
+    /**序列号掩码 2^22 = 4194304*/
     private final static long sequenceMask = -1L ^ (-1L << sequenceBits);
-    //上次生产id的时间戳
+    /**上次生产id的时间戳*/
     private static long lastTimestamp = -1L;
-    //毫秒内序列号
+    /**毫秒内序列号*/
     private long sequence = 0L;
 
     @Override

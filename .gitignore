@@ -137,3 +137,4 @@ Icon
 *.exe
 *.db
 account.properties
+daoutil.properties

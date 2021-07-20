@@ -21,7 +21,7 @@ public class PostgreDDLBuilder extends AbstractDDLBuilder {
 
     @Override
     protected String getAutoIncrementSQL(Property property) {
-        return property.column + " SERIAL UNIQUE PRIMARY KEY";
+        return quickDAOConfig.database.escape(property.column) + " SERIAL UNIQUE PRIMARY KEY";
     }
 
     @Override
@@ -106,6 +106,33 @@ public class PostgreDDLBuilder extends AbstractDDLBuilder {
         }
         resultSet.close();
         return result;
+    }
+
+    @Override
+    public void createIndex(IndexField indexField) throws SQLException {
+        if(indexField.columns.isEmpty()){
+            return;
+        }
+        StringBuilder builder = new StringBuilder("create");
+        switch (indexField.indexType){
+            case NORMAL:{}break;
+            case UNIQUE:{builder.append(" unique");}break;
+            case FULLTEXT:{builder.append(" fulltext");}break;
+        }
+        builder.append(" index " + quickDAOConfig.database.escape(indexField.indexName) + " on " + quickDAOConfig.database.escape(indexField.tableName));
+        if(null!=indexField.using&&!indexField.using.isEmpty()){
+            builder.append(" using " + indexField.using);
+        }
+        builder.append("(");
+        for(String column:indexField.columns){
+            builder.append(quickDAOConfig.database.escape(column)+",");
+        }
+        builder.deleteCharAt(builder.length()-1);
+        builder.append(")");
+        if(null!=indexField.comment&&!indexField.comment.isEmpty()){
+            builder.append(" "+quickDAOConfig.database.comment(indexField.comment));
+        }
+        connectionExecutor.executeUpdate("添加索引",builder.toString());
     }
 
     @Override

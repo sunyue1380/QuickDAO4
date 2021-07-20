@@ -29,7 +29,7 @@ public class GenerateEntityFileOption {
      * 实体类类名映射
      * <p>第一个参数为数据库表信息</p>
      * <p>第二个参数默认实体类名</p>
-     * <p返回值该类映射类名,下划线会转为驼峰式.返回值支持带包名,例如user.User</p>
+     * <p>返回值该类映射类名.返回值支持带包名,例如user.User</p>
      * */
     public BiFunction<Entity,String,String> entityClassNameMapping;
 }
