@@ -4,12 +4,55 @@ import cn.schoolwow.quickdao.DAOUtils;
 import cn.schoolwow.quickdao.QuickDAO;
 import cn.schoolwow.quickdao.dao.DAO;
 import cn.schoolwow.quickdao.domain.util.MigrateOption;
+import cn.schoolwow.quickdao.domain.util.TableStructureSynchronizedOption;
 import com.zaxxer.hikari.HikariDataSource;
 import org.aeonbits.owner.ConfigCache;
+import org.junit.Ignore;
 import org.junit.Test;
 
+@Ignore
 public class DAOUtilsTest {
     DAOUtilProperties daoUtilProperties = ConfigCache.getOrCreate(DAOUtilProperties.class);
+
+    @Test
+    public void tableStructureSynchronized(){
+        HikariDataSource sourceHikariDataSource = new HikariDataSource();
+        sourceHikariDataSource.setDriverClassName("oracle.jdbc.driver.OracleDriver");
+        sourceHikariDataSource.setJdbcUrl(daoUtilProperties.sourceOracleJdbc());
+        sourceHikariDataSource.setUsername(daoUtilProperties.sourceOracleUsername());
+        sourceHikariDataSource.setPassword(daoUtilProperties.sourceOraclePassword());
+
+        DAO sourceDAO = QuickDAO.newInstance()
+                .dataSource(sourceHikariDataSource)
+                .autoCreateTable(false)
+                .autoCreateProperty(false)
+                .build();
+
+        HikariDataSource targetHikariDataSource = new HikariDataSource();
+        targetHikariDataSource.setDriverClassName("oracle.jdbc.driver.OracleDriver");
+        targetHikariDataSource.setJdbcUrl(daoUtilProperties.targetOracleJdbc());
+        targetHikariDataSource.setUsername(daoUtilProperties.targetOracleUsername());
+        targetHikariDataSource.setPassword(daoUtilProperties.targetOraclePassword());
+
+        DAO targetDAO = QuickDAO.newInstance()
+                .dataSource(targetHikariDataSource)
+                .autoCreateTable(false)
+                .autoCreateProperty(false)
+                .build();
+
+        TableStructureSynchronizedOption tableStructureSynchronizedOption = new TableStructureSynchronizedOption();
+        tableStructureSynchronizedOption.source = sourceDAO;
+        tableStructureSynchronizedOption.target = targetDAO;
+        tableStructureSynchronizedOption.createTablePredicate = (entity)->{
+            System.out.println(entity);
+            return false;
+        };
+        tableStructureSynchronizedOption.createPropertyPredicate = (property)->{
+            System.out.println(property);
+            return false;
+        };
+        DAOUtils.tableStructureSynchronized(tableStructureSynchronizedOption);
+    }
 
     @Test
     public void migrate() {

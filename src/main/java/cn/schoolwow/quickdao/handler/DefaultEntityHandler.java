@@ -309,14 +309,16 @@ public class DefaultEntityHandler implements EntityHandler{
                 if(property.columnType.contains("(")){
                     property.columnType = property.columnType.substring(0,property.columnType.indexOf("("));
                 }
-                for(Map.Entry<String,String> entry:typeFieldMappingEntrySet){
-                    if(entry.getValue().contains(property.columnType.toUpperCase())){
-                        property.className = entry.getKey().replace("java.lang.","");
-                        break;
-                    }
-                }
-                if(null==property.className&&null!=generateEntityFileOption.columnFieldTypeMapping){
+                if(null!=generateEntityFileOption.columnFieldTypeMapping){
                     property.className = generateEntityFileOption.columnFieldTypeMapping.apply(property.columnType);
+                }
+                if(null==property.className){
+                    for(Map.Entry<String,String> entry:typeFieldMappingEntrySet){
+                        if(entry.getValue().contains(property.columnType.toUpperCase())){
+                            property.className = entry.getKey().replace("java.lang.","");
+                            break;
+                        }
+                    }
                 }
                 if(null==property.className){
                     logger.warn("[字段类型匹配失败]表名:{}字段名称:{},类型:{}",dbEntity.tableName,property.column,property.columnType);
@@ -328,7 +330,7 @@ public class DefaultEntityHandler implements EntityHandler{
 
             for(Property property:dbEntity.properties){
                 builder.append("\tpublic "+ property.className +" get" +firstLetterUpper(property.name)+"(){\n\t\treturn this."+property.name+";\n\t}\n\n");
-                builder.append("\tpublic void set" +firstLetterUpper(property.name)+"("+property.className+" "+property.name+"){\n\t\tthis."+property.name+"= "+property.name+";\n\t}\n\n");
+                builder.append("\tpublic void set" +firstLetterUpper(property.name)+"("+property.className+" "+property.name+"){\n\t\tthis."+property.name+" = "+property.name+";\n\t}\n\n");
             }
 
             builder.append("};");

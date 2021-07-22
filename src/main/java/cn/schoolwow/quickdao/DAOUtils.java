@@ -1,7 +1,9 @@
 package cn.schoolwow.quickdao;
 
 import cn.schoolwow.quickdao.domain.Entity;
+import cn.schoolwow.quickdao.domain.Property;
 import cn.schoolwow.quickdao.domain.util.MigrateOption;
+import cn.schoolwow.quickdao.domain.util.TableStructureSynchronizedOption;
 import com.alibaba.fastjson.JSONArray;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -15,10 +17,41 @@ import java.util.stream.Collectors;
 public class DAOUtils {
     private static Logger logger = LoggerFactory.getLogger(DAOUtils.class);
 
-
+    /**
+     * 数据库表结构同步
+     * */
+    public static void tableStructureSynchronized(TableStructureSynchronizedOption option){
+        if(null==option.source){
+            throw new IllegalArgumentException("请指定迁移源数据库!");
+        }
+        if(null==option.target){
+            throw new IllegalArgumentException("请指定迁移目标数据库!");
+        }
+        List<Entity> sourceEntityList = option.source.getDbEntityList();
+        for(Entity sourceEntity:sourceEntityList){
+            Entity targetEntity = option.target.getDbEntity(sourceEntity.tableName);
+            if(null==targetEntity){
+                if(null!=option.createTablePredicate&&!option.createTablePredicate.test(sourceEntity)){
+                    continue;
+                }
+                option.target.create(sourceEntity);
+                continue;
+            }
+            //比对属性
+            for(Property property:sourceEntity.properties){
+                if(targetEntity.properties.stream().noneMatch(property1 -> property1.column.equalsIgnoreCase(property.column))){
+                    if(null!=option.createPropertyPredicate&&!option.createPropertyPredicate.test(property)){
+                        continue;
+                    }
+                    option.target.createColumn(sourceEntity.tableName,property);
+                }
+            }
+        }
+    }
 
     /**
      * 数据库迁移
+     * @param migrateOption 迁移选项
      * */
     public static void migrate(MigrateOption migrateOption){
         if(null==migrateOption.source){

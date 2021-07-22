@@ -25,4 +25,22 @@ public interface DAOUtilProperties extends Config {
     @Key("target.postgre.password")
     String targetPostgrePassword();
 
+    @Key("source.oracle.jdbc")
+    String sourceOracleJdbc();
+
+    @Key("source.oracle.username")
+    String sourceOracleUsername();
+
+    @Key("source.oracle.password")
+    String sourceOraclePassword();
+
+    @Key("target.oracle.jdbc")
+    String targetOracleJdbc();
+
+    @Key("target.oracle.username")
+    String targetOracleUsername();
+
+    @Key("target.oracle.password")
+    String targetOraclePassword();
+
 }
