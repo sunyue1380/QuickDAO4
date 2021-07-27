@@ -2,6 +2,7 @@ package cn.schoolwow.quickdao.query.condition;
 
 import cn.schoolwow.quickdao.domain.*;
 import cn.schoolwow.quickdao.query.response.AbstractResponse;
+import cn.schoolwow.quickdao.query.response.OracleResponse;
 import cn.schoolwow.quickdao.query.response.Response;
 import cn.schoolwow.quickdao.query.response.ResponseInvocationHandler;
 import cn.schoolwow.quickdao.query.subCondition.AbstractSubCondition;
@@ -634,7 +635,13 @@ public class AbstractCondition<T> implements Condition<T>, Serializable,Cloneabl
             condition.execute();
         }
         hasExecute = true;
-        AbstractResponse<T> abstractResponse = new AbstractResponse<T>(query);
+        AbstractResponse<T> abstractResponse = null;
+        switch (query.quickDAOConfig.database){
+            case Oracle:{abstractResponse = new OracleResponse<>(query);}break;
+            default:{
+                abstractResponse = new AbstractResponse<T>(query);
+            }break;
+        }
         ResponseInvocationHandler invocationHandler = new ResponseInvocationHandler(abstractResponse);
         return (Response) Proxy.newProxyInstance(Thread.currentThread().getContextClassLoader(),new Class<?>[]{Response.class},invocationHandler);
     }

@@ -1,5 +1,6 @@
 package cn.schoolwow.quickdao.oracle.test;
 
+import cn.schoolwow.quickdao.domain.PageVo;
 import cn.schoolwow.quickdao.oracle.OracleTest;
 import cn.schoolwow.quickdao.oracle.entity.Person;
 import com.alibaba.fastjson.JSONArray;
@@ -104,6 +105,17 @@ public class VirtualTest extends OracleTest {
                     .execute()
                     .getObject();
             Assert.assertEquals("电器",result.getString("type"));
+        }
+        {
+            PageVo<JSONObject> pageVo = dao.query("product")
+                    .addQuery("type","电器")
+                    .page(1,2)
+                    .execute()
+                    .getPagingList();
+            Assert.assertEquals(2,pageVo.getPageSize());
+            Assert.assertEquals(1,pageVo.getCurrentPage());
+            Assert.assertEquals(2,pageVo.getTotalPage());
+            Assert.assertEquals(2,pageVo.getList().size());
         }
     }
 

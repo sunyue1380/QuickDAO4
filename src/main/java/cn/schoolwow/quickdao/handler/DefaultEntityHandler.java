@@ -115,10 +115,6 @@ public class DefaultEntityHandler implements EntityHandler{
                     }
                     property.defaultValue = constraint.defaultValue();
                 }
-                if(property.name.equals("id")){
-                    property.id = true;
-                    property.strategy = IdStrategy.AutoIncrement;
-                }
                 Id id = field.getDeclaredAnnotation(Id.class);
                 if(null!=id){
                     property.id = true;
@@ -324,7 +320,9 @@ public class DefaultEntityHandler implements EntityHandler{
                     logger.warn("[字段类型匹配失败]表名:{}字段名称:{},类型:{}",dbEntity.tableName,property.column,property.columnType);
                     property.className = "{{"+property.columnType+"}}";
                 }
-                property.name = underline2Camel(property.column);
+                if(null==property.name||property.name.isEmpty()){
+                    property.name = underline2Camel(property.column);
+                }
                 builder.append("\tprivate "+property.className+" "+property.name+";\n\n");
             }
 

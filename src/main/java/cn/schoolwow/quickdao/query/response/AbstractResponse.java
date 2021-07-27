@@ -243,16 +243,6 @@ public class AbstractResponse<T> implements Response<T>{
         return query.toString();
     }
 
-    /**设置分页对象*/
-    private void setPageVo() {
-        if (query.pageVo == null) {
-            throw new IllegalArgumentException("请先调用page()函数!");
-        }
-        query.pageVo.setTotalSize(count());
-        query.pageVo.setTotalPage((int)(query.pageVo.getTotalSize() / query.pageVo.getPageSize() + (query.pageVo.getTotalSize() % query.pageVo.getPageSize() > 0 ? 1 : 0)));
-        query.pageVo.setHasMore(query.pageVo.getCurrentPage() < query.pageVo.getTotalPage());
-    }
-
     /**
      * 获取复杂对象
      * @param resultSet 结果集
@@ -280,6 +270,16 @@ public class AbstractResponse<T> implements Response<T>{
                 oo.put(subQuery.compositField, subObject);
             }
         }
+    }
+
+    /**设置分页对象*/
+    private void setPageVo() {
+        if (query.pageVo == null) {
+            throw new IllegalArgumentException("请先调用page()函数!");
+        }
+        query.pageVo.setTotalSize(count());
+        query.pageVo.setTotalPage((int)(query.pageVo.getTotalSize() / query.pageVo.getPageSize() + (query.pageVo.getTotalSize() % query.pageVo.getPageSize() > 0 ? 1 : 0)));
+        query.pageVo.setHasMore(query.pageVo.getCurrentPage() < query.pageVo.getTotalPage());
     }
 
     /**设置生成的自增id*/

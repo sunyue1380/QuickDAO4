@@ -450,6 +450,7 @@ public interface Condition<T> extends Serializable {
 
     /**
      * 分页操作
+     * <b>请注意,oracle数据库调用分页方法后请直接执行execute方法</b>
      *
      * @param offset 偏移量
      * @param limit  返回个数
@@ -458,6 +459,7 @@ public interface Condition<T> extends Serializable {
 
     /**
      * 分页操作
+     * <b>请注意,oracle数据库调用分页方法后请直接执行execute方法</b>
      *
      * @param pageNum  第几页
      * @param pageSize 每页个数

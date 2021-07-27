@@ -1,5 +1,6 @@
 package cn.schoolwow.quickdao.oracle.test;
 
+import cn.schoolwow.quickdao.domain.PageVo;
 import cn.schoolwow.quickdao.oracle.OracleTest;
 import cn.schoolwow.quickdao.oracle.entity.Order;
 import cn.schoolwow.quickdao.oracle.entity.Person;
@@ -86,11 +87,35 @@ public class DQLTest extends OracleTest {
     @Test
     public void page(){
         {
-            Person person = (Person) dao.query(Person.class)
+            Person person = dao.query(Person.class)
                     .orderByDesc("lastName")
+                    .limit(0,1)
                     .execute()
                     .getOne();
             Assert.assertEquals("Wilson",person.getLastName());
+        }
+        {
+            Person person = (Person) dao.query(Person.class)
+                    .joinTable(Order.class,"id","person_id")
+                    .done()
+                    .orderByDesc("lastName")
+                    .compositField()
+                    .limit(0,1)
+                    .execute()
+                    .getOne();
+            Assert.assertEquals("Gates",person.getLastName());
+            Assert.assertNotNull(person.getOrder());
+        }
+        {
+            PageVo<Person> personPageVo = dao.query(Person.class)
+                    .page(1,10)
+                    .execute()
+                    .getPagingList(Person.class);
+            Assert.assertEquals(1,personPageVo.getCurrentPage());
+            Assert.assertEquals(10,personPageVo.getPageSize());
+            Assert.assertEquals(1,personPageVo.getTotalPage());
+            Assert.assertEquals(3,personPageVo.getTotalSize());
+            Assert.assertEquals(3,personPageVo.getList().size());
         }
     }
 

@@ -43,9 +43,6 @@ public class AbstractCompositQuery implements CompositQuery{
     @Override
     public Condition query(Condition condition) {
         Query fromQuery = ((AbstractCondition) condition).query;
-        if(null==fromQuery.tableAliasName){
-            fromQuery.tableAliasName = "from_table";
-        }
         condition.execute();
 
         Entity entity = new Entity();
