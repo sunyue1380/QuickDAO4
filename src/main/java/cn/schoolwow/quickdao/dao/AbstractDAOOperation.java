@@ -14,6 +14,7 @@ import java.sql.SQLException;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Consumer;
 
 public class AbstractDAOOperation implements DAOOperation{
     Logger logger = LoggerFactory.getLogger(AbstractDAOOperation.class);
@@ -38,6 +39,20 @@ public class AbstractDAOOperation implements DAOOperation{
             return transactionProxy;
         } catch (SQLException e) {
             throw new SQLRuntimeException(e);
+        }
+    }
+
+    @Override
+    public void startTransaction(Consumer<Transaction> transactionConsumer) {
+        Transaction transaction = startTransaction();
+        try{
+            transactionConsumer.accept(transaction);
+            transaction.commit();
+        } catch (SQLRuntimeException e){
+            transaction.rollback();
+            throw e;
+        } finally {
+            transaction.endTransaction();
         }
     }
 

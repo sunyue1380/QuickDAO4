@@ -6,6 +6,7 @@ import cn.schoolwow.quickdao.transaction.Transaction;
 import javax.sql.DataSource;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Consumer;
 
 public interface DAOOperation {
     /**
@@ -17,6 +18,11 @@ public interface DAOOperation {
      * 开启事务
      */
     Transaction startTransaction();
+
+    /**
+     * 开启事务
+     */
+    void startTransaction(Consumer<Transaction> transactionConsumer);
 
     /**
      * 表是否存在

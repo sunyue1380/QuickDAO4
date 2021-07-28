@@ -273,11 +273,6 @@ public class DefaultEntityHandler implements EntityHandler{
                 logger.warn("[创建文件夹失败]原因:{},文件夹路径:{}",e.getMessage(), target.getParent());
                 continue;
             }
-            if(Files.exists(target)){
-                logger.warn("[实体类文件已经存在]{}",target);
-                continue;
-            }
-
             builder.setLength(0);
             //新建Java类
             builder.append("package " + packageName + (entityClassName.contains(".")?"."+entityClassName.substring(0,entityClassName.lastIndexOf(".")):"") +";\n");
@@ -294,11 +289,7 @@ public class DefaultEntityHandler implements EntityHandler{
                     builder.append("\t@Comment(\""+property.comment.replaceAll("\r\n","")+"\")\n");
                 }
                 if(property.id){
-                    if(property.strategy.equals(IdStrategy.AutoIncrement)){
-                        builder.append("\t@Id\n");
-                    }else{
-                        builder.append("\t@Id(strategy = IdStrategy.None)\n");
-                    }
+                    builder.append("\t@Id\n");
                 }
                 builder.append("\t@ColumnName(\""+property.column+"\")\n");
                 builder.append("\t@ColumnType(\""+property.columnType+"\")\n");
@@ -331,12 +322,19 @@ public class DefaultEntityHandler implements EntityHandler{
                 builder.append("\tpublic void set" +firstLetterUpper(property.name)+"("+property.className+" "+property.name+"){\n\t\tthis."+property.name+" = "+property.name+";\n\t}\n\n");
             }
 
+            builder.append("\t@Override\n\tpublic String toString() {\n\t\treturn \"\\n{\\n\" +\n");
+            for(Property property:dbEntity.properties){
+                builder.append("\t\t\t\""+property.comment+":\" + "+property.name + " + \"\\n\" +\n");
+            }
+            builder.replace(builder.length()-3,builder.length(),";");
+            builder.append("\t}\n");
+
             builder.append("};");
 
             ByteArrayInputStream bais = new ByteArrayInputStream(builder.toString().getBytes());
             try {
                 Files.createDirectories(target.getParent());
-                Files.copy(bais, target);
+                Files.copy(bais, target, StandardCopyOption.REPLACE_EXISTING);
             } catch (IOException e) {
                 e.printStackTrace();
             }
