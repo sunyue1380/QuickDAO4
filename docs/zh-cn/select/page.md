@@ -35,3 +35,9 @@ public class PageVo<T> implements Serializable {
     private boolean hasMore;
 }
 ```
+
+## Oracle分页
+
+QuickDAO从4.1.7版本开始支持Oracle数据库,从4.1.8版本支持Oracle的分页操作
+
+> 请注意,由于Oracle分页特殊性,在调用page或者limit方法以后必须立即调用execute方法

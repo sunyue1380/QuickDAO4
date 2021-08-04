@@ -31,3 +31,30 @@ dao.save(person);
 //保存Perrson数组实例
 dao.save(persons);
 ```
+
+## 批量插入
+
+为提高插入效率,QuickDAO支持批量插入(数据库batch)
+
+> 此方法从4.1.8版本开始提供
+
+```java
+Product[] products = new Product[1000];
+dao.insertBatch(products);
+```
+
+Condition接口的批量插入
+
+```java
+JSONArray array = new JSONArray();
+IDGenerator idGenerator = new SnowflakeIdGenerator();
+for(int i=0;i<1000;i++){
+    JSONObject o = new JSONObject();
+    o.put("name", "电冰箱");
+    array.add(o);
+}
+dao.query("product")
+    .addInsert(array)
+    .execute()
+    .insertBatch();
+```

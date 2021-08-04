@@ -107,3 +107,32 @@ QuickDAO.newInstance()
             return String.class;
         });
 ```
+
+## 插入和更新时设置指定值
+
+QuickDAO支持在插入和更新时设置实例的某些字段值.
+
+使用场景: 数据库表需要存储当前插入或者更新记录的用户是谁.
+
+> 此方法从QuickDAO4.1.8版本开始提供
+
+```java
+DAO dao = QuickDAO.newInstance()
+        .dataSource(dataSource)
+        .packageName("cn.schoolwow.quickdao.entity")
+        .insertColumnValueFunction((property)->{
+            Object value = null;
+            switch (property.column){
+                case "insert_user_id":{value=1;}break;
+            }
+            return value;
+        })
+        .updateColumnValueFunction((property)->{
+            Object value = null;
+            switch (property.column){
+                case "update_user_id":{value=2;}break;
+            }
+            return value;
+        })
+        .build();
+```

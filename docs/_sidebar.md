@@ -30,5 +30,5 @@
 
 - 其他
 
-  - [实体类生成](zh-cn/generate/generateEntity.md)
-  - [数据源迁移](zh-cn/generate/migrate.md)
+  - [实体类生成](zh-cn/util/generateEntity.md)
+  - [工具类](zh-cn/util/util.md)
