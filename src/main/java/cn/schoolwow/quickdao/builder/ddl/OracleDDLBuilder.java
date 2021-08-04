@@ -111,10 +111,12 @@ public class OracleDDLBuilder extends PostgreDDLBuilder{
             ResultSet resultSet = connectionExecutor.executeQuery("获取索引信息",getIndexSQL);
             while (resultSet.next()) {
                 for(Entity entity:entityList) {
-                    if (!entity.tableName.equalsIgnoreCase(resultSet.getString("table_name"))) {
+                    String tableName = resultSet.getString("table_name");
+                    if (!entity.tableName.equalsIgnoreCase(tableName)) {
                         continue;
                     }
                     IndexField indexField = new IndexField();
+                    indexField.tableName = tableName;
                     if("UNIQUE".equalsIgnoreCase(resultSet.getString("uniqueness"))){
                         indexField.indexType = IndexType.UNIQUE;
                     }else{
@@ -165,7 +167,7 @@ public class OracleDDLBuilder extends PostgreDDLBuilder{
                         property.columnType = property.columnType.substring(0,property.columnType.indexOf(" "));
                     }
                     String dataLength = resultSet.getString("data_length");
-                    if(null!=dataLength&&!dataLength.isEmpty()){
+                    if(property.columnType.toLowerCase().contains("char")&&null!=dataLength&&!dataLength.isEmpty()){
                         property.columnType += "(" + dataLength + ")";
                     }
                     property.notNull = "N".equals(resultSet.getString("nullable"));
