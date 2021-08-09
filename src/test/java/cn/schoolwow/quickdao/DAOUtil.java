@@ -297,6 +297,7 @@ public class DAOUtil {
                     }
                     return null;
                 })
+                .lazyLoad(true)
                 .build();
         return dao;
     }

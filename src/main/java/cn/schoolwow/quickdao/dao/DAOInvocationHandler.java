@@ -3,7 +3,6 @@ package cn.schoolwow.quickdao.dao;
 import cn.schoolwow.quickdao.dao.sql.AbstractSQLDAO;
 import cn.schoolwow.quickdao.dao.sql.dcl.AbstractDCLDAO;
 import cn.schoolwow.quickdao.dao.sql.ddl.AbstractDDLDAO;
-import cn.schoolwow.quickdao.dao.sql.ddl.DDLDAO;
 import cn.schoolwow.quickdao.dao.sql.dml.AbstractDMLDAO;
 import cn.schoolwow.quickdao.dao.sql.dql.AbstractDQLDAO;
 import cn.schoolwow.quickdao.domain.ConnectionExecutor;
@@ -35,6 +34,11 @@ public class DAOInvocationHandler implements InvocationHandler {
 
     @Override
     public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
+        if(!quickDAOConfig.initialized&&method.getDeclaringClass().getName().startsWith("cn.schoolwow.quickdao")){
+            logger.info("[QuickDAO懒加载初始化]");
+            quickDAOConfig.initialized = true;
+            quickDAOConfig.dao.automaticCreateTableAndColumn();
+        }
         String interfaceName = method.getDeclaringClass().getSimpleName();
         if("CompositQuery".equals(interfaceName)){
             return method.invoke(compositQuery, args);
@@ -73,8 +77,7 @@ public class DAOInvocationHandler implements InvocationHandler {
             result = method.invoke(instance, args);
             if("DDLDAO".equals(interfaceName)&&!method.getName().equals("refreshDbEntityList")){
                 if(!"refreshDbEntityList".equals(method.getName())&&!"automaticCreateTableAndColumn".equals(method.getName())){
-                    DDLDAO ddldao = (DDLDAO) instance;
-                    ddldao.refreshDbEntityList();
+                    quickDAOConfig.dao.refreshDbEntityList();
                 }
             }
             return result;

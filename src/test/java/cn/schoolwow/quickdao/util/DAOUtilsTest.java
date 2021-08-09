@@ -3,15 +3,12 @@ package cn.schoolwow.quickdao.util;
 import cn.schoolwow.quickdao.DAOUtils;
 import cn.schoolwow.quickdao.QuickDAO;
 import cn.schoolwow.quickdao.dao.DAO;
-import cn.schoolwow.quickdao.domain.Property;
 import cn.schoolwow.quickdao.domain.util.MigrateOption;
 import cn.schoolwow.quickdao.domain.util.TableStructureSynchronizedOption;
 import com.zaxxer.hikari.HikariDataSource;
 import org.aeonbits.owner.ConfigCache;
 import org.junit.Ignore;
 import org.junit.Test;
-
-import java.util.function.Predicate;
 
 @Ignore
 public class DAOUtilsTest {

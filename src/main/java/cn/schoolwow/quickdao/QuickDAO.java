@@ -224,6 +224,15 @@ public class QuickDAO {
         return this;
     }
 
+    /**
+     * 是否开启懒加载
+     * @param lazyLoad 是否开启懒加载
+     * */
+    public QuickDAO lazyLoad(boolean lazyLoad) {
+        quickDAOConfig.lazyLoad = lazyLoad;
+        return this;
+    }
+
     /**自定义表和列*/
     public TableDefiner define(Class clazz) {
         if(quickDAOConfig.entityMap.isEmpty()){
@@ -259,8 +268,13 @@ public class QuickDAO {
         DAOInvocationHandler daoInvocationHandler = new DAOInvocationHandler(quickDAOConfig);
         DAO daoProxy = (DAO) Proxy.newProxyInstance(Thread.currentThread().getContextClassLoader(), new Class<?>[]{DAO.class},daoInvocationHandler);
         quickDAOConfig.dao = daoProxy;
-        //自动建表和新增字段
-        daoProxy.automaticCreateTableAndColumn();
+        if(!quickDAOConfig.lazyLoad){
+            //自动建表和新增字段
+            daoProxy.automaticCreateTableAndColumn();
+            quickDAOConfig.initialized = true;
+        }else{
+            logger.info("[开启懒加载功能]");
+        }
         return daoProxy;
     }
 }

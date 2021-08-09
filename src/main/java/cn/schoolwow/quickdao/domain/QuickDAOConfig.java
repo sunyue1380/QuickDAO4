@@ -92,6 +92,14 @@ public class QuickDAOConfig {
      */
     public Function<Property,Object> updateColumnValueFunction;
     /**
+     * 是否开启懒加载
+     * */
+    public volatile boolean lazyLoad;
+    /**
+     * 是否已经初始化过
+     * */
+    public volatile boolean initialized;
+    /**
      * 扫描后的实体类信息
      * */
     public final Map<String, Entity> entityMap = new HashMap<>();
