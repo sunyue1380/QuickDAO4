@@ -34,3 +34,4 @@
 
   - [实体类生成](zh-cn/util/generateEntity.md)
   - [工具类](zh-cn/util/util.md)
+  - [更新日志](zh-cn/update.md)

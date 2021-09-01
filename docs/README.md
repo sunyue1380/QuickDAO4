@@ -16,6 +16,10 @@ QuickDAO是一个简单易用方便的Java ORM框架.具有以下优势:
 * Postgre(9.0.0以上)
 * SQL Server(2012版本以上)
 
+# 更新日志
+
+[点此查看](zh-cn/update.md)
+
 # 快速入门
 
 ## 1 导入QuickDAO
