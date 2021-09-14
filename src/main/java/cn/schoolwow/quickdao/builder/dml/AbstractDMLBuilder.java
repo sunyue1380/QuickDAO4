@@ -158,17 +158,6 @@ public class AbstractDMLBuilder extends AbstractSQLBuilder implements DMLBuilder
     }
 
     @Override
-    public ConnectionExecutorItem clear(Class clazz) throws SQLException {
-        String key = "clear_" + clazz.getName()+"_"+quickDAOConfig.database.getClass().getSimpleName();
-        if (!quickDAOConfig.sqlCache.containsKey(key)) {
-            Entity entity = quickDAOConfig.getEntityByClassName(clazz.getName());
-            quickDAOConfig.sqlCache.put(key, "delete from "+entity.escapeTableName);
-        }
-        ConnectionExecutorItem connectionExecutorItem = connectionExecutor.newConnectionExecutorItem("清空表",quickDAOConfig.sqlCache.get(key));
-        return connectionExecutorItem;
-    }
-
-    @Override
     public ConnectionExecutorItem clear(String tableName) throws SQLException {
         String key = "clear_" + tableName+"_"+quickDAOConfig.database.getClass().getSimpleName();
         if (!quickDAOConfig.sqlCache.containsKey(key)) {

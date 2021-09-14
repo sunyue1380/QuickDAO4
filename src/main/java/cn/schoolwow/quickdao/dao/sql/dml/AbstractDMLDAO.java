@@ -281,9 +281,15 @@ public class AbstractDMLDAO extends AbstractSQLDAO implements DMLDAO{
 
     @Override
     public int clear(Class clazz) {
+        Entity entity = quickDAOConfig.getEntityByClassName(clazz.getName());
+        return clear(entity.escapeTableName);
+    }
+
+    @Override
+    public int clear(String tableName) {
         int effect = 0;
         try {
-            ConnectionExecutorItem connectionExecutorItem = dmlBuilder.clear(clazz);
+            ConnectionExecutorItem connectionExecutorItem = dmlBuilder.clear(tableName);
             effect = sqlBuilder.connectionExecutor.executeUpdate(connectionExecutorItem);
             connectionExecutorItem.preparedStatement.close();
         } catch (SQLException e) {

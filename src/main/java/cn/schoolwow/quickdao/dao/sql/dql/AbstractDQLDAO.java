@@ -12,6 +12,7 @@ import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 
 import java.sql.ResultSet;
+import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.util.List;
 
@@ -105,6 +106,30 @@ public class AbstractDQLDAO extends AbstractSQLDAO implements DQLDAO {
                 array.add(quickDAOConfig.database.getObject(dbEntity, "t",resultSet));
             }
             resultSet.close();
+            return array;
+        } catch (SQLException e) {
+            throw new SQLRuntimeException(e);
+        }
+    }
+
+    @Override
+    public JSONArray select(String selectSQL, Object... parameters) {
+        try {
+            ConnectionExecutorItem connectionExecutorItem = dqlBuilder.select(selectSQL,parameters);
+            ResultSet resultSet = dqlBuilder.connectionExecutor.executeQuery(connectionExecutorItem);
+            ResultSetMetaData metaData = resultSet.getMetaData();
+            String[] columnLables = new String[metaData.getColumnCount()];
+            for(int i=1;i<=columnLables.length;i++){
+                columnLables[i-1] = metaData.getColumnLabel(i);
+            }
+            JSONArray array = new JSONArray();
+            while(resultSet.next()){
+                JSONObject o = new JSONObject();
+                for(int i=1;i<=columnLables.length;i++){
+                    o.put(columnLables[i-1],resultSet.getObject(i));
+                }
+                array.add(o);
+            }
             return array;
         } catch (SQLException e) {
             throw new SQLRuntimeException(e);

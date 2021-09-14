@@ -279,7 +279,7 @@ public class AbstractSQLBuilder implements SQLBuilder{
     }
 
     /**替换SQL语句的第一个占位符*/
-    protected static void replaceFirst(StringBuilder sqlBuilder,String parameter){
+    protected void replaceFirst(StringBuilder sqlBuilder,String parameter){
         int indexOf = sqlBuilder.indexOf(PLACEHOLDER);
         if (indexOf >= 0) {
             sqlBuilder.replace(indexOf, indexOf + PLACEHOLDER.length(), parameter);

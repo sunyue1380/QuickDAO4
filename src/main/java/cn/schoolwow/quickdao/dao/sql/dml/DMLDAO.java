@@ -173,4 +173,11 @@ public interface DMLDAO {
      * @param clazz 类名,对应数据库中的一张表
      */
     int clear(Class clazz);
+
+    /**
+     * 清空表
+     *
+     * @param tableName 表名
+     */
+    int clear(String tableName);
 }

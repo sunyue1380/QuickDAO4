@@ -56,10 +56,5 @@ public interface DMLBuilder {
     /**
      * 清空表
      */
-    ConnectionExecutorItem clear(Class clazz) throws SQLException;
-
-    /**
-     * 清空表
-     */
     ConnectionExecutorItem clear(String tableName) throws SQLException;
 }

@@ -214,5 +214,12 @@ public class DQLTest extends MariaDBTest {
         }
     }
 
-
+    @Test
+    public void select() {
+        JSONArray array = dao.select("select * from person where password = ?","7199e4df92df94bb67252513b070945c");
+        Assert.assertEquals(3,array.size());
+        array = dao.select("select * from person where last_name = ?","Gates");
+        Assert.assertEquals(1,array.size());
+        Assert.assertEquals("Gates",array.getJSONObject(0).getString("last_name"));
+    }
 }
