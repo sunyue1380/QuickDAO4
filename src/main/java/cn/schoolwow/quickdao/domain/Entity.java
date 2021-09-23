@@ -48,6 +48,10 @@ public class Entity implements Serializable, Cloneable{
      * */
     public String charset;
     /**
+     * 数据库校对规则
+     * */
+    public String collate;
+    /**
      * 表引擎
      * */
     public String engine;

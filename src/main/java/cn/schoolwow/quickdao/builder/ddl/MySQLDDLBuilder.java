@@ -72,23 +72,27 @@ public class MySQLDDLBuilder extends AbstractDDLBuilder {
                 continue;
             }
             switch (indexField.indexType){
-                case NORMAL:{}break;
-                case UNIQUE:{builder.append("unique");}break;
-                case FULLTEXT:{builder.append("fulltext");}break;
+                case NORMAL:{};
+                case UNIQUE:{
+                    builder.append("unique");
+                    builder.append(" index " + quickDAOConfig.database.escape(indexField.indexName) + " (");
+                    for(String column:indexField.columns){
+                        builder.append(quickDAOConfig.database.escape(column)+",");
+                    }
+                    builder.deleteCharAt(builder.length()-1);
+                    builder.append(")");
+                    if(null!=indexField.using&&!indexField.using.isEmpty()){
+                        builder.append(" using " + indexField.using);
+                    }
+                    if(null!=indexField.comment&&!indexField.comment.isEmpty()){
+                        builder.append(" " + quickDAOConfig.database.comment(indexField.comment));
+                    }
+                    builder.append(",");
+                }break;
+                case FULLTEXT:{
+                    builder.append("fulltext("+indexField.columns.get(0)+"),");
+                }break;
             }
-            builder.append(" index " + quickDAOConfig.database.escape(indexField.indexName) + " (");
-            for(String column:indexField.columns){
-                builder.append(quickDAOConfig.database.escape(column)+",");
-            }
-            builder.deleteCharAt(builder.length()-1);
-            builder.append(")");
-            if(null!=indexField.using&&!indexField.using.isEmpty()){
-                builder.append(" using "+indexField.using);
-            }
-            if(null!=indexField.comment&&!indexField.comment.isEmpty()){
-                builder.append(" "+quickDAOConfig.database.comment(indexField.comment));
-            }
-            builder.append(",");
         }
         if (quickDAOConfig.openForeignKey&&null!=entity.foreignKeyProperties&&entity.foreignKeyProperties.size()>0) {
             for (Property property : entity.foreignKeyProperties) {
@@ -99,7 +103,9 @@ public class MySQLDDLBuilder extends AbstractDDLBuilder {
             }
         }
         builder.deleteCharAt(builder.length() - 1);
-        builder.append(")");
+        if(!entity.properties.isEmpty()){
+            builder.append(")");
+        }
         if (null != entity.comment) {
             builder.append(" "+quickDAOConfig.database.comment(entity.comment));
         }
@@ -117,7 +123,12 @@ public class MySQLDDLBuilder extends AbstractDDLBuilder {
             charset = quickDAOConfig.charset;
         }
         if(null!=charset&&!charset.isEmpty()){
-            builder.append(" DEFAULT CHARSET="+charset);
+            builder.append(" DEFAULT CHARSET = " + charset);
+        }
+        //指定校对规则
+        String collate = entity.collate;
+        if(null!=collate&&!collate.isEmpty()){
+            builder.append(" COLLATE = " + collate);
         }
         connectionExecutor.executeUpdate("生成新表",builder.toString());
     }
@@ -216,17 +227,30 @@ public class MySQLDDLBuilder extends AbstractDDLBuilder {
                 if(null==indexField) {
                     indexField = new IndexField();
                     indexField.indexType = resultSet.getInt("non_unique")==0?IndexType.UNIQUE:IndexType.NORMAL;
+                    if("FULLTEXT".equals(resultSet.getString("index_type"))){
+                        indexField.indexType = IndexType.FULLTEXT;
+                    }
                     indexField.indexName = resultSet.getString("index_name");
-                    indexField.columns.add(resultSet.getString("column_name"));
-                    indexField.using = resultSet.getString("index_type");
-                    indexField.comment = resultSet.getString("index_comment");
-                    entity.indexFieldList.add(indexField);
+                    switch (indexField.indexName){
+                        case "PRIMARY":{
+                            for(Property property:entity.properties){
+                                if(property.column.equals(resultSet.getString("column_name"))){
+                                    property.id = true;
+                                }
+                            }
+                        };break;
+                        default:{
+                            indexField.columns.add(resultSet.getString("column_name"));
+                            indexField.using = resultSet.getString("index_type");
+                            indexField.comment = resultSet.getString("index_comment");
+                            entity.indexFieldList.add(indexField);
+                        };
+                    }
                 }else{
                     indexField.columns.add(resultSet.getString("column_name"));
                 }
                 break;
             }
-
         }
         resultSet.close();
     }
@@ -246,10 +270,18 @@ public class MySQLDDLBuilder extends AbstractDDLBuilder {
                 //无符号填充0 => float unsigned zerofill
                 property.columnType = resultSet.getString("data_type");
                 if(property.columnType.contains(" ")){
-                    property.columnType = property.columnType.substring(0,property.columnType.indexOf(" "));
+                    property.columnType = property.columnType.substring(0,property.columnType.indexOf(" ")).trim();
                 }
                 if(null!=resultSet.getString("character_maximum_length")){
-                    property.columnType += "("+resultSet.getString("character_maximum_length")+")";
+                    if(property.columnType.contains("char")
+                            ||property.columnType.contains("int")
+                            ||property.columnType.contains("binary")
+                            ||"float".equals(property.columnType)
+                            ||"double".equals(property.columnType)
+                            ||"decimal".equals(property.columnType)
+                    ){
+                        property.columnType += "("+resultSet.getString("character_maximum_length")+")";
+                    }
                 }
                 property.notNull = "NO".equals(resultSet.getString("is_nullable"));
                 String key = resultSet.getString("column_key");
@@ -264,8 +296,11 @@ public class MySQLDDLBuilder extends AbstractDDLBuilder {
                 }
                 if (null != resultSet.getString("column_default")) {
                     property.defaultValue = resultSet.getString("column_default");
+                    if(!property.defaultValue.contains("CURRENT_TIMESTAMP")){
+                        property.defaultValue = "'" + property.defaultValue + "'";
+                    }
                 }
-                property.comment = resultSet.getString("column_comment");
+                property.comment = resultSet.getString("column_comment").replace("\"","\\\"");;
                 entity.properties.add(property);
                 break;
             }
@@ -282,9 +317,12 @@ public class MySQLDDLBuilder extends AbstractDDLBuilder {
         while (resultSet.next()) {
             Entity entity = new Entity();
             entity.tableName = resultSet.getString("name");
-            entity.comment = resultSet.getString("comment");
+            entity.comment = resultSet.getString("comment").replace("\"","\\\"");
             entity.engine = resultSet.getString("engine");
-            entity.charset = resultSet.getString("collation");
+            entity.collate = resultSet.getString("collation");
+            if(null!=entity.collate&&entity.collate.contains("_")){
+                entity.charset = entity.collate.substring(0,entity.collate.indexOf("_"));
+            }
             entityList.add(entity);
         }
         resultSet.close();
