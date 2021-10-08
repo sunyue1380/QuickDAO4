@@ -27,6 +27,13 @@ public interface DAOOperation {
     /**
      * 表是否存在
      *
+     * @param entityClass 实体类
+     */
+    boolean hasTable(Class entityClass);
+
+    /**
+     * 表是否存在
+     *
      * @param tableName 表名
      */
     boolean hasTable(String tableName);
