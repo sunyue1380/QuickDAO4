@@ -272,16 +272,9 @@ public class MySQLDDLBuilder extends AbstractDDLBuilder {
                 if(property.columnType.contains(" ")){
                     property.columnType = property.columnType.substring(0,property.columnType.indexOf(" ")).trim();
                 }
-                if(null!=resultSet.getString("character_maximum_length")){
-                    if(property.columnType.contains("char")
-                            ||property.columnType.contains("int")
-                            ||property.columnType.contains("binary")
-                            ||"float".equals(property.columnType)
-                            ||"double".equals(property.columnType)
-                            ||"decimal".equals(property.columnType)
-                    ){
-                        property.columnType += "("+resultSet.getString("character_maximum_length")+")";
-                    }
+                Object character_maximum_length = resultSet.getObject("character_maximum_length");
+                if(null!=character_maximum_length&&character_maximum_length.toString().length()<7){
+                    property.length = Integer.parseInt(character_maximum_length.toString());
                 }
                 property.notNull = "NO".equals(resultSet.getString("is_nullable"));
                 String key = resultSet.getString("column_key");

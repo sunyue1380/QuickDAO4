@@ -135,8 +135,9 @@ public class H2DDLBuilder extends MySQLDDLBuilder {
                 if(property.columnType.contains(" ")){
                     property.columnType = property.columnType.substring(0,property.columnType.indexOf(" "));
                 }
-                if(null!=resultSet.getString("character_maximum_length")){
-                    property.columnType += "("+resultSet.getString("character_maximum_length")+")";
+                Object character_maximum_length = resultSet.getObject("character_maximum_length");
+                if(null!=character_maximum_length&&character_maximum_length.toString().length()<7){
+                    property.length = Integer.parseInt(character_maximum_length.toString());
                 }
                 property.notNull = "NO".equals(resultSet.getString("is_nullable"));
                 if (null != resultSet.getString("column_default")) {

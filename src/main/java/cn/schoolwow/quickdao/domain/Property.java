@@ -30,6 +30,10 @@ public class Property implements Serializable,Cloneable {
      */
     public String columnType;
     /**
+     * 长度
+     */
+    public Integer length;
+    /**
      * 注释
      */
     public String comment;

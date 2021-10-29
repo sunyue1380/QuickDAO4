@@ -249,8 +249,9 @@ public class PostgreDDLBuilder extends AbstractDDLBuilder {
                             continue;
                         }
                         property.columnType = resultSet.getString("udt_name");
-                        if(null!=resultSet.getObject("character_maximum_length")){
-                            property.columnType += "("+resultSet.getInt("character_maximum_length")+")";
+                        Object character_maximum_length = resultSet.getObject("character_maximum_length");
+                        if(null!=character_maximum_length&&character_maximum_length.toString().length()<7){
+                            property.length = Integer.parseInt(character_maximum_length.toString());
                         }
                         if (null != resultSet.getString("column_default")) {
                             property.defaultValue = resultSet.getString("column_default");
