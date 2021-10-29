@@ -22,7 +22,7 @@ public class SQLServerDDLBuilder extends AbstractDDLBuilder {
 
     @Override
     protected String getAutoIncrementSQL(Property property) {
-        return property.column + " " + property.columnType + " identity(1,1) unique ";
+        return property.column + " " + property.columnType + (null==property.length?"":"("+property.length+")") + " identity(1,1) unique ";
     }
 
     @Override
@@ -44,7 +44,7 @@ public class SQLServerDDLBuilder extends AbstractDDLBuilder {
             if(property.id&&property.strategy== IdStrategy.AutoIncrement){
                 builder.append(getAutoIncrementSQL(property));
             }else{
-                builder.append(quickDAOConfig.database.escape(property.column) + " " + property.columnType);
+                builder.append(quickDAOConfig.database.escape(property.column) + " " + property.columnType + (null==property.length?"":"("+property.length+")"));
                 if (property.notNull) {
                     builder.append(" not null");
                 }

@@ -133,6 +133,52 @@ public class AbstractDMLBuilder extends AbstractSQLBuilder implements DMLBuilder
     }
 
     @Override
+    public ConnectionExecutorItem deleteByUniqueKey(Object instance) throws Exception {
+        String sql = deleteByUniqueKey(instance.getClass());
+        ConnectionExecutorItem connectionExecutorItem = connectionExecutor.newConnectionExecutorItem("根据唯一性约束删除对象",sql);
+        StringBuilder builder = new StringBuilder(sql.replace("?", PLACEHOLDER));
+        deleteByUniqueKey(connectionExecutorItem.preparedStatement,instance, builder);
+        connectionExecutorItem.sql = builder.toString();
+        return connectionExecutorItem;
+    }
+
+    @Override
+    public ConnectionExecutorItem deleteByUniqueKey(Object[] instances) throws Exception {
+        String sql = deleteByUniqueKey(instances[0].getClass());
+        ConnectionExecutorItem connectionExecutorItem = connectionExecutor.newConnectionExecutorItem("根据唯一性约束批量删除对象",sql);
+        connectionExecutor.connection.setAutoCommit(false);
+        StringBuilder builder = new StringBuilder();
+        for(Object instance : instances){
+            StringBuilder sqlBuilder = new StringBuilder(sql.replace("?", PLACEHOLDER));
+            deleteByUniqueKey(connectionExecutorItem.preparedStatement,instance,sqlBuilder);
+            builder.append(sqlBuilder.toString()+";");
+            connectionExecutorItem.preparedStatement.addBatch();
+        }
+        connectionExecutorItem.sql = builder.toString();
+        return connectionExecutorItem;
+    }
+
+    @Override
+    public ConnectionExecutorItem deleteById(Object instance) throws Exception {
+        Entity entity = quickDAOConfig.getEntityByClassName(instance.getClass().getName());
+        Field field = getFieldFromInstance(instance,entity.id);
+        return deleteByProperty(entity.clazz,field.getName(),field.get(instance));
+    }
+
+    @Override
+    public ConnectionExecutorItem deleteById(Object[] instances) throws Exception {
+        String sql = deleteByIds(instances[0].getClass(),instances.length);
+        ConnectionExecutorItem connectionExecutorItem = connectionExecutor.newConnectionExecutorItem("根据id批量删除对象",sql);
+        StringBuilder sqlBuilder = new StringBuilder(sql.replace("?", PLACEHOLDER));
+        Entity entity = quickDAOConfig.getEntityByClassName(instances[0].getClass().getName());
+        for(int i=0;i<instances.length;i++){
+            Field field = getFieldFromInstance(instances[i],entity.id);
+            setParameter(field.get(instances[i]), connectionExecutorItem.preparedStatement, i+1, sqlBuilder);
+        }
+        return connectionExecutorItem;
+    }
+
+    @Override
     public ConnectionExecutorItem deleteByProperty(Class clazz, String property, Object value) throws SQLException {
         String key = "deleteByProperty_" + clazz.getName()+"_"+property+"_"+quickDAOConfig.database.getClass().getSimpleName();
         if (!quickDAOConfig.sqlCache.containsKey(key)) {
@@ -370,6 +416,97 @@ public class AbstractDMLBuilder extends AbstractSQLBuilder implements DMLBuilder
         }
         //再设置id属性
         setParameter(instance, entity.id , preparedStatement, parameterIndex,sqlBuilder);
+    }
+
+    /**
+     * 根据唯一性约束删除语句
+     * @param clazz 实例类对象
+     * */
+    private String deleteByUniqueKey(Class clazz){
+        String key = "deleteByUniqueKey_" + clazz.getName()+"_"+quickDAOConfig.database.getClass().getSimpleName();
+        if (!quickDAOConfig.sqlCache.containsKey(key)) {
+            StringBuilder builder = new StringBuilder();
+            Entity entity = quickDAOConfig.getEntityByClassName(clazz.getName());
+            builder.append("delete from " + entity.escapeTableName + " where ");
+            for (Property property : entity.properties) {
+                if(entity.uniqueProperties.contains(property)){
+                    builder.append(quickDAOConfig.database.escape(property.column) + " = "+(null==property.function?"?":property.function)+",");
+                }
+            }
+            builder.deleteCharAt(builder.length() - 1);
+            quickDAOConfig.sqlCache.put(key, builder.toString());
+        }
+        return quickDAOConfig.sqlCache.get(key);
+    }
+
+    /**
+     * 设置根据唯一性约束插入参数值
+     * @param preparedStatement SQL语句
+     * @param instance 实例对象
+     * @param sqlBuilder sql日志
+     * */
+    private void deleteByUniqueKey(PreparedStatement preparedStatement,Object instance, StringBuilder sqlBuilder) throws Exception {
+        int parameterIndex = 1;
+        Entity entity = quickDAOConfig.getEntityByClassName(instance.getClass().getName());
+        for (Property property : entity.properties) {
+            if (entity.uniqueProperties.contains(property)) {
+                Object value = null;
+                if(null!=quickDAOConfig.updateColumnValueFunction){
+                    value = quickDAOConfig.updateColumnValueFunction.apply(property);
+                }
+                if(null!=value){
+                    setParameter(value, preparedStatement, parameterIndex, sqlBuilder);
+                }else{
+                    setParameter(instance, property, preparedStatement, parameterIndex, sqlBuilder);
+                }
+                parameterIndex++;
+            }
+        }
+    }
+
+    /**
+     * 根据唯一性约束删除语句
+     * @param clazz 实例类对象
+     * */
+    private String deleteByIds(Class clazz,int parameterLength){
+        String key = "deleteByIds_" + clazz.getName()+"_"+quickDAOConfig.database.getClass().getSimpleName();
+        if (!quickDAOConfig.sqlCache.containsKey(key)) {
+            StringBuilder builder = new StringBuilder();
+            Entity entity = quickDAOConfig.getEntityByClassName(clazz.getName());
+            builder.append("delete from " + entity.escapeTableName + " where " + entity.id.column + " in (");
+            for(int i=0;i<parameterLength;i++){
+                builder.append("?,");
+            }
+            builder.deleteCharAt(builder.length()-1);
+            builder.append(")");
+            quickDAOConfig.sqlCache.put(key, builder.toString());
+        }
+        return quickDAOConfig.sqlCache.get(key);
+    }
+
+    /**
+     * 设置根据id删除参数值
+     * @param preparedStatement SQL语句
+     * @param instance 实例对象
+     * @param sqlBuilder sql日志
+     * */
+    private void deleteById(PreparedStatement preparedStatement,Object instance, StringBuilder sqlBuilder) throws Exception {
+        int parameterIndex = 1;
+        Entity entity = quickDAOConfig.getEntityByClassName(instance.getClass().getName());
+        for (Property property : entity.properties) {
+            if (entity.uniqueProperties.contains(property)) {
+                Object value = null;
+                if(null!=quickDAOConfig.updateColumnValueFunction){
+                    value = quickDAOConfig.updateColumnValueFunction.apply(property);
+                }
+                if(null!=value){
+                    setParameter(value, preparedStatement, parameterIndex, sqlBuilder);
+                }else{
+                    setParameter(instance, property, preparedStatement, parameterIndex, sqlBuilder);
+                }
+                parameterIndex++;
+            }
+        }
     }
 
     /**

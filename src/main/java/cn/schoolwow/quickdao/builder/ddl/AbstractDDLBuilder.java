@@ -48,7 +48,7 @@ public abstract class AbstractDDLBuilder extends AbstractSQLBuilder implements D
 
     @Override
     public void createProperty(Property property) throws SQLException{
-        StringBuilder createPropertyBuilder = new StringBuilder("alter table " + quickDAOConfig.database.escape(property.entity.tableName) + " add " + quickDAOConfig.database.escape(property.column) + " " + property.columnType);
+        StringBuilder createPropertyBuilder = new StringBuilder("alter table " + quickDAOConfig.database.escape(property.entity.tableName) + " add " + quickDAOConfig.database.escape(property.column) + " " + property.columnType + (null==property.length?"":"("+property.length+")"));
         if (null!=property.defaultValue&&!property.defaultValue.isEmpty()) {
             createPropertyBuilder.append(" default " + property.defaultValue);
         }
@@ -70,7 +70,7 @@ public abstract class AbstractDDLBuilder extends AbstractSQLBuilder implements D
     @Override
     public void alterColumn(Property property) throws SQLException{
         StringBuilder builder = new StringBuilder("alter table " + quickDAOConfig.database.escape(property.entity.tableName));
-        builder.append(" alter column "+quickDAOConfig.database.escape(property.column)+" "+property.columnType);
+        builder.append(" alter column "+quickDAOConfig.database.escape(property.column) + " " + property.columnType + (null==property.length?"":"("+property.length+")"));
         connectionExecutor.executeUpdate("修改数据类型",builder.toString());
     }
 

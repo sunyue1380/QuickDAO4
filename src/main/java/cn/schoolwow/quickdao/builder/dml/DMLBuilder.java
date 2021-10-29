@@ -44,6 +44,26 @@ public interface DMLBuilder {
     ConnectionExecutorItem updateById(Object[] instances) throws Exception;
 
     /**
+     * 根据唯一性约束删除
+     */
+    ConnectionExecutorItem deleteByUniqueKey(Object instance) throws Exception;
+
+    /**
+     * 根据唯一性约束删除
+     */
+    ConnectionExecutorItem deleteByUniqueKey(Object[] instances) throws Exception;
+
+    /**
+     * 根据id删除
+     */
+    ConnectionExecutorItem deleteById(Object instance) throws Exception;
+
+    /**
+     * 根据id删除
+     */
+    ConnectionExecutorItem deleteById(Object[] instances) throws Exception;
+
+    /**
      * 根据字段值删除
      */
     ConnectionExecutorItem deleteByProperty(Class clazz, String property, Object value) throws SQLException;

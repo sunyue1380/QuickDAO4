@@ -28,7 +28,7 @@ public class MySQLDDLBuilder extends AbstractDDLBuilder {
 
     @Override
     protected String getAutoIncrementSQL(Property property) {
-        return property.column + " " + property.columnType + " primary key auto_increment";
+        return property.column + " " + property.columnType + (null==property.length?"":"("+property.length+")") + " primary key auto_increment";
     }
 
     @Override
@@ -50,7 +50,7 @@ public class MySQLDDLBuilder extends AbstractDDLBuilder {
             if(property.id&&property.strategy== IdStrategy.AutoIncrement){
                 builder.append(getAutoIncrementSQL(property));
             }else{
-                builder.append(quickDAOConfig.database.escape(property.column) + " " + property.columnType);
+                builder.append(quickDAOConfig.database.escape(property.column) + " " + property.columnType + (null==property.length?"":"("+property.length+")"));
                 if (property.notNull) {
                     builder.append(" not null");
                 }
@@ -72,9 +72,10 @@ public class MySQLDDLBuilder extends AbstractDDLBuilder {
                 continue;
             }
             switch (indexField.indexType){
-                case NORMAL:{};
                 case UNIQUE:{
                     builder.append("unique");
+                };
+                case NORMAL:{
                     builder.append(" index " + quickDAOConfig.database.escape(indexField.indexName) + " (");
                     for(String column:indexField.columns){
                         builder.append(quickDAOConfig.database.escape(column)+",");

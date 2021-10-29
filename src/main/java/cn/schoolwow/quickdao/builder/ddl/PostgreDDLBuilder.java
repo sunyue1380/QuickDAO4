@@ -48,7 +48,7 @@ public class PostgreDDLBuilder extends AbstractDDLBuilder {
             if(property.id&&property.strategy== IdStrategy.AutoIncrement){
                 builder.append(getAutoIncrementSQL(property));
             }else{
-                builder.append(quickDAOConfig.database.escape(property.column) + " " + property.columnType);
+                builder.append(quickDAOConfig.database.escape(property.column) + " " + property.columnType + (null==property.length?"":"("+property.length+")"));
                 if (null!=property.defaultValue&&!property.defaultValue.isEmpty()) {
                     builder.append(" default " + property.defaultValue);
                 }

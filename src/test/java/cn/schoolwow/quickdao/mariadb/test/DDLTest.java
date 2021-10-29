@@ -67,7 +67,7 @@ public class DDLTest extends MariaDBTest {
         {
             Property property = dao.getProperty("person","last_name");
             Assert.assertEquals("last_name",property.column);
-            Assert.assertEquals("varchar(64)",property.columnType);
+            Assert.assertEquals("varchar(64)",property.columnType+"("+property.length+")");
             Assert.assertEquals("姓",property.comment);
         }
     }

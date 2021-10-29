@@ -234,6 +234,39 @@ public class DMLTest extends PostgreLTest {
             Assert.assertEquals(count-1,dao.query(Person.class).execute().count());
         }
         {
+            dao.clear(Person.class);
+            //单独插入
+            {
+                Person person = new Person();
+                person.setPassword("123456");
+                person.setFirstName("Bill");
+                person.setLastName("Gates");
+                person.setAddress("Xuanwumen 10");
+                person.setCity("Beijing");
+                int effect = dao.insert(person);
+                Assert.assertEquals(1, effect);
+                effect = dao.delete(person);
+                Assert.assertEquals(1, effect);
+            }
+            //批量插入
+            {
+                Person[] persons = new Person[5];
+                for(int i=0;i<persons.length;i++){
+                    Person person = new Person();
+                    person.setPassword("123456");
+                    person.setFirstName("Jack");
+                    person.setLastName("Ma "+i);
+                    person.setAddress("Xuanwumen 10");
+                    person.setCity("Beijing");
+                    persons[i] = person;
+                }
+                int effect = dao.insert(persons);
+                Assert.assertEquals(5, effect);
+                effect = dao.delete(persons);
+                Assert.assertEquals(5, effect);
+            }
+        }
+        {
             long count = dao.query(Order.class).execute().count();
             int effect = dao.delete(Order.class,"orderNo",1);
             Assert.assertEquals(1,effect);
@@ -247,6 +280,33 @@ public class DMLTest extends PostgreLTest {
                     .delete();
             Assert.assertEquals(5,effect);
             Assert.assertEquals(count-5,dao.query(Order.class).execute().count());
+        }
+        {
+            dao.clear(Order.class);
+            {
+                Order order = new Order();
+                order.setId(UUID.randomUUID().toString());
+                order.setPersonId(1);
+                order.setOrderNo(1);
+                int effect = dao.insert(order);
+                Assert.assertEquals(1, effect);
+                effect = dao.delete(order);
+                Assert.assertEquals(1, effect);
+            }
+            {
+                Order[] orders = new Order[5];
+                for(int i=0;i<orders.length;i++){
+                    Order order = new Order();
+                    order.setId(UUID.randomUUID().toString());
+                    order.setPersonId(i+2);
+                    order.setOrderNo(i+2);
+                    orders[i] = order;
+                }
+                int effect = dao.insert(orders);
+                Assert.assertEquals(5,effect);
+                effect = dao.delete(orders);
+                Assert.assertEquals(5, effect);
+            }
         }
     }
 

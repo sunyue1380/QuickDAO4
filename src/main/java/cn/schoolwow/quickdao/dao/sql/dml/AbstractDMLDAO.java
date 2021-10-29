@@ -280,6 +280,75 @@ public class AbstractDMLDAO extends AbstractSQLDAO implements DMLDAO{
     }
 
     @Override
+    public int delete(Object instance) {
+        if(null==instance){
+            return 0;
+        }
+        int effect = 0;
+        Entity entity = quickDAOConfig.getEntityByClassName(instance.getClass().getName());
+        try {
+            ConnectionExecutorItem connectionExecutorItem = null;
+            if(!entity.uniqueProperties.isEmpty()){
+                connectionExecutorItem = dmlBuilder.deleteByUniqueKey(instance);
+            }else if(null!=entity.id){
+                connectionExecutorItem = dmlBuilder.deleteById(instance);
+            }else{
+                logger.warn("[忽略删除操作]该实例无唯一性约束又无id,忽略该实例的删除操作!");
+            }
+            if(null!=connectionExecutorItem){
+                effect = sqlBuilder.connectionExecutor.executeUpdate(connectionExecutorItem);
+                connectionExecutorItem.preparedStatement.close();
+            }
+        } catch (Exception e) {
+            throw new SQLRuntimeException(e);
+        }
+        return effect;
+    }
+
+    @Override
+    public int delete(Object[] instances) {
+        if(null==instances||instances.length==0){
+            return 0;
+        }
+        int effect = 0;
+        Entity entity = quickDAOConfig.getEntityByClassName(instances[0].getClass().getName());
+        try {
+            ConnectionExecutorItem connectionExecutorItem = null;
+            if(!entity.uniqueProperties.isEmpty()){
+                connectionExecutorItem = dmlBuilder.deleteByUniqueKey(instances);
+                if(null!=connectionExecutorItem){
+                    int[] batches = connectionExecutorItem.preparedStatement.executeBatch();
+                    for (int batch : batches) {
+                        switch (batch){
+                            case Statement.SUCCESS_NO_INFO:{
+                                effect += 1;
+                            }break;
+                            case Statement.EXECUTE_FAILED:{}break;
+                            default:{
+                                effect += batch;
+                            };
+                        }
+                    }
+                }
+                dmlBuilder.connectionExecutor.connection.commit();
+            }else if(null!=entity.id){
+                connectionExecutorItem = dmlBuilder.deleteById(instances);
+                effect = sqlBuilder.connectionExecutor.executeUpdate(connectionExecutorItem);
+            }else{
+                logger.warn("[忽略删除操作]该实例无唯一性约束又无id,忽略该实例的删除操作!");
+            }
+        } catch (Exception e) {
+            throw new SQLRuntimeException(e);
+        }
+        return effect;
+    }
+
+    @Override
+    public int delete(Collection instanceCollection) {
+        return delete(instanceCollection.toArray(new Object[0]));
+    }
+
+    @Override
     public int clear(Class clazz) {
         Entity entity = quickDAOConfig.getEntityByClassName(clazz.getName());
         return clear(entity.escapeTableName);
@@ -299,7 +368,7 @@ public class AbstractDMLDAO extends AbstractSQLDAO implements DMLDAO{
     }
 
     /**设置主键自增id值*/
-    private void setAutoIncrementPrimaryKeyValue(Object instance, Entity entity, PreparedStatement preparedStatement) throws Exception{
+    private void  setAutoIncrementPrimaryKeyValue(Object instance, Entity entity, PreparedStatement preparedStatement) throws Exception{
         Field idField = instance.getClass().getDeclaredField(entity.id.name);
         idField.setAccessible(true);
         ResultSet rs = null;

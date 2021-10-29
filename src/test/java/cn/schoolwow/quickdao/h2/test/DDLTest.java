@@ -68,7 +68,7 @@ public class DDLTest extends H2Test {
         {
             Property property = dao.getProperty("PERSON","LAST_NAME");
             Assert.assertEquals("LAST_NAME",property.column);
-            Assert.assertEquals("VARCHAR(64)",property.columnType);
+            Assert.assertEquals("VARCHAR(64)",property.columnType+"("+property.length+")");
         }
     }
 }

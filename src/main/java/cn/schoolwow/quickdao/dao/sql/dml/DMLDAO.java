@@ -168,6 +168,30 @@ public interface DMLDAO {
     int delete(String tableName, String field, Object value);
 
     /**
+     * 删除对象
+     * <p>首先根据实体类唯一性约束删除,若无唯一性约束则根据id删除</p>
+     *
+     * @param instance 待删除对象
+     */
+    int delete(Object instance);
+
+    /**
+     * 删除对象数组
+     * <p>首先根据实体类唯一性约束删除,若无唯一性约束则根据id删除</p>
+     *
+     * @param instances 待删除对象数组
+     */
+    int delete(Object[] instances);
+
+    /**
+     * 删除对象
+     * <p>首先根据实体类唯一性约束删除,若无唯一性约束则根据id删除</p>
+     *
+     * @param instanceCollection 删除对象集合
+     */
+    int delete(Collection instanceCollection);
+
+    /**
      * 清空表
      *
      * @param clazz 类名,对应数据库中的一张表
