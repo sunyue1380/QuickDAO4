@@ -27,24 +27,27 @@ public class MySQLDDLBuilder extends AbstractDDLBuilder {
     }
 
     @Override
+    public List<Entity> getVirtualEntity(){
+        Entity entity = new Entity();
+        entity.tableName = "dual";
+        entity.escapeTableName = "dual";
+        entity.properties = new ArrayList<>();
+        return Arrays.asList(entity);
+    }
+
+    @Override
     protected String getAutoIncrementSQL(Property property) {
         return property.column + " " + property.columnType + (null==property.length?"":"("+property.length+")") + " primary key auto_increment";
     }
 
     @Override
-    public boolean hasTableExists(Entity entity) throws SQLException {
+    public String hasTableExists(Entity entity) {
         String hasTableExistsSQL = "show tables like '%"+entity.tableName+"%';";
-        ResultSet resultSet = connectionExecutor.executeQuery("判断表是否存在",hasTableExistsSQL);
-        boolean result = false;
-        if(resultSet.next()){
-            result = true;
-        }
-        resultSet.close();
-        return result;
+        return hasTableExistsSQL;
     }
 
     @Override
-    public void createTable(Entity entity) throws SQLException {
+    public String createTable(Entity entity) {
         StringBuilder builder = new StringBuilder("create table " + entity.escapeTableName + "(");
         for (Property property : entity.properties) {
             if(property.id&&property.strategy== IdStrategy.AutoIncrement){
@@ -131,25 +134,19 @@ public class MySQLDDLBuilder extends AbstractDDLBuilder {
         if(null!=collate&&!collate.isEmpty()){
             builder.append(" COLLATE = " + collate);
         }
-        connectionExecutor.executeUpdate("生成新表",builder.toString());
+        return builder.toString();
     }
 
     @Override
-    public boolean hasIndexExists(String tableName, String indexName) throws SQLException {
+    public String hasIndexExists(String tableName, String indexName) {
         String hasIndexExistsSQL = "show index from "+quickDAOConfig.database.escape(tableName)+" where key_name = '"+indexName+"'";
-        ResultSet resultSet = connectionExecutor.executeQuery("查看索引是否存在",hasIndexExistsSQL);
-        boolean result = false;
-        if (resultSet.next()) {
-            result = true;
-        }
-        resultSet.close();
-        return result;
+        return hasIndexExistsSQL;
     }
 
     @Override
-    public void dropIndex(String tableName, String indexName) throws SQLException{
+    public String dropIndex(String tableName, String indexName) {
         String dropIndexSQL = "drop index "+quickDAOConfig.database.escape(indexName)+" on "+quickDAOConfig.database.escape(tableName);
-        connectionExecutor.executeUpdate("删除索引",dropIndexSQL);
+        return dropIndexSQL;
     }
 
     @Override
@@ -197,15 +194,6 @@ public class MySQLDDLBuilder extends AbstractDDLBuilder {
         fieldTypeMapping.put("java.io.InputStream","LONGTEXT");
         fieldTypeMapping.put("java.io.Reader","LONGTEXT");
         return fieldTypeMapping;
-    }
-
-    @Override
-    protected List<Entity> getVirtualEntity(){
-        Entity entity = new Entity();
-        entity.tableName = "dual";
-        entity.escapeTableName = "dual";
-        entity.properties = new ArrayList<>();
-        return Arrays.asList(entity);
     }
 
     @Override
@@ -258,7 +246,7 @@ public class MySQLDDLBuilder extends AbstractDDLBuilder {
 
     @Override
     protected void getEntityPropertyList(List<Entity> entityList) throws SQLException {
-        String getEntityPropertyListSQL = "select table_name, column_name, data_type, character_maximum_length, is_nullable, column_key, extra, column_default, column_comment from information_schema.`columns` where table_schema = '" + quickDAOConfig.databaseName + "'";
+        String getEntityPropertyListSQL = "select table_name, column_name, data_type, character_maximum_length, numeric_precision, is_nullable, column_key, extra, column_default, column_comment from information_schema.`columns` where table_schema = '" + quickDAOConfig.databaseName + "'";
         ResultSet resultSet = connectionExecutor.executeQuery("获取表字段信息",getEntityPropertyListSQL);
         while (resultSet.next()) {
             for(Entity entity : entityList){
@@ -273,9 +261,13 @@ public class MySQLDDLBuilder extends AbstractDDLBuilder {
                 if(property.columnType.contains(" ")){
                     property.columnType = property.columnType.substring(0,property.columnType.indexOf(" ")).trim();
                 }
-                Object character_maximum_length = resultSet.getObject("character_maximum_length");
-                if(null!=character_maximum_length&&character_maximum_length.toString().length()<7){
-                    property.length = Integer.parseInt(character_maximum_length.toString());
+                Object characterMaximumLength = resultSet.getObject("character_maximum_length");
+                if(null!=characterMaximumLength&&characterMaximumLength.toString().length()<7){
+                    property.length = Integer.parseInt(characterMaximumLength.toString());
+                }
+                Object numericPrecision = resultSet.getObject("numeric_precision");
+                if(null!=numericPrecision){
+                    property.length = Integer.parseInt(numericPrecision.toString());
                 }
                 property.notNull = "NO".equals(resultSet.getString("is_nullable"));
                 String key = resultSet.getString("column_key");

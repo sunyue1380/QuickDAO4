@@ -7,6 +7,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.StringTokenizer;
 
 public class ConnectionExecutor {
     private Logger logger = LoggerFactory.getLogger(ConnectionExecutor.class);
@@ -82,10 +83,14 @@ public class ConnectionExecutor {
      * */
     public int executeUpdate(String name, String sql) throws SQLException {
         try {
-            PreparedStatement preparedStatement = connection.prepareStatement(sql);
-            int effect = executeUpdate(name, sql, preparedStatement);
-            preparedStatement.close();
-            return effect;
+            if(sql.contains(";")){
+                return executeUpdates(name,sql);
+            }else{
+                PreparedStatement preparedStatement = connection.prepareStatement(sql);
+                int effect = executeUpdate(name, sql, preparedStatement);
+                preparedStatement.close();
+                return effect;
+            }
         }catch (SQLException e){
             throw e;
         }
@@ -144,12 +149,44 @@ public class ConnectionExecutor {
      * 执行更新操作
      * @param name 名称
      * @param sql SQL语句
+     * @param preparedStatement 执行语句
      * @return 影响行数
      * */
     private int executeUpdate(String name, String sql, PreparedStatement preparedStatement) throws SQLException {
         try {
             long startTime = System.currentTimeMillis();
             int effect = preparedStatement.executeUpdate();
+            long endTime = System.currentTimeMillis();
+            StackTraceElement[] stackTraceElements = Thread.currentThread().getStackTrace();
+            if(stackTraceElements[3].getClassName().startsWith("cn.schoolwow.quickdao.builder.ddl")){
+                logger.trace("[{}]耗时:{}ms,影响行数:{},执行SQL:{}", name, endTime - startTime, effect, sql);
+            }else{
+                logger.debug("[{}]耗时:{}ms,影响行数:{},执行SQL:{}", name, endTime - startTime, effect, sql);
+            }
+            for(Interceptor interceptor:quickDAOConfig.interceptorList){
+                interceptor.afterExecuteConnection(SQLStatementType.UPDATE, name, sql);
+            }
+            return effect;
+        }catch (SQLException e){
+            logger.warn("[SQL语句执行失败]名称:{},原始SQL:{}", name, sql);
+            throw e;
+        }
+    }
+
+    /**
+     * 执行包含分号的更新操作
+     * @param name 名称
+     * @param sql SQL语句
+     * @return 影响行数
+     * */
+    private int executeUpdates(String name, String sql) throws SQLException {
+        try {
+            long startTime = System.currentTimeMillis();
+            StringTokenizer st = new StringTokenizer(sql,";");
+            int effect = 0;
+            while(st.hasMoreTokens()){
+                effect += connection.createStatement().executeUpdate(st.nextToken());
+            }
             long endTime = System.currentTimeMillis();
             StackTraceElement[] stackTraceElements = Thread.currentThread().getStackTrace();
             if(stackTraceElements[3].getClassName().startsWith("cn.schoolwow.quickdao.builder.ddl")){

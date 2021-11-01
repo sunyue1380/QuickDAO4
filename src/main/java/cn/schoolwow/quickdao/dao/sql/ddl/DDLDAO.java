@@ -11,6 +11,11 @@ import java.util.Map;
  */
 public interface DDLDAO {
     /**
+     * 表是否存在
+     */
+    boolean hasTableExists(Class clazz);
+
+    /**
      * 建表
      */
     void create(Class clazz);
@@ -49,6 +54,13 @@ public interface DDLDAO {
     void createColumn(String tableName, Property property);
 
     /**
+     * 修改列
+     *
+     * @param property 列信息
+     */
+    void alterColumn(Property property);
+
+    /**
      * 删除列
      *
      * @param tableName 表名
@@ -64,6 +76,13 @@ public interface DDLDAO {
     boolean hasIndex(String tableName, String indexName);
 
     /**
+     * 约束否存在
+     * @param tableName 表名
+     * @param indexName 约束名称
+     */
+    boolean hasConstraintExists(String tableName, String indexName);
+
+    /**
      * 新增索引
      * @param indexField 索引信息
      */
@@ -75,6 +94,12 @@ public interface DDLDAO {
      * @param indexName 索引名称
      */
     void dropIndex(String tableName, String indexName);
+
+    /**
+     * 创建外键约束
+     * @param property 数据库列
+     * */
+    void createForeignKey(Property property);
 
     /**
      * 是否开启外键约束检查

@@ -5,6 +5,7 @@ import cn.schoolwow.quickdao.domain.Entity;
 import cn.schoolwow.quickdao.domain.IndexField;
 import cn.schoolwow.quickdao.domain.Property;
 import cn.schoolwow.quickdao.domain.QuickDAOConfig;
+import cn.schoolwow.quickdao.exception.SQLRuntimeException;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -17,33 +18,31 @@ public class OracleDDLBuilder extends PostgreDDLBuilder{
     }
 
     @Override
-    public boolean hasTableExists(Entity entity) throws SQLException {
+    public List<Entity> getVirtualEntity(){
+        Entity entity = new Entity();
+        entity.tableName = "dual";
+        entity.escapeTableName = "dual";
+        entity.properties = new ArrayList<>();
+        return Arrays.asList(entity);
+    }
+
+    @Override
+    public String hasTableExists(Entity entity) {
         String hasTableExistsSQL = "select table_name from user_tables where table_name = '" + entity.tableName + "'";
-        ResultSet resultSet = connectionExecutor.executeQuery("判断表是否存在",hasTableExistsSQL);
-        boolean result = false;
-        if(resultSet.next()){
-            result = true;
-        }
-        resultSet.close();
-        return result;
+        return hasTableExistsSQL;
     }
 
     @Override
-    public void createTable(Entity entity) throws SQLException {
-        super.createTable(entity);
-        createSequence(entity);
+    public String createTable(Entity entity) {
+        StringBuilder builder = new StringBuilder(super.createTable(entity));
+        createSequence(entity,builder);
+        return builder.toString();
     }
 
     @Override
-    public boolean hasIndexExists(String tableName, String indexName) throws SQLException {
+    public String hasIndexExists(String tableName, String indexName) {
         String hasIndexExistsSQL = "select index_name from user_indexes where table_name = '" + tableName + "' and index_name = '" + indexName + "'";
-        ResultSet resultSet = connectionExecutor.executeQuery("查看索引是否存在",hasIndexExistsSQL);
-        boolean result = false;
-        if (resultSet.next()) {
-            result = true;
-        }
-        resultSet.close();
-        return result;
+        return hasIndexExistsSQL;
     }
 
     @Override
@@ -88,15 +87,6 @@ public class OracleDDLBuilder extends PostgreDDLBuilder{
         fieldTypeMapping.put("java.io.InputStream","");
         fieldTypeMapping.put("java.io.Reader","");
         return fieldTypeMapping;
-    }
-
-    @Override
-    protected List<Entity> getVirtualEntity(){
-        Entity entity = new Entity();
-        entity.tableName = "dual";
-        entity.escapeTableName = "dual";
-        entity.properties = new ArrayList<>();
-        return Arrays.asList(entity);
     }
 
     @Override
@@ -216,26 +206,29 @@ public class OracleDDLBuilder extends PostgreDDLBuilder{
     }
 
     /**创建序列和触发器*/
-    private void createSequence(Entity entity) throws SQLException {
+    private void createSequence(Entity entity, StringBuilder builder) {
         if(null==entity.id){
             return;
         }
-        //创建sequence
-        String sequenceExistSQL = "select sequence_name from user_sequences where sequence_name= '" + entity.tableName.toUpperCase() + "_SEQ'";
-        ResultSet resultSet = connectionExecutor.executeQuery("判断序列是否存在",sequenceExistSQL);
-        if(resultSet.next()){
-            //删除序列
-            connectionExecutor.executeUpdate("删除序列","drop sequence " + entity.tableName.toUpperCase() + "_SEQ");
+        try {
+            //创建sequence
+            String sequenceExistSQL = "select sequence_name from user_sequences where sequence_name= '" + entity.tableName.toUpperCase() + "_SEQ'";
+            ResultSet resultSet = connectionExecutor.executeQuery("判断序列是否存在",sequenceExistSQL);
+            if(resultSet.next()){
+                //删除序列
+                builder.append("drop sequence " + entity.tableName.toUpperCase() + "_SEQ;");
+            }
+            resultSet.close();
+            //创建序列
+            builder.append("create sequence " + entity.tableName + "_seq increment by 1 start with 1 minvalue 1 maxvalue 9999999999999 nocache order;");
+            //创建触发器
+            String createTrigger = "create or replace trigger " + entity.tableName + "_trigger " +
+                    "before insert on " + entity.escapeTableName + " " +
+                    "for each row when(new.\"" + entity.id.column + "\" is null) " +
+                    "begin select " + entity.tableName + "_seq.nextval into:new.\"" + entity.id.column + "\" from dual; end;";
+            connectionExecutor.connection.createStatement().executeUpdate(createTrigger);
+        }catch (SQLException e){
+            throw new SQLRuntimeException(e);
         }
-        resultSet.close();
-        //创建序列
-        String createSequence = "create sequence " + entity.tableName + "_seq increment by 1 start with 1 minvalue 1 maxvalue 9999999999999 nocache order";
-        connectionExecutor.executeUpdate("创建序列",createSequence);
-        //创建触发器
-        String createTrigger = "create or replace trigger " + entity.tableName + "_trigger " +
-                "before insert on " + entity.escapeTableName + " " +
-                "for each row when(new.\"" + entity.id.column + "\" is null) " +
-                "begin select " + entity.tableName + "_seq.nextval into:new.\"" + entity.id.column + "\" from dual; end;";
-        connectionExecutor.connection.createStatement().executeUpdate(createTrigger);
     }
 }

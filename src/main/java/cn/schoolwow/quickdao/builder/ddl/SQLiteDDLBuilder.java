@@ -20,25 +20,19 @@ public class SQLiteDDLBuilder extends AbstractDDLBuilder {
     }
 
     @Override
-    public boolean hasTableExists(Entity entity) throws SQLException {
+    public String hasTableExists(Entity entity) {
         String hasTableExistsSQL = "select name from sqlite_master where type='table' and name = '"+entity.tableName+"';";
-        ResultSet resultSet = connectionExecutor.executeQuery("判断表是否存在",hasTableExistsSQL);
-        boolean result = false;
-        if(resultSet.next()){
-            result = true;
-        }
-        resultSet.close();
-        return result;
+        return hasTableExistsSQL;
     }
 
     @Override
-    public void createTable(Entity entity) throws SQLException {
+    public String createTable(Entity entity) {
+        StringBuilder builder = new StringBuilder();
         if (quickDAOConfig.openForeignKey&&null!=entity.foreignKeyProperties&&entity.foreignKeyProperties.size()>0) {
             //手动开启外键约束
-            String openForeignKeyCheck = "PRAGMA foreign_keys = ON;";
-            connectionExecutor.executeUpdate("开启外键约束",openForeignKeyCheck);
+            builder.append("PRAGMA foreign_keys = ON;");
         }
-        StringBuilder builder = new StringBuilder("create table " + entity.escapeTableName + "(");
+        builder.append("create table " + entity.escapeTableName + "(");
         for (Property property : entity.properties) {
             if(property.id&&property.strategy== IdStrategy.AutoIncrement){
                 builder.append(getAutoIncrementSQL(property));
@@ -72,33 +66,28 @@ public class SQLiteDDLBuilder extends AbstractDDLBuilder {
         if (null != entity.comment) {
             builder.append(" "+quickDAOConfig.database.comment(entity.comment));
         }
-        connectionExecutor.executeUpdate("生成新表", builder.toString());
+        builder.append(";");
         //创建索引
         for(IndexField indexField:entity.indexFieldList){
-            createIndex(indexField);
+            builder.append(createIndex(indexField));
         }
+        return builder.toString();
     }
 
     @Override
-    protected String getAutoIncrementSQL(Property property){
+    protected String getAutoIncrementSQL(Property property) {
         return property.column + " " + property.columnType + (null==property.length?"":"("+property.length+")") + " primary key autoincrement";
     }
 
     @Override
-    public void dropColumn(Property property) throws SQLException{
+    public String dropColumn(Property property) {
         throw new UnsupportedOperationException("SQLite不支持删除列");
     }
 
     @Override
-    public boolean hasIndexExists(String tableName, String indexName) throws SQLException {
-        String hasIndexExistsSQL = "select count(1) from sqlite_master where type = 'index' and name = '"+indexName+"'";
-        ResultSet resultSet = connectionExecutor.executeQuery("查看索引是否存在",hasIndexExistsSQL);
-        boolean result = false;
-        if (resultSet.next()) {
-            result = resultSet.getInt(1) > 0;
-        }
-        resultSet.close();
-        return result;
+    public String hasIndexExists(String tableName, String indexName) {
+        String hasIndexExistsSQL = "select name from sqlite_master where type = 'index' and name = '" + indexName + "'";
+        return hasIndexExistsSQL;
     }
 
     @Override

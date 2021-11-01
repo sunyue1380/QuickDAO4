@@ -18,6 +18,11 @@ public interface DDLBuilder {
     void getDatabaseName() throws SQLException;
 
     /**
+     * 获取虚拟表信息
+     * */
+    List<Entity> getVirtualEntity();
+
+    /**
      * 获取数据库信息
      */
     List<Entity> getDatabaseEntity() throws SQLException;
@@ -25,84 +30,69 @@ public interface DDLBuilder {
     /**
      * 判断表是否已经存在
      */
-    boolean hasTableExists(Entity entity) throws SQLException;
+    String hasTableExists(Entity entity);
 
     /**
      * 创建新表
      */
-    void createTable(Entity entity) throws SQLException;
+    String createTable(Entity entity);
 
     /**
      * 创建字段
      */
-    void createProperty(Property property) throws SQLException;
+    String createProperty(Property property);
 
     /**
      * 修改列
      */
-    void alterColumn(Property property) throws SQLException;
+    String alterColumn(Property property);
 
     /**
      * 删除列
      */
-    void dropColumn(Property property) throws SQLException;
+    String dropColumn(Property property);
 
     /**
      * 删除表
      */
-    void dropTable(String tableName) throws SQLException;
-
-    /**
-     * 重建表
-     */
-    void rebuild(Entity entity) throws SQLException;
+    String dropTable(String tableName);
 
     /**
      * 判断索引是否存在
      * @param tableName 表名
      * @param indexName 索引名称
      * */
-    boolean hasIndexExists(String tableName, String indexName) throws SQLException;
+    String hasIndexExists(String tableName, String indexName) throws SQLException;
 
     /**
      * 判断约束是否存在
      * @param tableName 表名
      * @param constraintName 约束名称
      * */
-    boolean hasConstraintExists(String tableName, String constraintName) throws SQLException;
+    String hasConstraintExists(String tableName, String constraintName) throws SQLException;
 
     /**
      * 创建索引
      * @param indexField 索引字段
      */
-    void createIndex(IndexField indexField) throws SQLException;
+    String createIndex(IndexField indexField);
 
     /**
      * 删除索引
      * @param tableName 表名
      * @param indexName 索引名称
      */
-    void dropIndex(String tableName, String indexName) throws SQLException;
+    String dropIndex(String tableName, String indexName);
 
     /**
      * 建立外键约束
      */
-    void createForeignKey(Property property) throws SQLException;
+    String createForeignKey(Property property) throws SQLException;
 
     /**
      * 是否开启外键约束检查
      */
     void enableForeignConstraintCheck(boolean enable) throws SQLException;
-
-    /**
-     * 自动建表和新增字段
-     */
-    void automaticCreateTableAndColumn() throws SQLException;
-
-    /**
-     * 刷新数据库字段信息
-     */
-    void refreshDbEntityList() throws SQLException;
 
     /**
      * 获取默认Java类型与数据库类型映射关系表

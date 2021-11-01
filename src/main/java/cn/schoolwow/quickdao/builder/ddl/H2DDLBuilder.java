@@ -25,27 +25,15 @@ public class H2DDLBuilder extends MySQLDDLBuilder {
     }
 
     @Override
-    public boolean hasTableExists(Entity entity) throws SQLException {
-        String hasTableExistsSQL = "select table_name from information_schema.tables where table_name = '"+entity.tableName.toUpperCase()+"'";
-        ResultSet resultSet = connectionExecutor.executeQuery("判断表是否存在",hasTableExistsSQL);
-        boolean result = false;
-        if(resultSet.next()){
-            result = true;
-        }
-        resultSet.close();
-        return result;
+    public String hasTableExists(Entity entity) {
+        String hasTableExistsSQL = "select table_name from information_schema.tables where table_name = '" + entity.tableName.toUpperCase() + "'";
+        return hasTableExistsSQL;
     }
 
     @Override
-    public boolean hasIndexExists(String tableName, String indexName) throws SQLException {
-        String hasIndexExistsSQL = "select count(1) from information_schema.indexes where index_name = '"+indexName.toUpperCase()+"'";
-        ResultSet resultSet = connectionExecutor.executeQuery("查看索引是否存在",hasIndexExistsSQL);
-        boolean result = false;
-        if (resultSet.next()) {
-            result = resultSet.getInt(1) > 0;
-        }
-        resultSet.close();
-        return result;
+    public String hasIndexExists(String tableName, String indexName)  {
+        String hasIndexExistsSQL = "select index_name from information_schema.indexes where index_name = '"+indexName.toUpperCase()+"'";
+        return hasIndexExistsSQL;
     }
 
     @Override

@@ -3,24 +3,57 @@ package cn.schoolwow.quickdao.util;
 import cn.schoolwow.quickdao.DAOUtils;
 import cn.schoolwow.quickdao.QuickDAO;
 import cn.schoolwow.quickdao.dao.DAO;
+import cn.schoolwow.quickdao.domain.util.DiffTableStructureOption;
 import cn.schoolwow.quickdao.domain.util.MigrateOption;
 import cn.schoolwow.quickdao.domain.util.TableStructureSynchronizedOption;
 import com.zaxxer.hikari.HikariDataSource;
 import org.aeonbits.owner.ConfigCache;
-import org.junit.Ignore;
 import org.junit.Test;
 
-@Ignore
 public class DAOUtilsTest {
     DAOUtilProperties daoUtilProperties = ConfigCache.getOrCreate(DAOUtilProperties.class);
+    private DAO sourceDAO;
+    private DAO targetDAO;
+    {
+        HikariDataSource sourceHikariDataSource = new HikariDataSource();
+        sourceHikariDataSource.setDriverClassName(daoUtilProperties.sourceJdbcDriver());
+        sourceHikariDataSource.setJdbcUrl(daoUtilProperties.sourceJdbcUrl());
+        sourceHikariDataSource.setUsername(daoUtilProperties.sourceUsername());
+        sourceHikariDataSource.setPassword(daoUtilProperties.sourcePassword());
+        sourceDAO = QuickDAO.newInstance()
+                .dataSource(sourceHikariDataSource)
+                .autoCreateTable(false)
+                .autoCreateProperty(false)
+                .build();
+
+        HikariDataSource targetHikariDataSource = new HikariDataSource();
+        targetHikariDataSource.setDriverClassName(daoUtilProperties.targetJdbcDriver());
+        targetHikariDataSource.setJdbcUrl(daoUtilProperties.targetJdbcUrl());
+        targetHikariDataSource.setUsername(daoUtilProperties.targetUsername());
+        targetHikariDataSource.setPassword(daoUtilProperties.targetPassword());
+        targetDAO = QuickDAO.newInstance()
+                .dataSource(targetHikariDataSource)
+                .autoCreateTable(false)
+                .autoCreateProperty(false)
+                .build();
+    }
+
+    @Test
+    public void diffTableStructureOption(){
+        DiffTableStructureOption diffTableStructureOption = new DiffTableStructureOption();
+        diffTableStructureOption.source = sourceDAO;
+        diffTableStructureOption.target = targetDAO;
+        diffTableStructureOption.executeSQL = true;
+        DAOUtils.diffTableStructure(diffTableStructureOption);
+    }
 
     @Test
     public void tableStructureSynchronized(){
         HikariDataSource sourceHikariDataSource = new HikariDataSource();
-        sourceHikariDataSource.setDriverClassName("oracle.jdbc.driver.OracleDriver");
-        sourceHikariDataSource.setJdbcUrl(daoUtilProperties.sourceOracleJdbc());
-        sourceHikariDataSource.setUsername(daoUtilProperties.sourceOracleUsername());
-        sourceHikariDataSource.setPassword(daoUtilProperties.sourceOraclePassword());
+        sourceHikariDataSource.setDriverClassName(daoUtilProperties.sourceJdbcDriver());
+        sourceHikariDataSource.setJdbcUrl(daoUtilProperties.sourceJdbcUrl());
+        sourceHikariDataSource.setUsername(daoUtilProperties.sourceUsername());
+        sourceHikariDataSource.setPassword(daoUtilProperties.sourcePassword());
 
         DAO sourceDAO = QuickDAO.newInstance()
                 .dataSource(sourceHikariDataSource)
@@ -29,10 +62,10 @@ public class DAOUtilsTest {
                 .build();
 
         HikariDataSource targetHikariDataSource = new HikariDataSource();
-        targetHikariDataSource.setDriverClassName("oracle.jdbc.driver.OracleDriver");
-        targetHikariDataSource.setJdbcUrl(daoUtilProperties.targetOracleJdbc());
-        targetHikariDataSource.setUsername(daoUtilProperties.targetOracleUsername());
-        targetHikariDataSource.setPassword(daoUtilProperties.targetOraclePassword());
+        targetHikariDataSource.setDriverClassName(daoUtilProperties.targetJdbcDriver());
+        targetHikariDataSource.setJdbcUrl(daoUtilProperties.targetJdbcUrl());
+        targetHikariDataSource.setUsername(daoUtilProperties.targetUsername());
+        targetHikariDataSource.setPassword(daoUtilProperties.targetPassword());
 
         DAO targetDAO = QuickDAO.newInstance()
                 .dataSource(targetHikariDataSource)
@@ -56,21 +89,21 @@ public class DAOUtilsTest {
 
     @Test
     public void migrate() {
-        HikariDataSource sorceHikariDataSource = new HikariDataSource();
-        sorceHikariDataSource.setDriverClassName("org.postgresql.Driver");
-        sorceHikariDataSource.setJdbcUrl(daoUtilProperties.sourcePostgreJdbc());
-        sorceHikariDataSource.setUsername(daoUtilProperties.sourcePostgreUsername());
-        sorceHikariDataSource.setPassword(daoUtilProperties.sourcePostgrePassword());
+        HikariDataSource sourceHikariDataSource = new HikariDataSource();
+        sourceHikariDataSource.setDriverClassName(daoUtilProperties.sourceJdbcDriver());
+        sourceHikariDataSource.setJdbcUrl(daoUtilProperties.sourceJdbcUrl());
+        sourceHikariDataSource.setUsername(daoUtilProperties.sourceUsername());
+        sourceHikariDataSource.setPassword(daoUtilProperties.sourcePassword());
         DAO sourceDAO = QuickDAO.newInstance()
-                .dataSource(sorceHikariDataSource)
+                .dataSource(sourceHikariDataSource)
                 .autoCreateTable(false)
                 .autoCreateProperty(false)
                 .build();
         HikariDataSource targetHikariDataSource = new HikariDataSource();
-        targetHikariDataSource.setDriverClassName("org.postgresql.Driver");
-        targetHikariDataSource.setJdbcUrl(daoUtilProperties.targetPostgreJdbc());
-        targetHikariDataSource.setUsername(daoUtilProperties.targetPostgreUsername());
-        targetHikariDataSource.setPassword(daoUtilProperties.targetPostgrePassword());
+        targetHikariDataSource.setDriverClassName(daoUtilProperties.targetJdbcDriver());
+        targetHikariDataSource.setJdbcUrl(daoUtilProperties.targetJdbcUrl());
+        targetHikariDataSource.setUsername(daoUtilProperties.targetUsername());
+        targetHikariDataSource.setPassword(daoUtilProperties.targetPassword());
         DAO targetDAO = QuickDAO.newInstance()
                 .dataSource(targetHikariDataSource)
                 .autoCreateTable(false)

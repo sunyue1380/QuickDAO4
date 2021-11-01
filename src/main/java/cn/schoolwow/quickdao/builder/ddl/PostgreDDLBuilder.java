@@ -25,25 +25,19 @@ public class PostgreDDLBuilder extends AbstractDDLBuilder {
     }
 
     @Override
-    public boolean hasTableExists(Entity entity) throws SQLException {
+    public String hasTableExists(Entity entity) {
         String hasTableExistsSQL = "select tablename from pg_tables where schemaname='public' and tablename = '"+entity.tableName+"';";
-        ResultSet resultSet = connectionExecutor.executeQuery("判断表是否存在",hasTableExistsSQL);
-        boolean result = false;
-        if(resultSet.next()){
-            result = true;
-        }
-        resultSet.close();
-        return result;
+        return hasTableExistsSQL;
     }
 
     @Override
-    public void createTable(Entity entity) throws SQLException {
+    public String createTable(Entity entity) {
+        StringBuilder builder = new StringBuilder();
         if (quickDAOConfig.openForeignKey&&null!=entity.foreignKeyProperties&&entity.foreignKeyProperties.size()>0) {
             //手动开启外键约束
-            String openForeignKeyCheck = "PRAGMA foreign_keys = ON;";
-            connectionExecutor.executeUpdate("开启外键约束",openForeignKeyCheck);
+            builder.append("PRAGMA foreign_keys = ON;");
         }
-        StringBuilder builder = new StringBuilder("create table " + entity.escapeTableName + "(");
+        builder.append("create table " + entity.escapeTableName + "(");
         for (Property property : entity.properties) {
             if(property.id&&property.strategy== IdStrategy.AutoIncrement){
                 builder.append(getAutoIncrementSQL(property));
@@ -77,42 +71,32 @@ public class PostgreDDLBuilder extends AbstractDDLBuilder {
         if (null != entity.comment) {
             builder.append(" "+quickDAOConfig.database.comment(entity.comment));
         }
-        connectionExecutor.executeUpdate("生成新表", builder.toString());
+        builder.append(";");
         //创建索引
         for(IndexField indexField:entity.indexFieldList){
-            createIndex(indexField);
+            builder.append(createIndex(indexField));
         }
         //创建注释
         if(null!=entity.comment){
-            String entityCommentSQL = "comment on table \"" + entity.tableName + "\" is '" + entity.comment + "'";
-            connectionExecutor.executeUpdate("创建表注释", entityCommentSQL);
+            builder.append("comment on table \"" + entity.tableName + "\" is '" + entity.comment + "';");
         }
         for (Property property : entity.properties) {
             if (property.comment == null) {
                 continue;
             }
-            String columnCommentSQL = "comment on column \"" + entity.tableName + "\".\"" + property.column + "\" is '" + property.comment + "'";
-            connectionExecutor.executeUpdate("创建表字段注释", columnCommentSQL);
+            builder.append("comment on column \"" + entity.tableName + "\".\"" + property.column + "\" is '" + property.comment + "';");
         }
+        return builder.toString();
     }
 
     @Override
-    public boolean hasIndexExists(String tableName, String indexName) throws SQLException {
-        String hasIndexExistsSQL = "select count(1) from pg_indexes where tablename = '"+tableName+"' and indexname = '"+indexName+"'";
-        ResultSet resultSet = connectionExecutor.executeQuery("查看索引是否存在",hasIndexExistsSQL);
-        boolean result = false;
-        if (resultSet.next()) {
-            result = resultSet.getInt(1) > 0;
-        }
-        resultSet.close();
-        return result;
+    public String hasIndexExists(String tableName, String indexName) {
+        String hasIndexExistsSQL = "select indexname from pg_indexes where tablename = '"+tableName+"' and indexname = '"+indexName+"'";
+        return hasIndexExistsSQL;
     }
 
     @Override
-    public void createIndex(IndexField indexField) throws SQLException {
-        if(indexField.columns.isEmpty()){
-            return;
-        }
+    public String createIndex(IndexField indexField) {
         StringBuilder builder = new StringBuilder("create");
         switch (indexField.indexType){
             case NORMAL:{}break;
@@ -132,7 +116,8 @@ public class PostgreDDLBuilder extends AbstractDDLBuilder {
         if(null!=indexField.comment&&!indexField.comment.isEmpty()){
             builder.append(" "+quickDAOConfig.database.comment(indexField.comment));
         }
-        connectionExecutor.executeUpdate("添加索引",builder.toString());
+        builder.append(";");
+        return builder.toString();
     }
 
     @Override

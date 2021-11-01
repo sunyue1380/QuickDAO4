@@ -1,13 +1,17 @@
 package cn.schoolwow.quickdao;
 
+import cn.schoolwow.quickdao.builder.ddl.DDLBuilder;
 import cn.schoolwow.quickdao.domain.Entity;
 import cn.schoolwow.quickdao.domain.Property;
+import cn.schoolwow.quickdao.domain.QuickDAOConfig;
+import cn.schoolwow.quickdao.domain.util.DiffTableStructureOption;
 import cn.schoolwow.quickdao.domain.util.MigrateOption;
 import cn.schoolwow.quickdao.domain.util.TableStructureSynchronizedOption;
 import com.alibaba.fastjson.JSONArray;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -20,30 +24,78 @@ public class DAOUtils {
     /**
      * 数据库表结构同步
      * */
-    public static void tableStructureSynchronized(TableStructureSynchronizedOption option){
-        if(null==option.source){
+    public static void diffTableStructure(DiffTableStructureOption diffTableStructureOption){
+        if(null==diffTableStructureOption.source){
             throw new IllegalArgumentException("请指定迁移源数据库!");
         }
-        if(null==option.target){
+        if(null==diffTableStructureOption.target){
             throw new IllegalArgumentException("请指定迁移目标数据库!");
         }
-        List<Entity> sourceEntityList = option.source.getDbEntityList();
+        List<Entity> sourceEntityList = new ArrayList<>();
+        if(null==diffTableStructureOption.tableNames||diffTableStructureOption.tableNames.length==0){
+            sourceEntityList = diffTableStructureOption.source.getDbEntityList();
+        }else{
+            for(String tableName:diffTableStructureOption.tableNames){
+                sourceEntityList.add(diffTableStructureOption.source.getDbEntity(tableName));
+            }
+        }
+        QuickDAOConfig quickDAOConfig = diffTableStructureOption.target.getQuickDAOConfig();
+        DDLBuilder ddlBuilder = quickDAOConfig.database.getDDLBuilderInstance(quickDAOConfig);
+
+        StringBuilder builder = new StringBuilder();
         for(Entity sourceEntity:sourceEntityList){
-            Entity targetEntity = option.target.getDbEntity(sourceEntity.tableName);
+            Entity targetEntity = diffTableStructureOption.target.getDbEntity(sourceEntity.tableName);
             if(null==targetEntity){
-                if(null!=option.createTablePredicate&&!option.createTablePredicate.test(sourceEntity)){
+                continue;
+            }
+            List<Property> sourcePropertyList = sourceEntity.properties;
+            for(Property sourceProperty:sourcePropertyList){
+                Property targetProperty = targetEntity.properties.stream().filter(property -> property.column.equals(sourceProperty.column)).findFirst().orElse(null);
+                if(null==targetProperty){
                     continue;
                 }
-                option.target.create(sourceEntity);
+                //比对属性
+                if(diffTableStructureOption.diffPropertyPredicate.test(sourceProperty,targetProperty)){
+                    //两列不同
+                    //判断是否要实际执行
+                    if(!diffTableStructureOption.executeSQL){
+                        builder.append(ddlBuilder.alterColumn(sourceProperty));
+                    }else{
+                        diffTableStructureOption.target.alterColumn(sourceProperty);
+                    }
+                }
+            }
+        }
+        diffTableStructureOption.sql = builder.toString();
+    }
+
+    /**
+     * 数据库表结构同步
+     * */
+    public static void tableStructureSynchronized(TableStructureSynchronizedOption tableStructureSynchronizedOption){
+        if(null==tableStructureSynchronizedOption.source){
+            throw new IllegalArgumentException("请指定迁移源数据库!");
+        }
+        if(null==tableStructureSynchronizedOption.target){
+            throw new IllegalArgumentException("请指定迁移目标数据库!");
+        }
+        List<Entity> sourceEntityList = tableStructureSynchronizedOption.source.getDbEntityList();
+        for(Entity sourceEntity:sourceEntityList){
+            Entity targetEntity = tableStructureSynchronizedOption.target.getDbEntity(sourceEntity.tableName);
+            if(null==targetEntity){
+                if(null!=tableStructureSynchronizedOption.createTablePredicate&&!tableStructureSynchronizedOption.createTablePredicate.test(sourceEntity)){
+                    continue;
+                }
+                tableStructureSynchronizedOption.target.create(sourceEntity);
                 continue;
             }
             //比对属性
             for(Property property:sourceEntity.properties){
                 if(targetEntity.properties.stream().noneMatch(property1 -> property1.column.equalsIgnoreCase(property.column))){
-                    if(null!=option.createPropertyPredicate&&!option.createPropertyPredicate.test(property)){
+                    if(null!=tableStructureSynchronizedOption.createPropertyPredicate&&!tableStructureSynchronizedOption.createPropertyPredicate.test(property)){
                         continue;
                     }
-                    option.target.createColumn(sourceEntity.tableName,property);
+                    tableStructureSynchronizedOption.target.createColumn(sourceEntity.tableName,property);
                 }
             }
         }

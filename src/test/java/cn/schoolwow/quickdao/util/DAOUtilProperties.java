@@ -7,40 +7,27 @@ import static org.aeonbits.owner.Config.DisableableFeature.PARAMETER_FORMATTING;
 @Config.DisableFeature(PARAMETER_FORMATTING)
 @Config.Sources({"file:${user.dir}/daoutil.properties"})
 public interface DAOUtilProperties extends Config {
-    @Key("source.postgre.jdbc")
-    String sourcePostgreJdbc();
+    @Key("source.jdbcDriver")
+    String sourceJdbcDriver();
 
-    @Key("source.postgre.username")
-    String sourcePostgreUsername();
+    @Key("source.jdbcUrl")
+    String sourceJdbcUrl();
 
-    @Key("source.postgre.password")
-    String sourcePostgrePassword();
+    @Key("source.username")
+    String sourceUsername();
 
-    @Key("target.postgre.jdbc")
-    String targetPostgreJdbc();
+    @Key("source.password")
+    String sourcePassword();
 
-    @Key("target.postgre.username")
-    String targetPostgreUsername();
+    @Key("target.jdbcDriver")
+    String targetJdbcDriver();
 
-    @Key("target.postgre.password")
-    String targetPostgrePassword();
+    @Key("target.jdbcUrl")
+    String targetJdbcUrl();
 
-    @Key("source.oracle.jdbc")
-    String sourceOracleJdbc();
+    @Key("target.username")
+    String targetUsername();
 
-    @Key("source.oracle.username")
-    String sourceOracleUsername();
-
-    @Key("source.oracle.password")
-    String sourceOraclePassword();
-
-    @Key("target.oracle.jdbc")
-    String targetOracleJdbc();
-
-    @Key("target.oracle.username")
-    String targetOracleUsername();
-
-    @Key("target.oracle.password")
-    String targetOraclePassword();
-
+    @Key("target.password")
+    String targetPassword();
 }

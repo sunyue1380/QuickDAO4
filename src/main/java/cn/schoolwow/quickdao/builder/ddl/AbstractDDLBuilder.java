@@ -5,13 +5,13 @@ import cn.schoolwow.quickdao.domain.Entity;
 import cn.schoolwow.quickdao.domain.IndexField;
 import cn.schoolwow.quickdao.domain.Property;
 import cn.schoolwow.quickdao.domain.QuickDAOConfig;
-import com.alibaba.fastjson.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 
 public abstract class AbstractDDLBuilder extends AbstractSQLBuilder implements DDLBuilder {
     protected Logger logger = LoggerFactory.getLogger(DDLBuilder.class);
@@ -22,6 +22,11 @@ public abstract class AbstractDDLBuilder extends AbstractSQLBuilder implements D
 
     @Override
     public void getDatabaseName() throws SQLException{
+    }
+
+    @Override
+    public List<Entity> getVirtualEntity(){
+        return new ArrayList<>();
     }
 
     @Override
@@ -41,13 +46,13 @@ public abstract class AbstractDDLBuilder extends AbstractSQLBuilder implements D
     }
 
     @Override
-    public abstract boolean hasTableExists(Entity entity) throws SQLException;
+    public abstract String hasTableExists(Entity entity);
 
     @Override
-    public abstract void createTable(Entity entity) throws SQLException;
+    public abstract String createTable(Entity entity);
 
     @Override
-    public void createProperty(Property property) throws SQLException{
+    public String createProperty(Property property){
         StringBuilder createPropertyBuilder = new StringBuilder("alter table " + quickDAOConfig.database.escape(property.entity.tableName) + " add " + quickDAOConfig.database.escape(property.column) + " " + property.columnType + (null==property.length?"":"("+property.length+")"));
         if (null!=property.defaultValue&&!property.defaultValue.isEmpty()) {
             createPropertyBuilder.append(" default " + property.defaultValue);
@@ -64,62 +69,44 @@ public abstract class AbstractDDLBuilder extends AbstractSQLBuilder implements D
         if (null != property.after) {
             createPropertyBuilder.append(" after "+quickDAOConfig.database.escape(property.after));
         }
-        connectionExecutor.executeUpdate("添加新列",createPropertyBuilder.toString());
+        return createPropertyBuilder.toString();
     }
 
     @Override
-    public void alterColumn(Property property) throws SQLException{
+    public String alterColumn(Property property){
         StringBuilder builder = new StringBuilder("alter table " + quickDAOConfig.database.escape(property.entity.tableName));
-        builder.append(" alter column "+quickDAOConfig.database.escape(property.column) + " " + property.columnType + (null==property.length?"":"("+property.length+")"));
-        connectionExecutor.executeUpdate("修改数据类型",builder.toString());
+        builder.append(" modify column " + quickDAOConfig.database.escape(property.column) + " " + property.columnType + (null==property.length?"":"("+property.length+")")+";");
+        return builder.toString();
     }
 
     @Override
-    public void dropColumn(Property property) throws SQLException{
+    public String dropColumn(Property property){
         StringBuilder builder = new StringBuilder("alter table ");
         if(null!=quickDAOConfig.databaseName){
             builder.append(quickDAOConfig.database.escape(quickDAOConfig.databaseName)+".");
         }
         builder.append(quickDAOConfig.database.escape(property.entity.tableName));
-        builder.append(" drop column "+quickDAOConfig.database.escape(property.column));
-
-        connectionExecutor.executeUpdate("删除列",builder.toString());
+        builder.append(" drop column "+quickDAOConfig.database.escape(property.column)+";");
+        return builder.toString();
     }
 
     @Override
-    public void dropTable(String tableName) throws SQLException {
-        String sql = "drop table "+quickDAOConfig.database.escape(tableName);
-        connectionExecutor.executeUpdate("删除表",sql);
+    public String dropTable(String tableName) {
+        String dropTableSQL = "drop table " + quickDAOConfig.database.escape(tableName);
+        return dropTableSQL;
     }
 
     @Override
-    public void rebuild(Entity entity) throws SQLException {
-        if(hasTableExists(entity)){
-            dropTable(entity.tableName);
-        }
-        createTable(entity);
+    public abstract String hasIndexExists(String tableName, String indexName);
+
+    @Override
+    public String hasConstraintExists(String tableName, String constraintName) throws SQLException {
+        String hasConstraintExistsSQL = "select constraint_name from information_schema.KEY_COLUMN_USAGE where constraint_name='" + constraintName + "'";
+        return hasConstraintExistsSQL;
     }
 
     @Override
-    public abstract boolean hasIndexExists(String tableName, String indexName) throws SQLException;
-
-    @Override
-    public boolean hasConstraintExists(String tableName, String constraintName) throws SQLException {
-        String hasConstraintExistsSQL = "select count(1) from information_schema.KEY_COLUMN_USAGE where constraint_name='" + constraintName + "'";
-        ResultSet resultSet = connectionExecutor.executeQuery("判断索引是否存在",hasConstraintExistsSQL);
-        boolean result = false;
-        if (resultSet.next()) {
-            result = resultSet.getInt(1) > 0;
-        }
-        resultSet.close();
-        return result;
-    }
-
-    @Override
-    public void createIndex(IndexField indexField) throws SQLException {
-        if(indexField.columns.isEmpty()){
-            return;
-        }
+    public String createIndex(IndexField indexField) {
         StringBuilder builder = new StringBuilder("create");
         switch (indexField.indexType){
             case NORMAL:{}break;
@@ -138,103 +125,26 @@ public abstract class AbstractDDLBuilder extends AbstractSQLBuilder implements D
         if(null!=indexField.comment&&!indexField.comment.isEmpty()){
             builder.append(" "+quickDAOConfig.database.comment(indexField.comment));
         }
-        connectionExecutor.executeUpdate("添加索引",builder.toString());
+        builder.append(";");
+        return builder.toString();
     }
 
     @Override
-    public void dropIndex(String tableName, String indexName) throws SQLException{
+    public String dropIndex(String tableName, String indexName){
         String dropIndexSQL = "drop index "+quickDAOConfig.database.escape(indexName);
-        connectionExecutor.executeUpdate("删除索引",dropIndexSQL);
+        return dropIndexSQL;
     }
 
     @Override
-    public void createForeignKey(Property property) throws SQLException{
-        if(!quickDAOConfig.openForeignKey){
-            return;
-        }
+    public String createForeignKey(Property property) throws SQLException {
         String operation = property.foreignKey.foreignKeyOption().getOperation();
         String reference = quickDAOConfig.database.escape(quickDAOConfig.getEntityByClassName(property.foreignKey.table().getName()).tableName) + "(" + quickDAOConfig.database.escape(property.foreignKey.field()) + ") ON DELETE " + operation + " ON UPDATE " + operation;
         String foreignKeyName = "FK_" + property.entity.tableName + "_" + property.foreignKey.field() + "_" + quickDAOConfig.getEntityByClassName(property.foreignKey.table().getName()).tableName + "_" + property.name;
-        if (hasConstraintExists(property.entity.tableName,foreignKeyName)) {
-            return;
-        }
-        String foreignKeySQL = "alter table " + quickDAOConfig.database.escape(property.entity.tableName) + " add constraint " + quickDAOConfig.database.escape(foreignKeyName) + " foreign key(" + quickDAOConfig.database.escape(property.column) + ") references " + reference;
-        connectionExecutor.executeUpdate("生成外键约束",foreignKeySQL);
-    }
-
-    @Override
-    public void automaticCreateTableAndColumn() throws SQLException {
-        Collection<Entity> entityList = quickDAOConfig.entityMap.values();
-        List<Entity> newEntityList = new ArrayList<>();
-        Map<Entity,Entity> updateEntityMap = new HashMap<>();
-        for (Entity entity : entityList) {
-            Entity dbEntity = quickDAOConfig.dbEntityList.stream().filter(entity1 -> entity1.tableName.equalsIgnoreCase(entity.tableName)).findFirst().orElse(null);
-            if(null==dbEntity){
-                newEntityList.add(entity);
-            }else{
-                updateEntityMap.put(entity,dbEntity);
-            }
-        }
-        //自动建表
-        if (quickDAOConfig.autoCreateTable) {
-            for(Entity entity: newEntityList){
-                createTable(entity);
-            }
-        }
-        //自动新增字段和索引
-        if(quickDAOConfig.autoCreateProperty){
-            for(Map.Entry<Entity,Entity> entry:updateEntityMap.entrySet()){
-                List<Property> propertyList = entry.getKey().properties;
-                for(Property property:propertyList){
-                    if(entry.getValue().properties.stream().noneMatch(property1 -> property1.column.equals(property.column))){
-                        createProperty(property);
-                    }
-                    if(null!=property.foreignKey){
-                        createForeignKey(property);
-                    }
-                }
-
-                List<IndexField> indexFieldList = entry.getKey().indexFieldList;
-                for(IndexField indexField:indexFieldList){
-                    if(entry.getValue().indexFieldList.stream().noneMatch(indexField1 -> indexField1.indexName.equalsIgnoreCase(indexField.indexName))){
-                        createIndex(indexField);
-                    }
-                }
-            }
-        }
-        //添加虚拟表
-        if(null==quickDAOConfig.visualTableList||quickDAOConfig.visualTableList.isEmpty()){
-            quickDAOConfig.visualTableList = getVirtualEntity();
-        }
-    }
-
-    @Override
-    public void refreshDbEntityList() throws SQLException {
-        getDatabaseName();
-        List<Entity> dbEntityList = getDatabaseEntity();
-        for (Entity dbEntity : dbEntityList) {
-            dbEntity.escapeTableName = quickDAOConfig.database.escape(dbEntity.tableName);
-            dbEntity.clazz = JSONObject.class;
-            for (Property property : dbEntity.properties) {
-                if(null!=quickDAOConfig.columnTypeMapping){
-                    Class type = quickDAOConfig.columnTypeMapping.columnMappingType(property);
-                    if(null!=type){
-                        property.className = type.getName();
-                    }
-                }
-                property.entity = dbEntity;
-            }
-        }
-        quickDAOConfig.dbEntityList = dbEntityList;
+        return "alter table " + quickDAOConfig.database.escape(property.entity.tableName) + " add constraint " + quickDAOConfig.database.escape(foreignKeyName) + " foreign key(" + quickDAOConfig.database.escape(property.column) + ") references " + reference + ";";
     }
 
     @Override
     public abstract Map<String,String> getTypeFieldMapping();
-
-    /**获取虚拟表信息*/
-    protected List<Entity> getVirtualEntity(){
-        return new ArrayList<>();
-    }
 
     /**
      * 获取自增语句

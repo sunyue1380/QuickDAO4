@@ -26,19 +26,13 @@ public class SQLServerDDLBuilder extends AbstractDDLBuilder {
     }
 
     @Override
-    public boolean hasTableExists(Entity entity) throws SQLException {
+    public String hasTableExists(Entity entity) {
         String hasTableExistsSQL = "select name from sysobjects where xtype='u' and name = '"+entity.tableName+"';";
-        ResultSet resultSet = connectionExecutor.executeQuery("判断表是否存在",hasTableExistsSQL);
-        boolean result = false;
-        if(resultSet.next()){
-            result = true;
-        }
-        resultSet.close();
-        return result;
+        return hasTableExistsSQL;
     }
 
     @Override
-    public void createTable(Entity entity) throws SQLException {
+    public String createTable(Entity entity) {
         StringBuilder builder = new StringBuilder("create table " + entity.escapeTableName + "(");
         for (Property property : entity.properties) {
             if(property.id&&property.strategy== IdStrategy.AutoIncrement){
@@ -69,41 +63,33 @@ public class SQLServerDDLBuilder extends AbstractDDLBuilder {
             }
         }
         builder.deleteCharAt(builder.length() - 1);
-        builder.append(")");
-        connectionExecutor.executeUpdate("生成新表", builder.toString());
+        builder.append(");");
         //添加注释
         if (null != entity.comment) {
-            String entityCommentSQL = "EXEC sp_addextendedproperty 'MS_Description',N'"+entity.comment+"','SCHEMA','dbo','table',N'"+entity.tableName+"';";
-            connectionExecutor.executeUpdate("创建表注释", entityCommentSQL);
+            builder.append("EXEC sp_addextendedproperty 'MS_Description',N'"+entity.comment+"','SCHEMA','dbo','table',N'"+entity.tableName+"';");
         }
         for(Property property:entity.properties){
             if(null != property.comment){
-                String columnCommentSQL = "EXEC sp_addextendedproperty 'MS_Description',N'"+property.comment+"','SCHEMA','dbo','table',N'"+entity.tableName+"','column',N'"+property.column+"';";
-                connectionExecutor.executeUpdate("创建表字段注释", columnCommentSQL);
+                builder.append("EXEC sp_addextendedproperty 'MS_Description',N'"+property.comment+"','SCHEMA','dbo','table',N'"+entity.tableName+"','column',N'"+property.column+"';");
             }
         }
         //创建索引
         for(IndexField indexField:entity.indexFieldList){
-            createIndex(indexField);
+            builder.append(createIndex(indexField));
         }
+        return builder.toString();
     }
 
     @Override
-    public boolean hasIndexExists(String tableName, String indexName) throws SQLException {
-        String hasIndexExistsSQL = "select count(1) from sys.indexes WHERE object_id=OBJECT_ID('"+tableName+"', N'U') and name = '"+indexName+"'";
-        ResultSet resultSet = connectionExecutor.executeQuery("查看索引是否存在",hasIndexExistsSQL);
-        boolean result = false;
-        if (resultSet.next()) {
-            result = resultSet.getInt(1) > 0;
-        }
-        resultSet.close();
-        return result;
+    public String hasIndexExists(String tableName, String indexName) {
+        String hasIndexExistsSQL = "select name from sys.indexes WHERE object_id=OBJECT_ID('"+tableName+"', N'U') and name = '" + indexName + "'";
+        return hasIndexExistsSQL;
     }
 
     @Override
-    public void dropIndex(String tableName, String indexName) throws SQLException{
+    public String dropIndex(String tableName, String indexName) {
         String dropIndexSQL = "drop index " + quickDAOConfig.database.escape(tableName) + "." + quickDAOConfig.database.escape(indexName);
-        connectionExecutor.executeUpdate("删除索引",dropIndexSQL);
+        return dropIndexSQL;
     }
 
     @Override
