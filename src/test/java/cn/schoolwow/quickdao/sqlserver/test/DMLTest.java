@@ -2,6 +2,7 @@ package cn.schoolwow.quickdao.sqlserver.test;
 
 import cn.schoolwow.quickdao.domain.Property;
 import cn.schoolwow.quickdao.sqlserver.SQLServerTest;
+import cn.schoolwow.quickdao.sqlserver.entity.DownloadTask;
 import cn.schoolwow.quickdao.sqlserver.entity.Order;
 import cn.schoolwow.quickdao.sqlserver.entity.Person;
 import org.junit.Assert;
@@ -18,6 +19,7 @@ public class DMLTest extends SQLServerTest {
     public DMLTest(){
         dao.rebuild(Person.class);
         dao.rebuild("order");
+        dao.rebuild(DownloadTask.class);
     }
 
     @Test
@@ -27,6 +29,18 @@ public class DMLTest extends SQLServerTest {
         save();
         delete();
         alterColumn();
+    }
+
+    @Test
+    public void userRawUpdate(){
+        int effect = dao.rawUpdate("delete from download_task;");
+        Assert.assertEquals(0,effect);
+        effect = dao.rawUpdate("insert into download_task(file_path,file_size,remark) values('filePath',0,'remark');");
+        Assert.assertEquals(1,effect);
+        effect = dao.rawUpdate("update download_task set file_size = 1024;");
+        Assert.assertEquals(1,effect);
+        effect = dao.rawUpdate("delete from download_task;");
+        Assert.assertEquals(1,effect);
     }
 
     private void insert() {

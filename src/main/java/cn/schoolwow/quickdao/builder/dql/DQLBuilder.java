@@ -75,13 +75,6 @@ public interface DQLBuilder {
     ConnectionExecutorItem getArray(Query query) throws SQLException;
 
     /**
-     * 用户select查询
-     * @param selectSQL 查询语句
-     * @param parameters 参数
-     * */
-    ConnectionExecutorItem select(String selectSQL, Object[] parameters) throws SQLException;
-
-    /**
      * 获取query对应的SQL语句
      */
     StringBuilder getArraySQL(Query query);

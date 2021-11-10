@@ -86,13 +86,13 @@ public class SQLiteDDLBuilder extends AbstractDDLBuilder {
 
     @Override
     public String hasIndexExists(String tableName, String indexName) {
-        String hasIndexExistsSQL = "select name from sqlite_master where type = 'index' and name = '" + indexName + "'";
+        String hasIndexExistsSQL = "select name from sqlite_master where type = 'index' and name = '" + indexName + "';";
         return hasIndexExistsSQL;
     }
 
     @Override
     public void enableForeignConstraintCheck(boolean enable) throws SQLException {
-        String foreignConstraintCheckSQL = "PRAGMA foreign_keys = " + enable;
+        String foreignConstraintCheckSQL = "PRAGMA foreign_keys = " + enable + ";";
         connectionExecutor.executeUpdate(enable?"启用外键约束检查":"禁用外键约束检查", foreignConstraintCheckSQL);
     }
 
@@ -139,7 +139,7 @@ public class SQLiteDDLBuilder extends AbstractDDLBuilder {
 
     @Override
     protected void getIndex(List<Entity> entityList) throws SQLException {
-        String getIndexSQL = "select tbl_name, sql from sqlite_master where type='index' and sql is not null";
+        String getIndexSQL = "select tbl_name, sql from sqlite_master where type='index' and sql is not null;";
         ResultSet resultSet = connectionExecutor.executeQuery("获取索引信息",getIndexSQL);
         while (resultSet.next()) {
             for(Entity entity:entityList) {
@@ -169,7 +169,7 @@ public class SQLiteDDLBuilder extends AbstractDDLBuilder {
     @Override
     protected void getEntityPropertyList(List<Entity> entityList) throws SQLException {
         for(Entity entity:entityList){
-            String getEntityPropertyListSQL = "PRAGMA table_info(`" + entity.tableName + "`)";
+            String getEntityPropertyListSQL = "PRAGMA table_info(`" + entity.tableName + "`);";
             ResultSet resultSet = connectionExecutor.executeQuery("获取表字段信息",getEntityPropertyListSQL);
             while (resultSet.next()) {
                 Property property = new Property();

@@ -4,6 +4,7 @@ import cn.schoolwow.quickdao.domain.Property;
 import cn.schoolwow.quickdao.h2.H2Test;
 import cn.schoolwow.quickdao.h2.entity.Order;
 import cn.schoolwow.quickdao.h2.entity.Person;
+import cn.schoolwow.quickdao.h2.entity.DownloadTask;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -18,6 +19,7 @@ public class DMLTest extends H2Test {
     public DMLTest(){
         dao.rebuild(Person.class);
         dao.rebuild("ORDER");
+        dao.rebuild(DownloadTask.class);
     }
 
     @Test
@@ -27,6 +29,18 @@ public class DMLTest extends H2Test {
         save();
         delete();
         alterColumn();
+    }
+
+    @Test
+    public void userRawUpdate(){
+        int effect = dao.rawUpdate("delete from DOWNLOAD_TASK;");
+        Assert.assertEquals(0,effect);
+        effect = dao.rawUpdate("insert into DOWNLOAD_TASK(file_path,file_size,remark) values('filePath',0,'remark');");
+        Assert.assertEquals(1,effect);
+        effect = dao.rawUpdate("update DOWNLOAD_TASK set file_size = 1024;");
+        Assert.assertEquals(1,effect);
+        effect = dao.rawUpdate("delete from DOWNLOAD_TASK;");
+        Assert.assertEquals(1,effect);
     }
 
     private void insert() {

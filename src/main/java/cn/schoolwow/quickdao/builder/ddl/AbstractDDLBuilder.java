@@ -69,6 +69,7 @@ public abstract class AbstractDDLBuilder extends AbstractSQLBuilder implements D
         if (null != property.after) {
             createPropertyBuilder.append(" after "+quickDAOConfig.database.escape(property.after));
         }
+        createPropertyBuilder.append(";");
         return createPropertyBuilder.toString();
     }
 
@@ -92,7 +93,7 @@ public abstract class AbstractDDLBuilder extends AbstractSQLBuilder implements D
 
     @Override
     public String dropTable(String tableName) {
-        String dropTableSQL = "drop table " + quickDAOConfig.database.escape(tableName);
+        String dropTableSQL = "drop table " + quickDAOConfig.database.escape(tableName) + ";";
         return dropTableSQL;
     }
 
@@ -101,7 +102,7 @@ public abstract class AbstractDDLBuilder extends AbstractSQLBuilder implements D
 
     @Override
     public String hasConstraintExists(String tableName, String constraintName) throws SQLException {
-        String hasConstraintExistsSQL = "select constraint_name from information_schema.KEY_COLUMN_USAGE where constraint_name='" + constraintName + "'";
+        String hasConstraintExistsSQL = "select constraint_name from information_schema.KEY_COLUMN_USAGE where constraint_name='" + constraintName + "';";
         return hasConstraintExistsSQL;
     }
 
@@ -131,7 +132,7 @@ public abstract class AbstractDDLBuilder extends AbstractSQLBuilder implements D
 
     @Override
     public String dropIndex(String tableName, String indexName){
-        String dropIndexSQL = "drop index "+quickDAOConfig.database.escape(indexName);
+        String dropIndexSQL = "drop index "+quickDAOConfig.database.escape(indexName) + ";";
         return dropIndexSQL;
     }
 

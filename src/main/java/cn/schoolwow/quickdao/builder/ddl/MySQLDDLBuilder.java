@@ -134,24 +134,25 @@ public class MySQLDDLBuilder extends AbstractDDLBuilder {
         if(null!=collate&&!collate.isEmpty()){
             builder.append(" COLLATE = " + collate);
         }
+        builder.append(";");
         return builder.toString();
     }
 
     @Override
     public String hasIndexExists(String tableName, String indexName) {
-        String hasIndexExistsSQL = "show index from "+quickDAOConfig.database.escape(tableName)+" where key_name = '"+indexName+"'";
+        String hasIndexExistsSQL = "show index from " + quickDAOConfig.database.escape(tableName) + " where key_name = '" + indexName+"';";
         return hasIndexExistsSQL;
     }
 
     @Override
     public String dropIndex(String tableName, String indexName) {
-        String dropIndexSQL = "drop index "+quickDAOConfig.database.escape(indexName)+" on "+quickDAOConfig.database.escape(tableName);
+        String dropIndexSQL = "drop index " + quickDAOConfig.database.escape(indexName) + " on "+quickDAOConfig.database.escape(tableName) + ";";
         return dropIndexSQL;
     }
 
     @Override
     public void enableForeignConstraintCheck(boolean enable) throws SQLException {
-        String foreignConstraintCheckSQL = "set foreign_key_checks = " + (enable?1:0);
+        String foreignConstraintCheckSQL = "set foreign_key_checks = " + (enable?1:0)+";";
         connectionExecutor.executeUpdate(enable?"启用外键约束检查":"禁用外键约束检查",foreignConstraintCheckSQL);
     }
 
@@ -198,7 +199,7 @@ public class MySQLDDLBuilder extends AbstractDDLBuilder {
 
     @Override
     protected void getIndex(List<Entity> entityList) throws SQLException {
-        String getIndexSQL = "select table_name, index_name, non_unique, column_name, index_type, index_comment from information_schema.`statistics` where table_schema = '" + quickDAOConfig.databaseName + "'";
+        String getIndexSQL = "select table_name, index_name, non_unique, column_name, index_type, index_comment from information_schema.`statistics` where table_schema = '" + quickDAOConfig.databaseName + "';";
         ResultSet resultSet = connectionExecutor.executeQuery("获取索引信息",getIndexSQL);
         while (resultSet.next()) {
             for(Entity entity : entityList) {
@@ -246,7 +247,7 @@ public class MySQLDDLBuilder extends AbstractDDLBuilder {
 
     @Override
     protected void getEntityPropertyList(List<Entity> entityList) throws SQLException {
-        String getEntityPropertyListSQL = "select table_name, column_name, data_type, character_maximum_length, numeric_precision, is_nullable, column_key, extra, column_default, column_comment from information_schema.`columns` where table_schema = '" + quickDAOConfig.databaseName + "'";
+        String getEntityPropertyListSQL = "select table_name, column_name, data_type, character_maximum_length, numeric_precision, is_nullable, column_key, extra, column_default, column_comment from information_schema.`columns` where table_schema = '" + quickDAOConfig.databaseName + "';";
         ResultSet resultSet = connectionExecutor.executeQuery("获取表字段信息",getEntityPropertyListSQL);
         while (resultSet.next()) {
             for(Entity entity : entityList){
@@ -282,7 +283,7 @@ public class MySQLDDLBuilder extends AbstractDDLBuilder {
                 }
                 if (null != resultSet.getString("column_default")) {
                     property.defaultValue = resultSet.getString("column_default");
-                    if(!property.defaultValue.contains("CURRENT_TIMESTAMP")){
+                    if(!property.defaultValue.contains("CURRENT_TIMESTAMP")&&!property.defaultValue.contains("'")){
                         property.defaultValue = "'" + property.defaultValue + "'";
                     }
                 }

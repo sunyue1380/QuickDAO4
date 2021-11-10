@@ -204,4 +204,11 @@ public interface DMLDAO {
      * @param tableName 表名
      */
     int clear(String tableName);
+
+    /**
+     * 执行原生更新语句
+     * @param updateSQL SQL更新语句
+     * @param parameters 参数
+     */
+    int rawUpdate(String updateSQL, Object... parameters);
 }

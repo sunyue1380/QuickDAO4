@@ -113,9 +113,9 @@ public class AbstractDQLDAO extends AbstractSQLDAO implements DQLDAO {
     }
 
     @Override
-    public JSONArray select(String selectSQL, Object... parameters) {
+    public JSONArray rawSelect(String selectSQL, Object... parameters) {
         try {
-            ConnectionExecutorItem connectionExecutorItem = dqlBuilder.select(selectSQL,parameters);
+            ConnectionExecutorItem connectionExecutorItem = dqlBuilder.execute(selectSQL,parameters);
             ResultSet resultSet = dqlBuilder.connectionExecutor.executeQuery(connectionExecutorItem);
             ResultSetMetaData metaData = resultSet.getMetaData();
             String[] columnLables = new String[metaData.getColumnCount()];

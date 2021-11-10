@@ -77,18 +77,19 @@ public class SQLServerDDLBuilder extends AbstractDDLBuilder {
         for(IndexField indexField:entity.indexFieldList){
             builder.append(createIndex(indexField));
         }
+        builder.append(";");
         return builder.toString();
     }
 
     @Override
     public String hasIndexExists(String tableName, String indexName) {
-        String hasIndexExistsSQL = "select name from sys.indexes WHERE object_id=OBJECT_ID('"+tableName+"', N'U') and name = '" + indexName + "'";
+        String hasIndexExistsSQL = "select name from sys.indexes WHERE object_id=OBJECT_ID('"+tableName+"', N'U') and name = '" + indexName + "';";
         return hasIndexExistsSQL;
     }
 
     @Override
     public String dropIndex(String tableName, String indexName) {
-        String dropIndexSQL = "drop index " + quickDAOConfig.database.escape(tableName) + "." + quickDAOConfig.database.escape(indexName);
+        String dropIndexSQL = "drop index " + quickDAOConfig.database.escape(tableName) + "." + quickDAOConfig.database.escape(indexName) + ";";
         return dropIndexSQL;
     }
 
@@ -140,7 +141,7 @@ public class SQLServerDDLBuilder extends AbstractDDLBuilder {
     @Override
     protected void getIndex(List<Entity> entityList) throws SQLException {
         for(Entity entity:entityList){
-            String getIndexSQL = "select i.is_unique,i.name,col.name col_name from sys.indexes i left join sys.index_columns ic on ic.object_id = i.object_id and ic.index_id = i.index_id left join (select * from sys.all_columns where object_id = object_id( '"+entity.tableName+"', N'U' )) col on ic.column_id = col.column_id where i.object_id = object_id('"+entity.tableName+"', N'U' ) and i.index_id > 0";
+            String getIndexSQL = "select i.is_unique,i.name,col.name col_name from sys.indexes i left join sys.index_columns ic on ic.object_id = i.object_id and ic.index_id = i.index_id left join (select * from sys.all_columns where object_id = object_id( '"+entity.tableName+"', N'U' )) col on ic.column_id = col.column_id where i.object_id = object_id('"+entity.tableName+"', N'U' ) and i.index_id > 0;";
             ResultSet resultSet = connectionExecutor.executeQuery("获取索引信息",getIndexSQL);
             while (resultSet.next()) {
                 IndexField indexField = new IndexField();
@@ -167,7 +168,7 @@ public class SQLServerDDLBuilder extends AbstractDDLBuilder {
     protected void getEntityPropertyList(List<Entity> entityList) throws SQLException {
         {
             //获取字段信息
-            String getEntityPropertyTypeListSQL = "select table_name, ordinal_position,column_name,data_type,is_nullable from information_schema.columns";
+            String getEntityPropertyTypeListSQL = "select table_name, ordinal_position,column_name,data_type,is_nullable from information_schema.columns;";
             ResultSet resultSet = connectionExecutor.executeQuery("获取表字段类型信息", getEntityPropertyTypeListSQL);
             while (resultSet.next()) {
                 for(Entity entity:entityList) {
@@ -187,7 +188,7 @@ public class SQLServerDDLBuilder extends AbstractDDLBuilder {
         }
         {
             //获取字段注释
-            String getPropertyCommentList = "select b.name table_name, c.name, convert(varchar(255),a.value) value from sys.extended_properties a, sysobjects b, sys.columns c where a.major_id = b.id and c.object_id = b.id and c.column_id = a.minor_id";
+            String getPropertyCommentList = "select b.name table_name, c.name, convert(varchar(255),a.value) value from sys.extended_properties a, sysobjects b, sys.columns c where a.major_id = b.id and c.object_id = b.id and c.column_id = a.minor_id;";
             ResultSet resultSet = connectionExecutor.executeQuery("获取字段注释", getPropertyCommentList);
             while(resultSet.next()){
                 for(Entity entity:entityList) {
@@ -224,7 +225,7 @@ public class SQLServerDDLBuilder extends AbstractDDLBuilder {
         }
         {
             //获取表注释
-            String getEntityCommentSQL = "select so.name table_name, isnull(convert(varchar(255),value),'') comment from sys.extended_properties ex_p left join sys.sysobjects so on ex_p.major_id = so.id where ex_p.minor_id=0";
+            String getEntityCommentSQL = "select so.name table_name, isnull(convert(varchar(255),value),'') comment from sys.extended_properties ex_p left join sys.sysobjects so on ex_p.major_id = so.id where ex_p.minor_id=0;";
             ResultSet resultSet = connectionExecutor.executeQuery("获取表注释",getEntityCommentSQL);
             if(resultSet.next()){
                 for(Entity entity:entityList) {

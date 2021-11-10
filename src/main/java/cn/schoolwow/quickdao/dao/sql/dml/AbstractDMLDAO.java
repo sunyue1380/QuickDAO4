@@ -367,6 +367,18 @@ public class AbstractDMLDAO extends AbstractSQLDAO implements DMLDAO{
         return effect;
     }
 
+    @Override
+    public int rawUpdate(String updateSQL, Object... parameters) {
+        int effect = 0;
+        try {
+            ConnectionExecutorItem connectionExecutorItem = dmlBuilder.execute(updateSQL, parameters);
+            effect = dmlBuilder.connectionExecutor.executeUpdate(connectionExecutorItem);
+        }catch (SQLException e){
+            throw new SQLRuntimeException(e);
+        }
+        return effect;
+    }
+
     /**设置主键自增id值*/
     private void  setAutoIncrementPrimaryKeyValue(Object instance, Entity entity, PreparedStatement preparedStatement) throws Exception{
         Field idField = instance.getClass().getDeclaredField(entity.id.name);

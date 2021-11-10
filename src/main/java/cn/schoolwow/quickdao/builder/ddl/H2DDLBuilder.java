@@ -26,13 +26,13 @@ public class H2DDLBuilder extends MySQLDDLBuilder {
 
     @Override
     public String hasTableExists(Entity entity) {
-        String hasTableExistsSQL = "select table_name from information_schema.tables where table_name = '" + entity.tableName.toUpperCase() + "'";
+        String hasTableExistsSQL = "select table_name from information_schema.tables where table_name = '" + entity.tableName.toUpperCase() + "';";
         return hasTableExistsSQL;
     }
 
     @Override
     public String hasIndexExists(String tableName, String indexName)  {
-        String hasIndexExistsSQL = "select index_name from information_schema.indexes where index_name = '"+indexName.toUpperCase()+"'";
+        String hasIndexExistsSQL = "select index_name from information_schema.indexes where index_name = '"+indexName.toUpperCase()+"';";
         return hasIndexExistsSQL;
     }
 
@@ -108,7 +108,7 @@ public class H2DDLBuilder extends MySQLDDLBuilder {
 
     @Override
     protected void getEntityPropertyList(List<Entity> entityList) throws SQLException {
-        String getEntityPropertyListSQL = "select table_name, column_name, type_name, character_maximum_length, is_nullable, column_default from information_schema.`columns` where table_schema = '" + quickDAOConfig.databaseName + "'";
+        String getEntityPropertyListSQL = "select table_name, column_name, type_name, character_maximum_length, is_nullable, column_default from information_schema.`columns` where table_schema = '" + quickDAOConfig.databaseName + "';";
         ResultSet resultSet = connectionExecutor.executeQuery("获取表字段信息",getEntityPropertyListSQL);
         while (resultSet.next()) {
             for(Entity entity : entityList){

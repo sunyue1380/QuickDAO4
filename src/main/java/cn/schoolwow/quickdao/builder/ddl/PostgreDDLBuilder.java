@@ -91,7 +91,7 @@ public class PostgreDDLBuilder extends AbstractDDLBuilder {
 
     @Override
     public String hasIndexExists(String tableName, String indexName) {
-        String hasIndexExistsSQL = "select indexname from pg_indexes where tablename = '"+tableName+"' and indexname = '"+indexName+"'";
+        String hasIndexExistsSQL = "select indexname from pg_indexes where tablename = '"+tableName+"' and indexname = '"+indexName+"';";
         return hasIndexExistsSQL;
     }
 
@@ -167,7 +167,7 @@ public class PostgreDDLBuilder extends AbstractDDLBuilder {
 
     @Override
     protected void getIndex(List<Entity> entityList) throws SQLException {
-        String getIndexSQL = "select tablename,indexname,indexdef from pg_indexes";
+        String getIndexSQL = "select tablename,indexname,indexdef from pg_indexes;";
         ResultSet resultSet = connectionExecutor.executeQuery("获取索引信息",getIndexSQL);
         while (resultSet.next()) {
             for(Entity entity : entityList) {
@@ -200,7 +200,7 @@ public class PostgreDDLBuilder extends AbstractDDLBuilder {
     protected void getEntityPropertyList(List<Entity> entityList) throws SQLException {
         {
             //获取表字段信息
-            String getEntityPropertyListSQL = "select pg_class.relname as table_name, attname as column_name, attnum as oridinal_position, attnotnull as notnull, format_type(atttypid,atttypmod) as type, col_description(attrelid, attnum) as comment from pg_attribute join pg_class on pg_attribute.attrelid = pg_class.oid where attnum > 0 and atttypid > 0";
+            String getEntityPropertyListSQL = "select pg_class.relname as table_name, attname as column_name, attnum as oridinal_position, attnotnull as notnull, format_type(atttypid,atttypmod) as type, col_description(attrelid, attnum) as comment from pg_attribute join pg_class on pg_attribute.attrelid = pg_class.oid where attnum > 0 and atttypid > 0;";
             ResultSet resultSet = connectionExecutor.executeQuery("获取表字段信息",getEntityPropertyListSQL);
             while (resultSet.next()) {
                 for(Entity entity : entityList) {
@@ -221,7 +221,7 @@ public class PostgreDDLBuilder extends AbstractDDLBuilder {
         }
         {
             //提取默认值和主键信息
-            String getEntityPropertyTypeListSQL = "select table_name, ordinal_position,column_name,column_default,is_nullable,udt_name,character_maximum_length,column_default from information_schema.columns";
+            String getEntityPropertyTypeListSQL = "select table_name, ordinal_position,column_name,column_default,is_nullable,udt_name,character_maximum_length,column_default from information_schema.columns;";
             ResultSet resultSet = connectionExecutor.executeQuery("获取表字段类型信息", getEntityPropertyTypeListSQL);
             while (resultSet.next()) {
                 for(Entity entity : entityList) {
@@ -250,7 +250,7 @@ public class PostgreDDLBuilder extends AbstractDDLBuilder {
         }
         {
             //获取主键约束
-            String getPrimaryKeySQL = "select relname, conkey from pg_constraint join pg_class on pg_class.oid = pg_constraint.conrelid where contype = 'p'";
+            String getPrimaryKeySQL = "select relname, conkey from pg_constraint join pg_class on pg_class.oid = pg_constraint.conrelid where contype = 'p';";
             ResultSet resultSet = connectionExecutor.executeQuery("获取主键约束", getPrimaryKeySQL);
             while (resultSet.next()) {
                 for(Entity entity : entityList) {
@@ -273,7 +273,7 @@ public class PostgreDDLBuilder extends AbstractDDLBuilder {
 
     @Override
     protected List<Entity> getEntityList() throws SQLException {
-        String getEntityListSQL = "select relname as name,cast(obj_description(relfilenode,'pg_class') as varchar) as comment from pg_class c where  relkind = 'r' and relname not like 'pg_%' and relname not like 'sql_%' order by relname";
+        String getEntityListSQL = "select relname as name,cast(obj_description(relfilenode,'pg_class') as varchar) as comment from pg_class c where  relkind = 'r' and relname not like 'pg_%' and relname not like 'sql_%' order by relname;";
         ResultSet resultSet = connectionExecutor.executeQuery("获取表列表",getEntityListSQL);
 
         List<Entity> entityList = new ArrayList<>();

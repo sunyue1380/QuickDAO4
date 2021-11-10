@@ -88,6 +88,19 @@ public class AbstractSQLBuilder implements SQLBuilder{
         return connectionExecutorItem;
     }
 
+    @Override
+    public ConnectionExecutorItem execute(String sql, Object... parameters) throws SQLException {
+        ConnectionExecutorItem connectionExecutorItem = connectionExecutor.newConnectionExecutorItem("用户自定义语句",sql);
+        if(null!=parameters&&parameters.length>0){
+            StringBuilder sqlBuilder = new StringBuilder(sql.replace("?", PLACEHOLDER));
+            for(int i=0;i<parameters.length;i++){
+                setParameter(parameters[i],connectionExecutorItem.preparedStatement,i+1,sqlBuilder);
+            }
+            connectionExecutorItem.sql = sqlBuilder.toString();
+        }
+        return connectionExecutorItem;
+    }
+
     /**
      * DQL查询操作设置参数
      * @param parameter 参数

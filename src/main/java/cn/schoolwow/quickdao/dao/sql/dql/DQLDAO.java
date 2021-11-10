@@ -73,9 +73,9 @@ public interface DQLDAO {
     JSONArray fetchList(String tableName, String field, Object value);
 
     /**
-     * 执行查询语句
-     * @param selectSQL select查询sql语句
+     * 执行原生查询语句
+     * @param selectSQL SQL查询语句
      * @param parameters 参数
      */
-    JSONArray select(String selectSQL, Object... parameters);
+    JSONArray rawSelect(String selectSQL, Object... parameters);
 }

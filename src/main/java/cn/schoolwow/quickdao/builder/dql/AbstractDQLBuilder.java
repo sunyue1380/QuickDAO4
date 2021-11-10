@@ -315,19 +315,6 @@ public class AbstractDQLBuilder extends AbstractSQLBuilder implements DQLBuilder
     }
 
     @Override
-    public ConnectionExecutorItem select(String selectSQL, Object[] parameters) throws SQLException {
-        ConnectionExecutorItem connectionExecutorItem = connectionExecutor.newConnectionExecutorItem("用户查询语句",selectSQL);
-        if(null!=parameters&&parameters.length>0){
-            StringBuilder sqlBuilder = new StringBuilder(selectSQL.replace("?", PLACEHOLDER));
-            for(int i=0;i<parameters.length;i++){
-                setParameter(parameters[i],connectionExecutorItem.preparedStatement,i+1,sqlBuilder);
-            }
-            connectionExecutorItem.sql = sqlBuilder.toString();
-        }
-        return connectionExecutorItem;
-    }
-
-    @Override
     public StringBuilder getArraySQL(Query query) {
         StringBuilder builder = getUnionArraySQL(query);
         builder.append(" " + query.orderBy + " " + query.limit);

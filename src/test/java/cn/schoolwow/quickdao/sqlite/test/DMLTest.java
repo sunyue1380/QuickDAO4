@@ -1,5 +1,6 @@
 package cn.schoolwow.quickdao.sqlite.test;
 
+import cn.schoolwow.quickdao.sqlite.entity.DownloadTask;
 import cn.schoolwow.quickdao.sqlite.SQLiteTest;
 import cn.schoolwow.quickdao.sqlite.entity.Order;
 import cn.schoolwow.quickdao.sqlite.entity.Person;
@@ -17,6 +18,7 @@ public class DMLTest extends SQLiteTest {
     public DMLTest(){
         dao.rebuild(Person.class);
         dao.rebuild("order");
+        dao.rebuild(DownloadTask.class);
     }
 
     @Test
@@ -25,6 +27,18 @@ public class DMLTest extends SQLiteTest {
         update();
         save();
         delete();
+    }
+
+    @Test
+    public void userRawUpdate(){
+        int effect = dao.rawUpdate("delete from download_task;");
+        Assert.assertEquals(0,effect);
+        effect = dao.rawUpdate("insert into download_task(file_path,file_size,remark) values('filePath',0,'remark');");
+        Assert.assertEquals(1,effect);
+        effect = dao.rawUpdate("update download_task set file_size = 1024;");
+        Assert.assertEquals(1,effect);
+        effect = dao.rawUpdate("delete from download_task;");
+        Assert.assertEquals(1,effect);
     }
 
     private void insert() {
