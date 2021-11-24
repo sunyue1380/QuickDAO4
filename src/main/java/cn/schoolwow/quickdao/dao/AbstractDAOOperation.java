@@ -1,5 +1,6 @@
 package cn.schoolwow.quickdao.dao;
 
+import cn.schoolwow.quickdao.builder.ddl.DDLBuilder;
 import cn.schoolwow.quickdao.domain.*;
 import cn.schoolwow.quickdao.exception.SQLRuntimeException;
 import cn.schoolwow.quickdao.transaction.Transaction;
@@ -107,6 +108,19 @@ public class AbstractDAOOperation implements DAOOperation{
     }
 
     @Override
+    public Property getProperty(Class clazz, String column) {
+        Entity entity = quickDAOConfig.entityMap.get(clazz.getName());
+        if(null==entity){
+            throw new IllegalArgumentException("实体类不存在!实体类名:"+clazz.getName());
+        }
+        Property property = entity.properties.stream().filter(property1 -> property1.column.equals(column)).findFirst().orElse(null);
+        if(null==property){
+            throw new IllegalArgumentException("列不存在!实体类名:"+clazz.getName()+",字段名:"+column);
+        }
+        return property;
+    }
+
+    @Override
     public Property getProperty(String tableName, String column) {
         Entity entity = quickDAOConfig.dbEntityList.stream().filter(entity1 -> entity1.tableName.equals(tableName)).findFirst().orElse(null);
         if(null==entity){
@@ -120,12 +134,26 @@ public class AbstractDAOOperation implements DAOOperation{
     }
 
     @Override
+    public List<Property> getPropertyList(Class clazz) {
+        Entity entity = quickDAOConfig.entityMap.get(clazz.getName());
+        if(null==entity){
+            throw new IllegalArgumentException("实体类不存在!实体类:"+clazz.getName());
+        }
+        return entity.properties;
+    }
+
+    @Override
     public List<Property> getPropertyList(String tableName) {
         Entity entity = quickDAOConfig.dbEntityList.stream().filter(entity1 -> entity1.tableName.equals(tableName)).findFirst().orElse(null);
         if(null==entity){
             throw new IllegalArgumentException("表不存在!表名:"+tableName);
         }
         return entity.properties;
+    }
+
+    @Override
+    public DDLBuilder getDDLBuilder() {
+        return quickDAOConfig.database.getDDLBuilderInstance(quickDAOConfig);
     }
 
     @Override
@@ -136,5 +164,13 @@ public class AbstractDAOOperation implements DAOOperation{
     @Override
     public void generateEntityFile(GenerateEntityFileOption generateEntityFileOption) {
         quickDAOConfig.entityHandler.generateEntityFile(generateEntityFileOption);
+    }
+
+    private List<Property> getPropertyList(List<Entity> entityList, String tableName) {
+        Entity entity = entityList.stream().filter(entity1 -> entity1.tableName.equals(tableName)).findFirst().orElse(null);
+        if(null==entity){
+            throw new IllegalArgumentException("表不存在!表名:"+tableName);
+        }
+        return entity.properties;
     }
 }

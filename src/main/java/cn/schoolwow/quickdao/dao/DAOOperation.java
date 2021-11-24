@@ -1,5 +1,6 @@
 package cn.schoolwow.quickdao.dao;
 
+import cn.schoolwow.quickdao.builder.ddl.DDLBuilder;
 import cn.schoolwow.quickdao.domain.*;
 import cn.schoolwow.quickdao.transaction.Transaction;
 
@@ -76,10 +77,25 @@ public interface DAOOperation {
     /**
      * 获取表字段
      *
+     * @param clazz 实体类
+     * @param column    字段名称
+     */
+    Property getProperty(Class clazz, String column);
+
+    /**
+     * 获取表字段
+     *
      * @param tableName 表名
      * @param column    字段名称
      */
     Property getProperty(String tableName, String column);
+
+    /**
+     * 获取实体类表字段列表
+     *
+     * @param clazz 实体类
+     */
+    List<Property> getPropertyList(Class clazz);
 
     /**
      * 获取表字段列表
@@ -87,6 +103,11 @@ public interface DAOOperation {
      * @param tableName 表名
      */
     List<Property> getPropertyList(String tableName);
+
+    /**
+     * 获取DDL语句构造器
+     */
+    DDLBuilder getDDLBuilder();
 
     /**
      * 获取配置信息

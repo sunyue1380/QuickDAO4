@@ -1,5 +1,6 @@
 package cn.schoolwow.quickdao.builder.ddl;
 
+import cn.schoolwow.quickdao.annotation.IdStrategy;
 import cn.schoolwow.quickdao.builder.AbstractSQLBuilder;
 import cn.schoolwow.quickdao.domain.Entity;
 import cn.schoolwow.quickdao.domain.IndexField;
@@ -53,21 +54,26 @@ public abstract class AbstractDDLBuilder extends AbstractSQLBuilder implements D
 
     @Override
     public String createProperty(Property property){
-        StringBuilder createPropertyBuilder = new StringBuilder("alter table " + quickDAOConfig.database.escape(property.entity.tableName) + " add " + quickDAOConfig.database.escape(property.column) + " " + property.columnType + (null==property.length?"":"("+property.length+")"));
-        if (null!=property.defaultValue&&!property.defaultValue.isEmpty()) {
-            createPropertyBuilder.append(" default " + property.defaultValue);
-        }
-        if (property.notNull) {
-            createPropertyBuilder.append(" not null");
-        }
-        if (null!=property.escapeCheck&&!property.escapeCheck.isEmpty()) {
-            createPropertyBuilder.append(" check " + property.escapeCheck);
-        }
-        if (null != property.comment) {
-            createPropertyBuilder.append(" "+quickDAOConfig.database.comment(property.comment));
-        }
-        if (null != property.after) {
-            createPropertyBuilder.append(" after "+quickDAOConfig.database.escape(property.after));
+        StringBuilder createPropertyBuilder = new StringBuilder("alter table " + quickDAOConfig.database.escape(property.entity.tableName) + " add ");
+        if(property.id&&property.strategy== IdStrategy.AutoIncrement){
+            createPropertyBuilder.append(getAutoIncrementSQL(property));
+        }else{
+            createPropertyBuilder.append(quickDAOConfig.database.escape(property.column) + " " + property.columnType + (null==property.length?"":"("+property.length+")"));
+            if (null!=property.defaultValue&&!property.defaultValue.isEmpty()) {
+                createPropertyBuilder.append(" default " + property.defaultValue);
+            }
+            if (property.notNull) {
+                createPropertyBuilder.append(" not null");
+            }
+            if (null!=property.escapeCheck&&!property.escapeCheck.isEmpty()) {
+                createPropertyBuilder.append(" check " + property.escapeCheck);
+            }
+            if (null != property.comment) {
+                createPropertyBuilder.append(" "+quickDAOConfig.database.comment(property.comment));
+            }
+            if (null != property.after) {
+                createPropertyBuilder.append(" after "+quickDAOConfig.database.escape(property.after));
+            }
         }
         createPropertyBuilder.append(";");
         return createPropertyBuilder.toString();
