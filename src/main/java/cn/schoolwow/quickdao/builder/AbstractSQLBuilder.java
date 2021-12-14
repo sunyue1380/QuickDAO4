@@ -109,6 +109,7 @@ public class AbstractSQLBuilder implements SQLBuilder{
      * @param sqlBuilder 记录SQL日志
      */
     protected void setParameter(Object parameter, PreparedStatement ps, int parameterIndex, StringBuilder sqlBuilder) throws SQLException {
+        logger.trace("[设置SQL参数]参数序号:{},参数值:{}",parameterIndex,parameter);
         String parameterSQL = setPrepareStatementParameter(parameter,ps,parameterIndex);
         replaceFirst(sqlBuilder,parameterSQL);
     }
@@ -123,6 +124,7 @@ public class AbstractSQLBuilder implements SQLBuilder{
      */
     protected void setParameter(Object instance, Property property, PreparedStatement ps, int parameterIndex, StringBuilder sqlBuilder) throws Exception {
         Field field = getFieldFromInstance(instance,property);
+        logger.trace("[设置SQL参数]参数序号:{},参数值:{}",parameterIndex,field.get(instance));
         String parameterSQL = setPrepareStatementParameter(field.get(instance),ps,parameterIndex);
         replaceFirst(sqlBuilder,parameterSQL);
     }

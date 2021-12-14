@@ -90,6 +90,10 @@ public class Query implements Serializable,Cloneable {
      * */
     public List<AbstractCondition> orList = new ArrayList<>();
     /**
+     * 当前query是否为or查询条件
+     * */
+    public boolean or;
+    /**
      * 参数索引
      */
     public int parameterIndex = 1;

@@ -35,6 +35,7 @@ public class ConnectionExecutor {
      * 新建执行器子项
      * */
     public ConnectionExecutorItem newConnectionExecutorItem(String name, String sql) throws SQLException{
+        logger.trace("[新建查询SQL]SQL:{}",sql);
         try {
             //解决postgre数据获取自增id时异常问题
             PreparedStatement preparedStatement;
@@ -82,6 +83,7 @@ public class ConnectionExecutor {
      * @return 影响行数
      * */
     public int executeUpdate(String name, String sql) throws SQLException {
+        logger.trace("[新建更新SQL]SQL:{}",sql);
         try {
             if(sql.contains(";")){
                 return executeUpdates(name,sql);

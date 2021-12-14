@@ -345,7 +345,8 @@ public class AbstractCondition<T> implements Condition<T>, Serializable,Cloneabl
     @Override
     public Condition<T> or() {
         AbstractCondition orCondition = (AbstractCondition) query.quickDAOConfig.dao.query(query.entity.clazz);
-        orCondition.tableAliasName("t");
+        orCondition.tableAliasName(query.tableAliasName);
+        orCondition.query.or = true;
         query.orList.add(orCondition);
         return orCondition;
     }
@@ -388,6 +389,7 @@ public class AbstractCondition<T> implements Condition<T>, Serializable,Cloneabl
 
     @Override
     public <E> SubCondition<E,T> crossJoinTable(Class<E> clazz) {
+        checkOrCondition();
         SubQuery<E,T> subQuery = new SubQuery<E,T>();
         subQuery.entity = query.quickDAOConfig.getEntityByClassName(clazz.getName());
         subQuery.join = "cross join";
@@ -402,6 +404,7 @@ public class AbstractCondition<T> implements Condition<T>, Serializable,Cloneabl
 
     @Override
     public SubCondition<?,T> crossJoinTable(String tableName) {
+        checkOrCondition();
         SubQuery subQuery = new SubQuery();
         for(Entity entity:query.quickDAOConfig.dbEntityList){
             if(entity.tableName.equals(tableName)){
@@ -429,6 +432,7 @@ public class AbstractCondition<T> implements Condition<T>, Serializable,Cloneabl
 
     @Override
     public <E> SubCondition<E,T> joinTable(Class<E> clazz, String primaryField, String joinTableField, String compositField) {
+        checkOrCondition();
         SubQuery<E,T> subQuery = new SubQuery<E,T>();
         subQuery.entity = query.quickDAOConfig.getEntityByClassName(clazz.getName());
         if(null==subQuery.entity){
@@ -448,6 +452,7 @@ public class AbstractCondition<T> implements Condition<T>, Serializable,Cloneabl
 
     @Override
     public <E> SubCondition<E,T> joinTable(Condition<E> joinCondition, String primaryField, String joinConditionField) {
+        checkOrCondition();
         joinCondition.execute();
         Query joinQuery = ((AbstractCondition) joinCondition).query;
         SubQuery<E,T> subQuery = new SubQuery();
@@ -468,6 +473,7 @@ public class AbstractCondition<T> implements Condition<T>, Serializable,Cloneabl
 
     @Override
     public SubCondition<?,T> joinTable(String tableName, String primaryField, String joinTableField) {
+        checkOrCondition();
         SubQuery subQuery = new SubQuery();
         for(Entity entity:query.quickDAOConfig.dbEntityList){
             if(entity.tableName.equals(tableName)){
@@ -774,5 +780,11 @@ public class AbstractCondition<T> implements Condition<T>, Serializable,Cloneabl
             builder.append(separator);
         }
         return builder.toString();
+    }
+
+    private void checkOrCondition(){
+        if("t_or".equals(query.tableAliasName)){
+            throw new IllegalArgumentException("or查询条件不允许进行joinTable操作!");
+        }
     }
 }
