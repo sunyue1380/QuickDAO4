@@ -135,10 +135,6 @@ public class ConnectionExecutor {
                         logger.debug("[{}]耗时:{}ms,执行SQL:{}", name, endTime - startTime, sql);
                     }
                 }
-
-                for(Interceptor interceptor:quickDAOConfig.interceptorList){
-                    interceptor.afterExecuteConnection(SQLStatementType.SELECT, name, sql);
-                }
             }
             return resultSet;
         }catch (SQLException e){
@@ -164,9 +160,6 @@ public class ConnectionExecutor {
                 logger.trace("[{}]耗时:{}ms,影响行数:{},执行SQL:{}", name, endTime - startTime, effect, sql);
             }else{
                 logger.debug("[{}]耗时:{}ms,影响行数:{},执行SQL:{}", name, endTime - startTime, effect, sql);
-            }
-            for(Interceptor interceptor:quickDAOConfig.interceptorList){
-                interceptor.afterExecuteConnection(SQLStatementType.UPDATE, name, sql);
             }
             return effect;
         }catch (SQLException e){
@@ -195,9 +188,6 @@ public class ConnectionExecutor {
                 logger.trace("[{}]耗时:{}ms,影响行数:{},执行SQL:{}", name, endTime - startTime, effect, sql);
             }else{
                 logger.debug("[{}]耗时:{}ms,影响行数:{},执行SQL:{}", name, endTime - startTime, effect, sql);
-            }
-            for(Interceptor interceptor:quickDAOConfig.interceptorList){
-                interceptor.afterExecuteConnection(SQLStatementType.UPDATE, name, sql);
             }
             return effect;
         }catch (SQLException e){

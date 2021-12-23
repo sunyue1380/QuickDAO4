@@ -1,7 +1,13 @@
 package cn.schoolwow.quickdao.dao;
 
+import cn.schoolwow.quickdao.builder.dcl.DCLBuilder;
 import cn.schoolwow.quickdao.builder.ddl.DDLBuilder;
-import cn.schoolwow.quickdao.domain.*;
+import cn.schoolwow.quickdao.builder.dml.DMLBuilder;
+import cn.schoolwow.quickdao.builder.dql.DQLBuilder;
+import cn.schoolwow.quickdao.domain.Entity;
+import cn.schoolwow.quickdao.domain.GenerateEntityFileOption;
+import cn.schoolwow.quickdao.domain.Property;
+import cn.schoolwow.quickdao.domain.QuickDAOConfig;
 import cn.schoolwow.quickdao.transaction.Transaction;
 
 import javax.sql.DataSource;
@@ -10,11 +16,6 @@ import java.util.Map;
 import java.util.function.Consumer;
 
 public interface DAOOperation {
-    /**
-     * 添加过滤器
-     */
-    void interceptor(Interceptor interceptor);
-
     /**
      * 开启事务
      */
@@ -105,9 +106,24 @@ public interface DAOOperation {
     List<Property> getPropertyList(String tableName);
 
     /**
+     * 获取DCL语句构造器
+     */
+    DCLBuilder getDCLBuilder();
+
+    /**
      * 获取DDL语句构造器
      */
     DDLBuilder getDDLBuilder();
+
+    /**
+     * 获取DQL语句构造器
+     */
+    DQLBuilder getDQLBuilder();
+
+    /**
+     * 获取DML语句构造器
+     */
+    DMLBuilder getDMLBuilder();
 
     /**
      * 获取配置信息

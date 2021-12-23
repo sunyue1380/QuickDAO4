@@ -400,7 +400,7 @@ public class AbstractDMLDAO extends AbstractSQLDAO implements DMLDAO{
     }
 
     /**设置主键自增id值*/
-    private void  setAutoIncrementPrimaryKeyValue(Object instance, Entity entity, PreparedStatement preparedStatement) throws Exception{
+    private void setAutoIncrementPrimaryKeyValue(Object instance, Entity entity, PreparedStatement preparedStatement) throws Exception{
         Field idField = instance.getClass().getDeclaredField(entity.id.name);
         idField.setAccessible(true);
         ResultSet rs = null;

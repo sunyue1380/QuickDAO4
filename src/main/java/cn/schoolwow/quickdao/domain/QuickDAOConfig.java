@@ -7,7 +7,6 @@ import cn.schoolwow.quickdao.domain.generator.SnowflakeIdGenerator;
 import cn.schoolwow.quickdao.handler.EntityHandler;
 
 import javax.sql.DataSource;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -127,10 +126,6 @@ public class QuickDAOConfig {
      * 实体类工具
      * */
     public EntityHandler entityHandler;
-    /**
-     * 拦截器
-     * */
-    public List<Interceptor> interceptorList = new ArrayList<>();
 
     /**SQLite数据库写锁*/
     public ReentrantLock sqliteLock = new ReentrantLock();

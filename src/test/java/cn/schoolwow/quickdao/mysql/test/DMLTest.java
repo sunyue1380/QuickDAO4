@@ -1,8 +1,8 @@
 package cn.schoolwow.quickdao.mysql.test;
 
 import cn.schoolwow.quickdao.domain.Property;
-import cn.schoolwow.quickdao.mysql.entity.DownloadTask;
 import cn.schoolwow.quickdao.mysql.MySQLTest;
+import cn.schoolwow.quickdao.mysql.entity.DownloadTask;
 import cn.schoolwow.quickdao.mysql.entity.Order;
 import cn.schoolwow.quickdao.mysql.entity.Person;
 import org.junit.Assert;

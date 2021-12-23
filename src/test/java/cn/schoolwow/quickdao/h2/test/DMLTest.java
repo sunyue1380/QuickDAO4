@@ -2,9 +2,9 @@ package cn.schoolwow.quickdao.h2.test;
 
 import cn.schoolwow.quickdao.domain.Property;
 import cn.schoolwow.quickdao.h2.H2Test;
+import cn.schoolwow.quickdao.h2.entity.DownloadTask;
 import cn.schoolwow.quickdao.h2.entity.Order;
 import cn.schoolwow.quickdao.h2.entity.Person;
-import cn.schoolwow.quickdao.h2.entity.DownloadTask;
 import org.junit.Assert;
 import org.junit.Test;
 

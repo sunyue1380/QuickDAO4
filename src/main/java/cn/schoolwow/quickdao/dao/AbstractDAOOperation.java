@@ -1,7 +1,14 @@
 package cn.schoolwow.quickdao.dao;
 
+import cn.schoolwow.quickdao.builder.dcl.DCLBuilder;
 import cn.schoolwow.quickdao.builder.ddl.DDLBuilder;
-import cn.schoolwow.quickdao.domain.*;
+import cn.schoolwow.quickdao.builder.dml.AbstractDMLBuilder;
+import cn.schoolwow.quickdao.builder.dml.DMLBuilder;
+import cn.schoolwow.quickdao.builder.dql.DQLBuilder;
+import cn.schoolwow.quickdao.domain.Entity;
+import cn.schoolwow.quickdao.domain.GenerateEntityFileOption;
+import cn.schoolwow.quickdao.domain.Property;
+import cn.schoolwow.quickdao.domain.QuickDAOConfig;
 import cn.schoolwow.quickdao.exception.SQLRuntimeException;
 import cn.schoolwow.quickdao.transaction.Transaction;
 import cn.schoolwow.quickdao.transaction.TransactionInvocationHandler;
@@ -23,11 +30,6 @@ public class AbstractDAOOperation implements DAOOperation{
 
     public AbstractDAOOperation(QuickDAOConfig quickDAOConfig) {
         this.quickDAOConfig = quickDAOConfig;
-    }
-
-    @Override
-    public void interceptor(Interceptor interceptor) {
-        quickDAOConfig.interceptorList.add(interceptor);
     }
 
     @Override
@@ -152,8 +154,23 @@ public class AbstractDAOOperation implements DAOOperation{
     }
 
     @Override
+    public DCLBuilder getDCLBuilder() {
+        return quickDAOConfig.database.getDCLBuilderInstance(quickDAOConfig);
+    }
+
+    @Override
     public DDLBuilder getDDLBuilder() {
         return quickDAOConfig.database.getDDLBuilderInstance(quickDAOConfig);
+    }
+
+    @Override
+    public DQLBuilder getDQLBuilder() {
+        return quickDAOConfig.database.getDQLBuilderInstance(quickDAOConfig);
+    }
+
+    @Override
+    public DMLBuilder getDMLBuilder() {
+        return new AbstractDMLBuilder(quickDAOConfig);
     }
 
     @Override
@@ -164,13 +181,5 @@ public class AbstractDAOOperation implements DAOOperation{
     @Override
     public void generateEntityFile(GenerateEntityFileOption generateEntityFileOption) {
         quickDAOConfig.entityHandler.generateEntityFile(generateEntityFileOption);
-    }
-
-    private List<Property> getPropertyList(List<Entity> entityList, String tableName) {
-        Entity entity = entityList.stream().filter(entity1 -> entity1.tableName.equals(tableName)).findFirst().orElse(null);
-        if(null==entity){
-            throw new IllegalArgumentException("表不存在!表名:"+tableName);
-        }
-        return entity.properties;
     }
 }

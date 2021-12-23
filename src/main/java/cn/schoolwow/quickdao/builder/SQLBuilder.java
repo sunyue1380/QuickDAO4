@@ -20,7 +20,7 @@ public interface SQLBuilder {
 
     /**
      * 用户自定义SQL语句
-     * @param sqlSQL语句
+     * @param sql语句
      * @param parameters 参数
      * */
     ConnectionExecutorItem execute(String sql, Object... parameters) throws SQLException;
