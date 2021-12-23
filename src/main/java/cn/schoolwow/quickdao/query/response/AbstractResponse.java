@@ -7,10 +7,7 @@ import com.alibaba.fastjson.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.ResultSetMetaData;
-import java.sql.SQLException;
+import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -71,9 +68,30 @@ public class AbstractResponse<T> implements Response<T>{
 
     @Override
     public int insertBatch() {
+        int effect = 0;
+        int perBatchCommit = Math.max(query.perBatchCommit, query.quickDAOConfig.perBatchCommit);
         try {
-            return query.dqlBuilder.insertArrayBatch(query);
-        } catch (SQLException e) {
+            query.dqlBuilder.connectionExecutor.connection.setAutoCommit(false);
+            for(int i=0;i<query.insertArray.size();i+=perBatchCommit){
+                ConnectionExecutorItem connectionExecutorItem = query.dqlBuilder.insertArrayBatch(query,i,Math.min(i+perBatchCommit,query.insertArray.size()));
+                int[] batches = connectionExecutorItem.preparedStatement.executeBatch();
+                for(int batch:batches){
+                    switch (batch){
+                        case Statement.SUCCESS_NO_INFO:{
+                            effect += 1;
+                        }break;
+                        case Statement.EXECUTE_FAILED:{}break;
+                        default:{
+                            effect += batch;
+                        };
+                    }
+                }
+                query.dqlBuilder.connectionExecutor.connection.commit();
+                connectionExecutorItem.preparedStatement.clearBatch();
+                connectionExecutorItem.preparedStatement.close();
+            }
+            return effect;
+        }catch (Exception e){
             throw new SQLRuntimeException(e);
         }
     }

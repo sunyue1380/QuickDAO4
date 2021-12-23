@@ -9,7 +9,6 @@ import com.alibaba.fastjson.JSONObject;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.Statement;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -195,15 +194,15 @@ public class AbstractDQLBuilder extends AbstractSQLBuilder implements DQLBuilder
     }
 
     @Override
-    public int insertArrayBatch(Query query) throws SQLException {
-        String sql = insertArraySQL(query);
+    public ConnectionExecutorItem insertArrayBatch(Query query) throws SQLException {
+        return insertArrayBatch(query,0,query.insertArray.size());
+    }
 
-        connectionExecutor.connection.setAutoCommit(false);
+    @Override
+    public ConnectionExecutorItem insertArrayBatch(Query query, int offset, int length) throws SQLException {
+        String sql = insertArraySQL(query);
         ConnectionExecutorItem connectionExecutorItem = connectionExecutor.newConnectionExecutorItem("批量插入记录",sql);
-        int effect = 0;
-        int perBatchCommit = Math.max(query.perBatchCommit,quickDAOConfig.perBatchCommit);
-        int length = query.insertArray.size();
-        for(int i=0;i<length;i++){
+        for(int i=offset;i<offset+length;i++){
             StringBuilder sqlBuilder = new StringBuilder(sql.replace("?",PLACEHOLDER));
             JSONObject o = query.insertArray.getJSONObject(i);
             int parameterIndex = 1;
@@ -219,25 +218,8 @@ public class AbstractDQLBuilder extends AbstractSQLBuilder implements DQLBuilder
                 setParameter(null!=value?value:o.get(property.column),connectionExecutorItem.preparedStatement,parameterIndex++,sqlBuilder);
             }
             connectionExecutorItem.preparedStatement.addBatch();
-            if((i!=0&&i%perBatchCommit==0)||i==length-1){
-                int[] batches = connectionExecutorItem.preparedStatement.executeBatch();
-                for(int batch:batches){
-                    switch (batch){
-                        case Statement.SUCCESS_NO_INFO:{
-                            effect += 1;
-                        }break;
-                        case Statement.EXECUTE_FAILED:{}break;
-                        default:{
-                            effect += batch;
-                        };
-                    }
-                }
-                connectionExecutor.connection.commit();
-                connectionExecutorItem.preparedStatement.clearBatch();
-            }
         }
-        connectionExecutorItem.preparedStatement.close();
-        return effect;
+        return connectionExecutorItem;
     }
 
     @Override
