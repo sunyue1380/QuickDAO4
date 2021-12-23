@@ -7,6 +7,9 @@ import cn.schoolwow.quickdao.builder.dcl.PostgreDCLBuilder;
 import cn.schoolwow.quickdao.builder.ddl.*;
 import cn.schoolwow.quickdao.builder.dql.AbstractDQLBuilder;
 import cn.schoolwow.quickdao.builder.dql.OracleDQLBuilder;
+import cn.schoolwow.quickdao.dao.sql.dcl.AbstractDCLDAO;
+import cn.schoolwow.quickdao.dao.sql.dcl.OracleDCLDAO;
+import cn.schoolwow.quickdao.dao.sql.dcl.PostgreDCLDAO;
 import cn.schoolwow.quickdao.query.condition.*;
 import cn.schoolwow.quickdao.query.subCondition.AbstractSubCondition;
 import cn.schoolwow.quickdao.query.subCondition.SQLiteSubCondition;
@@ -123,6 +126,22 @@ public enum Database {
             case SQLite:{throw new IllegalArgumentException("SQLite不支持创建用户等操作!");}
             case SQLServer:{throw new UnsupportedOperationException("当前不支持SQLServer的DCL相关操作!");}
             case Oracle:{return new OracleDCLBuilder(quickDAOConfig);}
+            default:{
+                throw new IllegalArgumentException("不支持的数据库类型!");
+            }
+        }
+    }
+
+    /**获取DCL DAO对象*/
+    public AbstractDCLDAO getDCLDAOInstance(QuickDAOConfig quickDAOConfig){
+        switch(this){
+            case H2:
+            case MariaDB:
+            case Mysql:
+            case SQLite:
+            case SQLServer:{return new AbstractDCLDAO(quickDAOConfig);}
+            case Postgre:{return new PostgreDCLDAO(quickDAOConfig);}
+            case Oracle:{return new OracleDCLDAO(quickDAOConfig);}
             default:{
                 throw new IllegalArgumentException("不支持的数据库类型!");
             }

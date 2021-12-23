@@ -47,4 +47,9 @@ public interface DCLDAO {
      * @param grantOption 授权信息
      */
     void revoke(GrantOption grantOption);
+
+    /**
+     * 刷新权限
+     */
+    void flushPrivileges();
 }

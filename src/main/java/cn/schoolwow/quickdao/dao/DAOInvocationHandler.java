@@ -1,7 +1,6 @@
 package cn.schoolwow.quickdao.dao;
 
 import cn.schoolwow.quickdao.dao.sql.AbstractSQLDAO;
-import cn.schoolwow.quickdao.dao.sql.dcl.AbstractDCLDAO;
 import cn.schoolwow.quickdao.dao.sql.ddl.AbstractDDLDAO;
 import cn.schoolwow.quickdao.dao.sql.dml.AbstractDMLDAO;
 import cn.schoolwow.quickdao.dao.sql.dql.AbstractDQLDAO;
@@ -51,7 +50,7 @@ public class DAOInvocationHandler implements InvocationHandler {
             }
             break;
             case "DCLDAO": {
-                instance = new AbstractDCLDAO(quickDAOConfig);
+                instance = quickDAOConfig.database.getDCLDAOInstance(quickDAOConfig);
             }
             break;
             case "DDLDAO": {

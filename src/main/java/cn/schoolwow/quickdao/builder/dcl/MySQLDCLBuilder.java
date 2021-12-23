@@ -4,11 +4,6 @@ import cn.schoolwow.quickdao.domain.QuickDAOConfig;
 import cn.schoolwow.quickdao.domain.dcl.DataBaseUser;
 import cn.schoolwow.quickdao.domain.dcl.GrantOption;
 
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.List;
-
 public class MySQLDCLBuilder extends AbstractDCLBuilder{
 
     public MySQLDCLBuilder(QuickDAOConfig quickDAOConfig) {
@@ -16,58 +11,44 @@ public class MySQLDCLBuilder extends AbstractDCLBuilder{
     }
 
     @Override
-    public List<String> getUserNameList() throws SQLException {
-        String sql = "select distinct user from mysql.user;";
-        ResultSet resultSet = connectionExecutor.executeQuery("获取用户列表",sql);
-        List<String> userNameList = new ArrayList<>();
-        while(resultSet.next()){
-            userNameList.add(resultSet.getString(1));
-        }
-        resultSet.close();
-        return userNameList;
+    public String getUserNameList() {
+        return "select distinct user from mysql.user;";
     }
 
     @Override
-    public void createUser(DataBaseUser dataBaseUser) throws SQLException {
-        String sql = "create user '" + dataBaseUser.username + "'@'" + dataBaseUser.host + "' identified by '" + dataBaseUser.password + "';";
-        connectionExecutor.executeUpdate("创建用户",sql);
+    public String createUser(DataBaseUser dataBaseUser) {
+        return "create user '" + dataBaseUser.username + "'@'" + dataBaseUser.host + "' identified by '" + dataBaseUser.password + "';";
     }
 
     @Override
-    public void modifyPassword(String username, String newPassword) throws SQLException {
-        String sql = "set password for " + username + " = password('" + newPassword + "');";
-        connectionExecutor.executeUpdate("更改密码",sql);
+    public String modifyPassword(String username, String newPassword) {
+        return "set password for " + username + " = password('" + newPassword + "');";
     }
 
     @Override
-    public void deleteUser(DataBaseUser dataBaseUser) throws SQLException {
-        String sql = "drop user " + dataBaseUser.username + "@'" + dataBaseUser.host + "';";
-        connectionExecutor.executeUpdate("删除用户",sql);
+    public String deleteUser(DataBaseUser dataBaseUser) {
+        return "drop user " + dataBaseUser.username + "@'" + dataBaseUser.host + "';";
     }
 
     @Override
-    public void grant(GrantOption grantOption) throws SQLException {
-        String sql = "grant " + grantOption.privileges + " on " + grantOption.databaseName + ".* to '" + grantOption.dataBaseUser.username + "'@'" + grantOption.dataBaseUser.host + "';";
-        connectionExecutor.executeUpdate("数据库授权",sql);
-        flushPrivileges();
+    public String grant(GrantOption grantOption) {
+        return "grant " + grantOption.privileges + " on " + grantOption.databaseName + ".* to '" + grantOption.dataBaseUser.username + "'@'" + grantOption.dataBaseUser.host + "';";
     }
 
     @Override
-    public void createUserAndGrant(GrantOption grantOption) throws SQLException {
-        String sql = "grant " + grantOption.privileges + " on " + grantOption.databaseName + ".* to '" + grantOption.dataBaseUser.username + "'@'" + grantOption.dataBaseUser.host + "' identified by '" + grantOption.dataBaseUser.password + "';";
-        connectionExecutor.executeUpdate("创建用户并授权",sql);
-        flushPrivileges();
+    public String createUserAndGrant(GrantOption grantOption) {
+        return "grant " + grantOption.privileges + " on " + grantOption.databaseName + ".* to '" + grantOption.dataBaseUser.username + "'@'" + grantOption.dataBaseUser.host + "' identified by '" + grantOption.dataBaseUser.password + "';";
+        
     }
 
     @Override
-    public void revoke(GrantOption grantOption) throws SQLException {
-        String sql = "revoke " + grantOption.privileges + " on " + grantOption.databaseName + ".* from '" + grantOption.dataBaseUser.username + "'@'" + grantOption.dataBaseUser.host + "';";
-        connectionExecutor.executeUpdate("收回权限",sql);
-        flushPrivileges();
+    public String revoke(GrantOption grantOption) {
+        return "revoke " + grantOption.privileges + " on " + grantOption.databaseName + ".* from '" + grantOption.dataBaseUser.username + "'@'" + grantOption.dataBaseUser.host + "';";
+        
     }
 
-    /**刷新权限*/
-    private void flushPrivileges() throws SQLException {
-        connectionExecutor.executeUpdate("刷新权限","flush privileges;");
+    @Override
+    public String flushPrivileges() {
+        return "flush privileges;";
     }
 }

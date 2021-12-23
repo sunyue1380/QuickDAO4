@@ -4,11 +4,6 @@ import cn.schoolwow.quickdao.domain.QuickDAOConfig;
 import cn.schoolwow.quickdao.domain.dcl.DataBaseUser;
 import cn.schoolwow.quickdao.domain.dcl.GrantOption;
 
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.List;
-
 public class PostgreDCLBuilder extends AbstractDCLBuilder{
 
     public PostgreDCLBuilder(QuickDAOConfig quickDAOConfig) {
@@ -16,50 +11,42 @@ public class PostgreDCLBuilder extends AbstractDCLBuilder{
     }
 
     @Override
-    public List<String> getUserNameList() throws SQLException {
-        String sql = "select usename from pg_user;";
-        ResultSet resultSet = connectionExecutor.executeQuery("获取用户列表",sql);
-        List<String> userNameList = new ArrayList<>();
-        while(resultSet.next()){
-            userNameList.add(resultSet.getString(1));
-        }
-        resultSet.close();
-        return userNameList;
+    public String getUserNameList() {
+        return "select usename from pg_user;";
     }
 
     @Override
-    public void createUser(DataBaseUser dataBaseUser) throws SQLException {
-        String sql = "create user " + dataBaseUser.username + " with password '" + dataBaseUser.password + "';";
-        connectionExecutor.executeUpdate("创建用户",sql);
+    public String createUser(DataBaseUser dataBaseUser) {
+        return "create user " + dataBaseUser.username + " with password '" + dataBaseUser.password + "';";
     }
 
     @Override
-    public void modifyPassword(String username, String newPassword) throws SQLException {
-        String sql = "alter user " + username + " with password '" + newPassword + "';";
-        connectionExecutor.executeUpdate("修改密码",sql);
+    public String modifyPassword(String username, String newPassword) {
+        return "alter user " + username + " with password '" + newPassword + "';";
     }
 
     @Override
-    public void deleteUser(DataBaseUser dataBaseUser) throws SQLException {
-        String sql = "drop role " + dataBaseUser.username + ";";
-        connectionExecutor.executeUpdate("删除用户",sql);
+    public String deleteUser(DataBaseUser dataBaseUser) {
+        return "drop role " + dataBaseUser.username + ";";
     }
 
     @Override
-    public void grant(GrantOption grantOption) throws SQLException {
-        String sql = "grant " + grantOption.privileges + " on database " + grantOption.databaseName + " to " + grantOption.dataBaseUser.username + ";";
-        connectionExecutor.executeUpdate("数据库授权",sql);
+    public String grant(GrantOption grantOption) {
+        return "grant " + grantOption.privileges + " on database " + grantOption.databaseName + " to " + grantOption.dataBaseUser.username + ";";
     }
 
     @Override
-    public void createUserAndGrant(GrantOption grantOption) throws SQLException {
-        createUser(grantOption.dataBaseUser);
-        grant(grantOption);
+    public String createUserAndGrant(GrantOption grantOption) {
+        throw new UnsupportedOperationException();
     }
 
     @Override
-    public void revoke(GrantOption grantOption) throws SQLException {
-        String sql = "revoke " + grantOption.privileges + " on database " + grantOption.databaseName + " from " + grantOption.dataBaseUser.username + ";";
-        connectionExecutor.executeUpdate("收回权限",sql);
+    public String revoke(GrantOption grantOption) {
+        return "revoke " + grantOption.privileges + " on database " + grantOption.databaseName + " from " + grantOption.dataBaseUser.username + ";";
+    }
+
+    @Override
+    public String flushPrivileges() {
+        throw new UnsupportedOperationException();
     }
 }
