@@ -2,7 +2,8 @@
 
 QuickDAO提供了一些便捷方法.当您只是根据单个条件查询或者只需要返回单条结果时,这些方法是非常有用的.
 
-## Person实体类
+* Person实体类
+
 ```java
 public class Person {
     @Id(strategy = IdStrategy.AutoIncrement)

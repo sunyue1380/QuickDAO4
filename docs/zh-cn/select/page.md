@@ -18,7 +18,7 @@ Response response = condition.execute();
 PageVo<Person> personList = response.getPagingList();
 ```
 
-## PageVo定义
+## PageVo
 ```java
 public class PageVo<T> implements Serializable {
     /**列表*/

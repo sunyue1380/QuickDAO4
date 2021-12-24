@@ -1,21 +1,21 @@
-# 关联外键查询
+# Join Table 
 
-QuickDAO提供了强大的外键关联查询,核心方法为joinTable方法.
+The core method to achieve foreign key query feature is ``joinTable``.
 
-* 实体类信息
+* Entity Class
 
 ```java
 
-/**Person类,表示人*/
+/**Person*/
 public class Person{
     @Id(strategy = IdStrategy.AutoIncrement)
     private long id;
     
     private String lastName;
-    //省略get/set方法
+    //omit get/set
 }
 
-/**Order类,订单类*/
+/**Order*/
 public class Order{
     @Id(strategy = IdStrategy.AutoIncrement)
     private long id;
@@ -25,10 +25,10 @@ public class Order{
     private String lastName;
     
     private Person person;
-    //省略get/set方法
+    //omit get/set
 }
 
-/**地址类,每个订单有一个地址信息*/
+/**Address*/
 public class Address{
     @Id(strategy = IdStrategy.AutoIncrement)
     private long id;
@@ -39,11 +39,11 @@ public class Address{
     private long orderId;
     
     private Order order;
-    //省略get/set方法
+    //omit get/set
 }
 ```
 
-## 主表,子表,父表
+## Main table, Child Table, Parent Table
 
 ```java
 //from person
@@ -56,37 +56,52 @@ dao.query(Person.class)
     .done();
 ```
 
-joinTable方法用于关联表,方法定义如下:
+``joinTable`` is used for join table. The definition as following:
+
 ```java
 <E> SubCondition<E> joinTable(Class<E> clazz, String primaryField, String joinTableField);
 ```
 
-参数含义如下:
+* clazz: which table to join
+* primaryField: **Main Table** field
+* joinTableField: **Child Table** field
 
-* clazz: 要join的表
-* primaryField: **主表**的关联字段
-* joinTableField: **子表**的关联字段
+The meaning of Main Table and Child Table as following
 
-其中主表,子表的定义如下:
+* Main Table: dao.query(Class mainTable) mainTable is Main Table
+* Child Table: joinTable(Class<E> childTable, String primaryField, String joinTableField) childTable is Child Table
 
-* 主表: query方法的参数即为主表
-* 子表: joinTable方法的第一个参数为子表
+Person is **Main Table** and Order is **Child Table** in above.
 
-上述例子中,Person为主表,Order为子表.
+Furthermore, **Child Table** can join table again. At this time, origin child table called **Parent Table** and join table called **Child Table**.
 
-此外,子表还可以再次关联表,此时原子表称为**父表**,父表和子表是相对关系
+Order is **Parent Table** and Address is **Child Table** in above.
 
-上述例子中,Order是Address的父表,Address是Order的子表
+Invoking ``done`` to return **Main Table** and invoking ``doneSubCondition`` to return **Parent Table**.
 
-调用done方法返回**主表**,doneSubCondition方法返回**父表**
+## Table Alias
 
-## 表别名
+The **Main Table** alias name is t and next join table is t1,t2,t3......
 
-默认情况下,主表别名为t,依次关联的子表分别为t1,t2,t3......
+You can invoke ``tableAliasName`` method to specify your own table alias name.
 
-## 关联查询
+```java
+dao.query(Person.class).tableAliasName("p");
+```
 
-调用joinTable方法后一样可调用addQuery系列方法添加查询参数.此时的查询是针对join的表所添加的查询
+```java
+dao.query(Person.class)
+    .joinTable(Person.class,"motherId","id","mother")
+    .tableAliasName("motherTable")
+    .done()
+    .joinTable(Person.class,"fatherId","id","father")
+    .tableAliasName("fatherTable")
+    .done()
+```
+
+## Join Table Query
+
+You can still use addXXXQuery when you invoking ``joinTable``.
 
 ```java
 //from person
@@ -103,11 +118,11 @@ dao.query(Person.class)
     .done();
 ```
 
-## 多字段关联查询
+## Multiple Field Join Query
 
-> 此特性从4.1.3版本开始提供
+> Since 4.1.3
 
-QuickDAO支持关联查询时同时关联多个字段.通过调用SubCondition接口的on方法指定关联的多个字段
+You can join table with more than one condition by using ``on`` method.
 
 ```java
 //from person
@@ -119,9 +134,9 @@ dao.query(Person.class)
         .done();
 ```
 
-## 关联查询结果
+## CompositField
 
-若要返回关联查询实体,则必须手动调用compositField方法.
+The composit member fields in entity class will not be filled by default if you don't invoke ``compositField`` method.
 
 ```java
 //from person
@@ -136,17 +151,15 @@ dao.query(Person.class)
     .addQuery("name","quickdao")
     .doneSubCondition()
     .done()
-    //调用以下方法后Order类的Person对象和Address类的Order对象会自动填充
+    //invoke compositField to fill field person field in Order class and order in Address class
     .compositField();
 ```
 
-> 若未调用CompositField方法不会返回关联表属性信息.
+> QuickDAO will search the only one entity type member field by default.
 
-> 默认情况下QuickDAO会根据实体类型自动寻找实体类成员变量中唯一匹配的成员变量.
+## Multiple Field Associate
 
-## 多属性关联
-
-若实体类中有多个需关联对象,则需要用户手动指定要关联的成员变量名.
+You must specify associated member field name if there are more than one entity class memeber field.
 
 ```java
 public class Person {
@@ -160,39 +173,21 @@ public class Person {
 
 ```java
 List<Person> userList = dao.query(Person.class)
-        //person1.mother_id = person2.id,关联属性到mother变量
+        //person1.mother_id = person2.id, fill to mother
         .joinTable(Person.class,"mother_id","id","mother")
         .done()
-        //person1.father_id = person2.id,关联属性到father变量
+        //person1.father_id = person2.id, fill to father
         .joinTable(Person.class,"father_id","id","father")
         .done()
         .compositField()
         .execute()
         .getList();
 ```
-## 设置表别名
 
-* 设置主表别名
+## Join Condition
 
-```java
-dao.query(Person.class).tableAliasName("p");
-```
+You can pass a Condition object as a query parameter.
 
-* 设置子表别名
-
-```java
-dao.query(Person.class)
-    .joinTable(Person.class,"motherId","id","mother")
-    .tableAliasName("motherTable")
-    .done()
-    .joinTable(Person.class,"fatherId","id","father")
-    .tableAliasName("fatherTable")
-    .done()
-```
-
-## 关联Condition
-
-joinTable支持将Condition接口作为参数传入
 ```java
 //select id,username,password,type from person as t join (select person_id,count(person_id) count from `order` group by person_id having count(person_id) > 0) t1 on t.id = t1.person_id where t.person_id = 1 order by t.id desc
 Condition joinCondition = dao.query(Order.class)
@@ -209,8 +204,6 @@ Condition joinCondition = dao.query(Order.class)
 ```
 
 ## cross join
-
-QuickDAO支持crossJoin方法
 
 ```java
 //select id,username,password,type from person as t cross join order as t1 where t.id =t1.person_id and t1.order_no > 0

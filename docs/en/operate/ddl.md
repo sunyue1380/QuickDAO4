@@ -1,32 +1,30 @@
-# DDL操作
+# DDL
 
-QuickDAO支持DDL相关操作.
-
-## 表是否存在
+## hasTable
 
 ```java
 dao.hasTable("person");
 ```
 
-## 列是否存在
+## hasColumn
 
 ```java
 dao.hasColumn("person","name");
 ```
 
-## 获取表字段列表
+## getPropertyList
 
 ```java
 List<Property> propertyList = dao.getPropertyList("person");
 ```
 
-## 获取指定表的指定字段
+## getProperty
 
 ```java
 Property property = dao.getProperty("person","name");
 ```
 
-## 建表
+## create Table
 
 ```java
 dao.create(Person.class);
@@ -34,26 +32,26 @@ Entity entity = new Entity();
 entity.tableName = "person";
 entity.comment = "人";
 entity.charset = "utf-8";
-//设置字段信息
+//column list
 entity.properties = new ArrayList<Property>();
 dao.create(entity);
 ```
 
-## 删表
+## drop Table
 
 ```java
 dao.drop(Person.class);
 dao.drop("person");
 ```
 
-## 重建表
+## rebuild
 
 ```java
 dao.rebuild(Person.class);
 dao.rebuild("person");
 ```
 
-## 新增字段
+## createColumn
 
 ```java
 Property property = new Property();
@@ -63,27 +61,27 @@ property.comment = "姓名";
 dao.createColumn("person",property);
 ```
 
-## 删除字段
+## dropColumn
 
 ```java
 dao.dropColumn("person","name");
 ```
 
-## 双向同步
+## syncEntityList
 
-让扫描实体类包信息和数据库保持一致,即新增实体类信息存在但数据库不存在的表和字段信息,删除数据库里多余的字段和表.
+Make entity package class same with database table.
 
 ```java
 dao.syncEntityList();
 ```
 
-## 自动建表和新增字段
+## automaticCreateTableAndField
 
 ```java
 dao.automaticCreateTableAndField();
 ```
 
-## 刷新数据库字段信息
+## refreshDbEntityList
 
 重新从数据库里获取表和字段信息
 

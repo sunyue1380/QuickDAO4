@@ -6,37 +6,38 @@ QuickDAO通过配置信息生成DAO对象以便对数据库进行操作.用户�
 
 ```java
 //QuickDAO需要传递DataSource实现对象,您可以自由选择市面上的任意DataSource实现,本例采用dbcp
-        BasicDataSource mysqlDataSource = new BasicDataSource();
-        mysqlDataSource.setDriverClassName("com.mysql.jdbc.Driver");
-        mysqlDataSource.setUrl("jdbc:mysql://127.0.0.1:3306/quickdao");
-        mysqlDataSource.setUsername("root");
-        mysqlDataSource.setPassword("123456");
-        DAO dao = QuickDAO.newInstance()
-                //指定DataSource
-                .dataSource(mysqlDataSource)
-                //指定要扫描的实体类包,支持多级目录
-                .packageName("cn.schoolwow.quickdao.entity")
-                //指定要扫描的实体类包,支持多级目录,同时添加表名前缀quickdao
-                .packageName("cn.schoolwow.quickdao.entity","quickdao")
-                //指定扫描单个实体类
-                .entity(Person.class)
-                //是否自动新增表,默认开启
-                .autoCreateTable(false)
-                //是否自动新增字段,默认开启
-                .autoCreateProperty(false)
-                //指定全局Id策略
-                .idStrategy(IdStrategy.IdGenerator)
-                //指定全局Id生成期实例(目前只支持雪花算法)
-                .idGenerator(new SnowflakeIdGenerator())
-                //是否建表时建立外键约束,默认关闭
-                .foreignKey(false)
-                //忽略指定实体类
-                .ignoreClass(Person.class)
-                //忽略指定实体类包
-                .ignorePackageName("cn.schoolwow.quickdao.entity.ignore")
-                //返回DAO接口对象
-                .build();
+BasicDataSource mysqlDataSource = new BasicDataSource();mysqlDataSource.setDriverClassName("com.mysql.jdbc.Driver");mysqlDataSource.setUrl("jdbc:mysql://127.0.0.1:3306/quickdao");mysqlDataSource.setUsername("root");mysqlDataSource.setPassword("123456");DAO dao = QuickDAO.newInstance()
+        //指定DataSource
+        .dataSource(mysqlDataSource)
+        //指定要扫描的实体类包,支持多级目录
+        .packageName("cn.schoolwow.quickdao.entity")
+        //指定要扫描的实体类包,支持多级目录,同时添加表名前缀quickdao
+        .packageName("cn.schoolwow.quickdao.entity","quickdao")
+        //指定扫描单个实体类
+        .entity(Person.class)
+        //是否自动新增表,默认开启
+        .autoCreateTable(false)
+        //是否自动新增字段,默认开启
+        .autoCreateProperty(false)
+        //指定全局Id策略
+        .idStrategy(IdStrategy.IdGenerator)
+        //指定全局Id生成期实例(目前只支持雪花算法)
+        .idGenerator(new SnowflakeIdGenerator())
+        //是否建表时建立外键约束,默认关闭
+        .foreignKey(false)
+        //忽略指定实体类
+        .ignoreClass(Person.class)
+        //忽略指定实体类包
+        .ignorePackageName("cn.schoolwow.quickdao.entity.ignore")
+        //返回DAO接口对象
+        .build();
 ```
+
+## 自动建表和新增字段
+
+QuickDAO支持自动建表和自动新增字段。QuickDAO启动后回自动扫描注册的实体类并创建对应的数据库表。
+
+当您在实体类上添加了新字段时，重启应用程序，QuickDAO会自动的在数据库中也创建对应的数据库字段。
 
 ## 动态定义实体类注解
 

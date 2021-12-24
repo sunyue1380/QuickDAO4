@@ -52,7 +52,7 @@ public class User{
 
 ```java
 public class User{
-    @ColumnName("varchar(1024)")
+    @ColumnType("varchar(1024)")
     private String username;
 }
 ```
@@ -107,9 +107,9 @@ public class User{
 }
 ```
 
-同时支持重复注解,可在一个字段上添加多个CompositeIndex注解
+同时支持重复注解,可在一个类上添加多个CompositeIndex注解
 
-## UniqueField
+## @UniqueField
 
 > 此注解从4.1.2开始提供
 

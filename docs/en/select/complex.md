@@ -1,8 +1,7 @@
-# 复杂查询
+# Complex Query
 
-QuickDAO提供了丰富的单表查询操作.
+* Person
 
-* Person实体类
 ```java
 public class Person {
     @Id(strategy = IdStrategy.AutoIncrement)
@@ -14,13 +13,13 @@ public class Person {
 }
 ```
 
-## Condition对象
+## Condition
 
-调用``dao.query(Person.class);``就得到了Person类的Condition对象,Condition接口定义了大量添加条件查询的方法.
+Use ``dao.query(Person.class);`` to get ``Condition`` object
 
 ```java
 Condition condition = dao.query(Person.class)
-    //添加distinct关键字
+    //add distinct
     .distinct()
     //username is null
     .addNullQuery("username")
@@ -42,11 +41,9 @@ Condition condition = dao.query(Person.class)
     .addQuery("type",">=","1")
 ```
 
-这些方法名见名知义,同时也有详细的JavaDoc文档.所有的查询条件接口以``addXXXQuery``命名,您可以很方便的分辨出哪些是查询方法接口.
+> all query method names start with ``addXXXXQuery``
 
-## or查询
-
-您可以添加or查询条件
+## OR query
 
 ```java
 //select distinct id,username,password,type from person where username like 'a%' or username like 'b%' 
@@ -57,11 +54,9 @@ condition.or().addQuery("username","b%")
 Response response = condition.execute();
 ```
 
-## union查询
+## Union Query
 
-您可以union多个表,但是您需要保证union关联的表的返回的字段个数保持一致.
-
-您可以指定使用union或者union all类型进行连接,union方法默认采用union连接方式.
+> Make sure all union statements return same fields
 
 ```java
 Condition unionCondition1 = dao.query(Person.class)
@@ -79,18 +74,18 @@ Response response = dao.query(Person.class)
                     .execute();
 ```
 
-## addRawQuery
+## AddRawQuery
 
-addRawQuery方法将给定的参数直接拼接到SQL语句上,适用于查询条件无法用现有API生成的情况
+> The parameters will append to sql statement without escape. Please pay attention to secure question.
 
 ```java
 Condition condition = dao.query(Person.class)
      .addRawQuery("username = (select max(username) from person where age = t.age) ")
 ```
 
-## Response 对象
+## Response
 
-调用Condition实例的execute()方法就得到Response实例对象.Response接口定义获取返回结果的方法.不同的返回结果对应着不同的查询条件.
+``Response`` defined methods how to get results.
 
 ```java
 Condition condition = dao.query(User.class);
@@ -98,23 +93,22 @@ Response response = condition.execute();
 List<User> userList = response.getList();
 ```
 
-## 指定返回字段类型
+## Specify Return Column Type
 
-> 此特性从v4.1.2版本开始提供
+> Since 4.1.2
 
-QuickDAO支持在调用[虚拟查询](virtual.md)相关方法时,指定返回的列类型
+When you invoke [Virtual Query](/en/select/virtual.md), you can specify return column type.
 
 ```java
 dao.query(Person.class)
-        //对于数据库列类型为datetime的以String类型返回
         .setColumnTypeMapping(property -> property.columnType.equals("datetime")?String.class:null)
         .execute()
 ```
 
-此外,QuickDAO还支持指定全局字段返回类型,请参阅[配置DAO](zh-cn/config/configuration.md)
+You can specify global column type function.Please refer to [Configuration](/en/config/configuration.md)
 
-> 若同时调用setColumnTypeMapping方法和指定全局字段返回类型,则setColumnTypeMapping方法优先级更高
+> Thr priority of setColumnTypeMapping is higner than global column type function.
 
-## clone方法
+## Clone
 
-Condition实现了Cloneable接口.
+Condition implements Cloneable.

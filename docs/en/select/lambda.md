@@ -1,10 +1,8 @@
-# lambda查询
+# lambda
 
-> 该特性从v4.1.4版本开始提供
+> Since 4.1.4
 
-QuickDAO支持lambda查询条件
-
-* Person实体类
+* Person
 
 ```java
 public class Person {
@@ -16,13 +14,10 @@ public class Person {
 }
 ```
 
-## lambdaCondition对象
-
-调用``dao.query(Person.class).lambdaCondition();``就得到了Person类的lambdaCondition对象
+## lambdaCondition
 
 ```java
 Condition condition = dao.query(Person.class)
-    //获取lambda查询条件对象
     .lambdaCondition
     //username is null
     .addNullQuery(Person::getUsername)
@@ -44,10 +39,10 @@ Condition condition = dao.query(Person.class)
     .addQuery(Person::getType,">=","1")
 ```
 
-LambdaCondition接口所定义的查询方法同Condition接口定义的方法相似,您可以参阅[复杂查询](complex.md)章节获取具体使用方法.
+> Please refer to [Complex Query](/en/select/complex.md) for more infomation.
 
-## lambdaSubCondition对象
+## lambdaSubCondition
 
-在SubCondition接口对象上调用lambdaSubCondition()即可获取该SubCondition对应的lambdaSubCondition对象.
+Invoking ``lambdaSubCondition`` on SubCondition to get lambdaSubCondition object.
 
-lambdaSubCondition接口所定义的查询方法同SubCondition接口定义的方法相似,您可以参阅[关联查询](joinTable.md)章节获取具体使用方法.
+> Please refer to [Join Table Query](/en/select/joinTable.md) for more infomation.

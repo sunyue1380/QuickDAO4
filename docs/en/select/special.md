@@ -1,9 +1,10 @@
-# 特殊查询
+# Special Query
 
-QuickDAO提供了addColumn方法，该方法用于指定返回的列信息,即select {{column}} from table 中的column部分.
-基于此,addColumn的用法非常多样,同时需要调用对应的Response接口里面定义的方法.
+## AddColumn
 
-* Person实体类
+``addColumn`` is used for specifying which fields will be returned. 
+
+* Person
 
 ```java
 public class Person {
@@ -15,17 +16,19 @@ public class Person {
 }
 ```
 
-## 返回单属性
+## Return Single Column
 
 ```java
-//select id from person 返回第一行的id属性
+//select id from person
 String id = (String)dao.query(Person.class)
                 .addColumn("id")
                 .execute()
                 .getSingleColumn(String.class);
 ```
 
-## 返回单列
+> ``getSingleColumn`` only return the first row of result.
+
+## Return Single Column List
 
 ```java
 //select id from person
@@ -35,7 +38,7 @@ List<Long> ids = dao.query(Person.class)
                 .getSingleColumnList(Long.class);
 ```
 
-## 返回部分属性
+## Return Part Column
 
 ```java
 //select username,password from person
@@ -45,7 +48,7 @@ List<Person> personList = dao.query(Person.class)
                 .getList();
 ```
 
-## 分组聚合查询
+## Group By
 
 ```java
 //select COUNT(ID) as count,max(id) as \"M(ID)\" from person group by id having count(id) = 1 order by max(id)
