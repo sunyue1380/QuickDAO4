@@ -99,7 +99,7 @@ List<User> userList2 = dao.query(User.class)
 
 # 反馈
 
-目前QuickDAO还不成熟,还在不断完善中.若有问题请提交Issue或者发送邮件到648823596@qq.com,作者将第一时间跟进并努力解决.同时欢迎热心认识提交PR,共同完善QuickDAO项目!
+若有问题请提交Issue或者发送邮件到648823596@qq.com.
 
 # 开源协议
 本软件使用[LGPL](http://www.gnu.org/licenses/lgpl-3.0-standalone.html)开源协议!
