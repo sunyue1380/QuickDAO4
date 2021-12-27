@@ -41,7 +41,7 @@ Condition condition = dao.query(Person.class)
     .addQuery("type",">=","1")
 ```
 
-> all query method names start with ``addXXXXQuery``
+> All query method names start with ``addXXXXQuery``
 
 ## OR query
 
@@ -49,7 +49,7 @@ Condition condition = dao.query(Person.class)
 //select distinct id,username,password,type from person where username like 'a%' or username like 'b%' 
 Condition condition = dao.query(Person.class)
            .distinct()
-            .addLikeQuery("username","a%");
+           .addLikeQuery("username","a%");
 condition.or().addQuery("username","b%")
 Response response = condition.execute();
 ```
@@ -76,7 +76,7 @@ Response response = dao.query(Person.class)
 
 ## AddRawQuery
 
-> The parameters will append to sql statement without escape. Please pay attention to secure question.
+> The parameters will append to sql statement directly without escape. Please pay attention to secure questions.
 
 ```java
 Condition condition = dao.query(Person.class)

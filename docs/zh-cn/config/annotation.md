@@ -160,7 +160,7 @@ public class User{
 
 ```java
 public class User{ 
-    @ForeignKey(table=Address.class,field="uid",foreignKeyOption=ForeignKeyOption.RESTRICT)
+    @ForeignKey(table=Address.class,field="id",foreignKeyOption=ForeignKeyOption.RESTRICT)
     private long addressId;
 }
 ```

@@ -1,13 +1,13 @@
 # QuickDAO4
 
-A simple, Quick, Powerful Java ORM Framework. 
+A Simple, Quick, Powerful Java ORM Framework. 
 
 Advantage:
 
-* Cover all db operation by only one dao object
+* Cover all db operations by only one dao object
 * Automatically creating tables and fields
 * Support foreign key query
-* Entity annotation allows you specify database index, constraint, column type, column name and so on
+* Entity annotation which allows you specify database index, constraint, column type, column name and so on
 
 # Support database
 
@@ -38,7 +38,7 @@ To use QuickDAO, you must choose a DataSource implement(eg commons-dbcp)
 </dependency>
 ```
 
-> [Query QuickDAO latest Version](https://search.maven.org/search?q=a:QuickDAO)
+> [query QuickDAO latest version](https://search.maven.org/search?q=a:QuickDAO)
 
 ## 2 QuickDAO Configuration
 ```java
@@ -52,7 +52,7 @@ cn.schoolwow.quickdao.dao.DAO dao = QuickDAO.newInstance()
                     //specify entity package name
                     .packageName("cn.schoolwow.quickdao.entity")
                     .build();
-//then you can use this dao object for any database operation
+//then you can use this dao object to do any database operation
 ```
 
 ## 3 use QuickDAO
@@ -99,7 +99,7 @@ List<User> userList2 = dao.query(User.class)
 
 # Feedback
 
-if you have any suggestions please Pull Request or mailto 648823596@qq.com.
+If you have any suggestions please Pull Request or mailto 648823596@qq.com.
 
 # LICENSE
 

@@ -79,9 +79,9 @@ migrateOption.tableFilter = (entity)->{
 DAOUtils.migrate(migrateOption);
 ```
 
-It may appear column type compatible problem for cross database migration(eg from mysql to sqlite).
+There are some column type compatible problems if you want to migrate cross database type(eg from mysql to sqlite).
 
-In this situation, user should customize column type mapping.
+In this situation, user should customize column type mapping manually.
 
 ```java
 migrateOption.tableConsumer = (sourceTable,targetTable)->{

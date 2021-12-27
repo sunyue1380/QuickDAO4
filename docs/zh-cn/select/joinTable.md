@@ -196,16 +196,15 @@ joinTable支持将Condition接口作为参数传入
 ```java
 //select id,username,password,type from person as t join (select person_id,count(person_id) count from `order` group by person_id having count(person_id) > 0) t1 on t.id = t1.person_id where t.person_id = 1 order by t.id desc
 Condition joinCondition = dao.query(Order.class)
-                    .addColumn("person_id","count(person_id) count")
-                    .groupBy("personId")
-                    .having("count(person_id) > 0");
-            Response response = dao.query(Person.class)
-                    .joinTable(joinCondition,
-                            "id","person_id")
-                    .done()
-                    .addQuery("person_id",1)
-                    .orderByDesc("id")
-                    .execute();
+        .addColumn("person_id","count(person_id) count")
+        .groupBy("personId")
+        .having("count(person_id) > 0");
+Response response = dao.query(Person.class)
+        .joinTable(joinCondition,"id","person_id")
+        .done()
+        .addQuery("person_id",1)
+        .orderByDesc("id")
+        .execute();
 ```
 
 ## cross join

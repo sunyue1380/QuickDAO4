@@ -1,6 +1,6 @@
 # Log
 
-QuickDAO used slf4j as log facade framework. You can choose logback,log4j and so on as log implement.  
+QuickDAO used slf4j as log facade framework. You can choose logback,log4j or other log implements.  
 
 > SQL statement will be printed in ``DEBUG`` level.
 

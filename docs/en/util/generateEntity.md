@@ -1,6 +1,6 @@
 # Entity Class Generate
 
-QuickDAO supports scanning database and generate corresponding entity class.
+QuickDAO has the ability to scan database and generate corresponding entity class.
 
 ## Before 4.1.8
 
@@ -27,7 +27,7 @@ dao.generateEntityFile("/path/to/src/main/java/",new String[]{"person"});
 ```java
 GenerateEntityFileOption generateEntityFileOption = new GenerateEntityFileOption();
 //specify java source file path
-generateEntityFileOption.sourceClassPath = System.getProperty("user.dir")+"/entity/";
+generateEntityFileOption.sourceClassPath = System.getProperty("user.dir")+"/src/main/java/com/schoolwow/quickdao/entity/";
 //specify tables to generate
 generateEntityFileOption.tableFilter = (entity)->{
     return true;

@@ -2,9 +2,11 @@
 
 Normally QuickDAO will scan entity package and mapping entity class to database table.
 
-However QuickDAO can query database without any entity class.
+However QuickDAO also can query database without any entity classes.
   
 Assuming there is a table named **person** in database.
+
+person table:
 
 |id|username|password|type|
 |:---:|:---:|:---:|:---:|
@@ -28,7 +30,7 @@ JSONArray array = dao.query("person")
     .getArray();
 ```
 
-> You must invoke addColumn method to specify return column if you use virual query feature.
+> Attention! You must specify return column by invoking ``addColumn`` method if you use Virual Query feature.
 
 ## Insert
 

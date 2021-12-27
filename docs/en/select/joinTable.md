@@ -56,7 +56,7 @@ dao.query(Person.class)
     .done();
 ```
 
-``joinTable`` is used for join table. The definition as following:
+``joinTable`` method is used to join table. The definition of parameters:
 
 ```java
 <E> SubCondition<E> joinTable(Class<E> clazz, String primaryField, String joinTableField);
@@ -66,14 +66,14 @@ dao.query(Person.class)
 * primaryField: **Main Table** field
 * joinTableField: **Child Table** field
 
-The meaning of Main Table and Child Table as following
+The meaning of **Main Table** and **Child Table**:
 
-* Main Table: dao.query(Class mainTable) mainTable is Main Table
-* Child Table: joinTable(Class<E> childTable, String primaryField, String joinTableField) childTable is Child Table
+* **Main Table**: dao.query(Class mainTable) mainTable is Main Table
+* **Child Table**: joinTable(Class<E> childTable, String primaryField, String joinTableField) childTable is Child Table
 
 Person is **Main Table** and Order is **Child Table** in above.
 
-Furthermore, **Child Table** can join table again. At this time, origin child table called **Parent Table** and join table called **Child Table**.
+Furthermore, **Child Table** can join table again. At this time, origin child table is called **Parent Table** and join table is called **Child Table**.
 
 Order is **Parent Table** and Address is **Child Table** in above.
 
@@ -159,7 +159,7 @@ dao.query(Person.class)
 
 ## Multiple Field Associate
 
-You must specify associated member field name if there are more than one entity class memeber field.
+You must specify associated member field name if there are more than one same entity class member field.
 
 ```java
 public class Person {
@@ -191,16 +191,15 @@ You can pass a Condition object as a query parameter.
 ```java
 //select id,username,password,type from person as t join (select person_id,count(person_id) count from `order` group by person_id having count(person_id) > 0) t1 on t.id = t1.person_id where t.person_id = 1 order by t.id desc
 Condition joinCondition = dao.query(Order.class)
-                    .addColumn("person_id","count(person_id) count")
-                    .groupBy("personId")
-                    .having("count(person_id) > 0");
-            Response response = dao.query(Person.class)
-                    .joinTable(joinCondition,
-                            "id","person_id")
-                    .done()
-                    .addQuery("person_id",1)
-                    .orderByDesc("id")
-                    .execute();
+        .addColumn("person_id","count(person_id) count")
+        .groupBy("personId")
+        .having("count(person_id) > 0");
+Response response = dao.query(Person.class)
+        .joinTable(joinCondition,"id","person_id")
+        .done()
+        .addQuery("person_id",1)
+        .orderByDesc("id")
+        .execute();
 ```
 
 ## cross join

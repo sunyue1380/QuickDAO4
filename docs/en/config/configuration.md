@@ -1,6 +1,6 @@
 # DAO Configuration
 
-QuickDAO provides plenty of configuration to customize your own behavior.
+QuickDAO provides plenty of configurations to customize your own behavior.
 
 ## Build quickdao
 
@@ -37,13 +37,15 @@ DAO dao = QuickDAO.newInstance()
         .build();
 ```
 
-## Automatic create column
+## Automatically creating column
 
-When you add new class entity class or new field, quickdao will automatically mapping these classes or fields to database.
+QuickDAO will automatically mapping classes or fields to database if you has setting entity package name or entity class.
+
+If you add new field in java, it will also aotomatically mapping new field to database column. 
 
 You don't need to execute sql manually. 
 
-## Dynamic define entity annotation
+## define entity annotation Dynamically
 
 In some cases, you can't modify entity class directly. Then you can use this method to add entity annotation.
 
@@ -63,7 +65,7 @@ DAO dao = QuickDAO.newInstance()
 
 ## Specify global id strategy
 
-You can specify global id strategy and this will be works for all fields which use @Id.
+You can specify global id strategy and it works for all fields which use @Id.
 
 ```java
 public class User{
@@ -76,9 +78,9 @@ QuickDAO.newInstance()
               .done();
 ```
 
-> If @Id field has its own strategy, then global id strategy has no effect.
+> If @Id field has its own strategy, then global id strategy has no effects.
 
-Currently QuickDAO only has one ID Generator(SnowflakeIdGenerator),but you can implement IdGenerator interface to create your own ID generator.
+Currently QuickDAO has only one ID Generator(SnowflakeIdGenerator),but you can implement IdGenerator interface to create your own ID generator.
 
 > Attention! ID Generator only works for fields using @Id. Please remember to add @Id annotatation.
 
@@ -86,11 +88,11 @@ Currently QuickDAO only has one ID Generator(SnowflakeIdGenerator),but you can i
 
 > Since 4.1.3
 
-> Attention! This feature only effect [Vitual Query](/en/select/virtual.md)
+> Attention! This feature only affects [Vitual Query](/en/select/virtual.md)
 
-JDBC defined mapping rules that how the column type convert to java class.But you can specify your own mapping rules.
+JDBC defined mapping rules that how the column type converts to java class.However you can specify your own mapping rules.
 
-> Before 4.1.2, vitual query result type is String.class and can't be changed.
+> Before 4.1.2, the result type of vitual query is always String.class.
 
 ```java
 QuickDAO.newInstance()
@@ -99,7 +101,7 @@ QuickDAO.newInstance()
         });
 ```
 
-Recommend code for user using 4.1.1 or before.
+Recommending code for user using 4.1.1 or before.
 
 ```java
 QuickDAO.newInstance()
@@ -110,7 +112,7 @@ QuickDAO.newInstance()
 
 ## Specify value on insert and update
 
-If you want to know a record inserted by who and when, this feature works for you.
+This feature would be very nice for you if you want to know that a record is inserted or updated by who. 
 
 > Since 4.1.8
 

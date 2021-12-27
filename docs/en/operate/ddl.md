@@ -83,8 +83,6 @@ dao.automaticCreateTableAndField();
 
 ## refreshDbEntityList
 
-重新从数据库里获取表和字段信息
-
 ```java
 dao.refreshDbEntityList();
 ```

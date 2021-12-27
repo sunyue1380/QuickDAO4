@@ -15,7 +15,7 @@ public class User{
 
 ### Id generate strategy
 
-@Id has a field named strategy whose value as following:
+@Id has a attribute named ``strategy`` whose value as following:
 
 * None(handle by user)
 * AutoIncrement(database autoincrement)
@@ -71,9 +71,9 @@ public class User{
 
 ## @Index
 
-create database index, using in field
+Creating database index, using in field
 
-> Recommand create index in unique constraint column for accelerating search speed
+> Recommand creating index in a unique constraint column to accelerate searching speed
 
 ```java
 public class User{
@@ -82,22 +82,22 @@ public class User{
 }
 ```
 
-> Since 4.1.2 @Index has following attributes
+> Since 4.1.2 @Index has new attributes as following:
 
-|field|remark|
-|---|---|---|
+|Field|Remark|
+|---|---|
 |indexType|default value is IndexType.NORMAL|
-|indexName|if empty then automatic generate|
-|using|btree or hash, if empty will using database default value|
+|indexName|if empty then automatically generate|
+|using|btree or hash, if empty it will use database default value|
 |comment|index comment|
 
-you add more than one @Index annotation in same field
+you can add more than one @Index annotation in same field.
 
 ## @CompositeIndex
 
 > Since 4.1.2
 
-Create composit index, using in class
+Create composit indexes, using in class
 
 ```java
 @CompositeIndex(columns={"username","password"})
@@ -107,7 +107,7 @@ public class User{
 }
 ```
 
-You add add more than one @CompositeIndex annotation in same class 
+You can add more than one @CompositeIndex annotation in same class.
 
 ## @UniqueField
 
@@ -124,13 +124,13 @@ public class User{
 
 ## @Constraint
 
-Specify database constraint includes notnull, check, defaultValue.
+Specify database constraints includes notnull, check, defaultValue.
 
 * notNull: default false
 * check: default empty
 * defaultValue: default empty
 
-> After 4.1.2, @Constraint remove attributes unique and unionUnique. Please use @UniqueField and @CompositeIndex instead.
+> After 4.1.2, unique and unionUnique attributes are removed from @Constraint. Please use @UniqueField and @CompositeIndex instead.
 
 ```java
 public class User{
@@ -152,13 +152,13 @@ public class User{
 
 Specify foreign key constraint, using in class
 
-* table: refer to which table
-* field: refer to which field, default value is ``id``
+* table: refer to join table
+* field: refer to join table field, default value is ``id``
 * foreignKeyOption: cascade strategy, default value is NOACTION
 
 ```java
 public class User{ 
-    @ForeignKey(table=Address.class,field="uid",foreignKeyOption=ForeignKeyOption.RESTRICT)
+    @ForeignKey(table=Address.class,field="id",foreignKeyOption=ForeignKeyOption.RESTRICT)
     private long addressId;
 }
 ```

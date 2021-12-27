@@ -1,6 +1,6 @@
 # ID generate strategy
 
-Currently there three strategies:
+Currently there are three strategies:
 
 ```java
 public enum IdStrategy {
@@ -17,7 +17,7 @@ There are two ways to specify id strategy.
 
 ```java
 public class User{
-    @Id
+    @Id(strategy=IdStrategy.AutoIncrement)
     private long uid;
 }
 ```

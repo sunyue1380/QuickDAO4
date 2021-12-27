@@ -1,6 +1,6 @@
 # DCL
 
-> Currently only support MySQL,MariaDB and Postgre.
+> Currently DCL only support MySQL,MariaDB and Postgre.
 
 Define User infomation.
 

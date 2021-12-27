@@ -30,7 +30,7 @@ dao.generateEntityFile("/path/to/src/main/java/",new String[]{"person"});
 ```java
 GenerateEntityFileOption generateEntityFileOption = new GenerateEntityFileOption();
 //设置java类路径
-generateEntityFileOption.sourceClassPath = System.getProperty("user.dir")+"/entity/";;
+generateEntityFileOption.sourceClassPath = System.getProperty("user.dir")+"/src/main/java/com/schoolwow/quickdao/entity/";
 //设置哪些表需要生成实体类
 generateEntityFileOption.tableFilter = (entity)->{
     return true;

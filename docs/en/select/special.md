@@ -38,7 +38,7 @@ List<Long> ids = dao.query(Person.class)
                 .getSingleColumnList(Long.class);
 ```
 
-## Return Part Column
+## Return Part Columns
 
 ```java
 //select username,password from person

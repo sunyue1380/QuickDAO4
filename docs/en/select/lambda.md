@@ -1,4 +1,4 @@
-# lambda
+# Lambda
 
 > Since 4.1.4
 

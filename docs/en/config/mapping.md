@@ -1,6 +1,6 @@
-# Entity class mapping to table
+# Mapping entity class to database table
 
-An example to show how entity class mapping to database table.
+An example to show how entity class were mapped to database table.
 
 ```
 └── cn.schoolwow.quickdao.entity
@@ -12,7 +12,7 @@ An example to show how entity class mapping to database table.
             └── LoginHistory.java
 ```
 
-After mapping
+Here's the situation in database:
 
 |entity class|table name|
 |---|---|
@@ -21,4 +21,4 @@ After mapping
 |cn.schoolwow.quickdao.entity.user.User|user@user|
 |cn.schoolwow.quickdao.entity.user.history.LoginHistory|user_history@login_history|
 
-> Attention! If you use packageName("cn.schoolwow.quickdao.entity","t") then following table names will add ``t`` prefix.
+> Attention! If you use packageName("cn.schoolwow.quickdao.entity","t") then the names of foregoing table will add ``t`` prefix.
