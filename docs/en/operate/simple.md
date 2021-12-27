@@ -52,3 +52,11 @@ dao.query("product")
     .execute()
     .insertBatch();
 ```
+
+## RawUpdate
+
+> Since 4.1.9
+
+```java
+effect = dao.rawUpdate("insert into DOWNLOAD_TASK(file_path,file_size,remark) values('filePath',0,'remark');");
+```

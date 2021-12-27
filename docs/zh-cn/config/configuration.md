@@ -29,6 +29,8 @@ BasicDataSource mysqlDataSource = new BasicDataSource();mysqlDataSource.setDrive
         .ignoreClass(Person.class)
         //忽略指定实体类包
         .ignorePackageName("cn.schoolwow.quickdao.entity.ignore")
+        //是否开启懒加载功能(在第一次查询数据库时再初始化)
+        .lazyLoad(true)
         //返回DAO接口对象
         .build();
 ```

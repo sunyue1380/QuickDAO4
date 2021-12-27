@@ -30,3 +30,13 @@ List<User> userList = dao.fetchList(User.class,"username","quickdao");
 ```
 
 > fetch方法默认只会返回列表的第一条记录,若返回列表存在多条记录,则会直接返回第一条记录
+
+## RawSelect
+
+> 此特性从v4.1.9版本开始提供
+
+QuickDAO支持调用rawSelect方法，直接传入sql语句并返回结果
+
+```java
+JSONArray array = dao.rawSelect("select * from person where password = ?","123456");
+```

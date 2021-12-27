@@ -97,3 +97,15 @@ DAOUtils.migrate(migrateOption);
 migrateOption.tableConsumer = (sourceTable,targetTable)->{
 };
 ```
+
+## 比较表结构并生成SQL语句
+
+QuickDAO支持生成两个数据库表结构差异部分的SQL语句.
+
+```java
+DiffTableStructureOption diffTableStructureOption = new DiffTableStructureOption();
+diffTableStructureOption.source = sourceDAO;
+diffTableStructureOption.target = targetDAO;
+diffTableStructureOption.executeSQL = true;
+DAOUtils.diffTableStructure(diffTableStructureOption);
+```

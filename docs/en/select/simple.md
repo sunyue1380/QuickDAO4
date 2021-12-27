@@ -27,3 +27,11 @@ List<User> userList = dao.fetchList(User.class,"username","quickdao");
 ```
 
 > ``fetch`` method will only return first row of record even there are more than one rows in result.
+
+## RawSelect
+
+> Since 4.1.9
+
+```java
+JSONArray array = dao.rawSelect("select * from person where password = ?","123456");
+```

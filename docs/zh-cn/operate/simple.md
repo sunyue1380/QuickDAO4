@@ -58,3 +58,13 @@ dao.query("product")
     .execute()
     .insertBatch();
 ```
+
+## RawUpdate
+
+> 此特性从v4.1.9版本开始提供
+
+QuickDAO支持调用rawUpdate方法，直接传入sql语句并返回结果
+
+```java
+effect = dao.rawUpdate("insert into DOWNLOAD_TASK(file_path,file_size,remark) values('filePath',0,'remark');");
+```

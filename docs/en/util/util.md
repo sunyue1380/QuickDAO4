@@ -88,3 +88,15 @@ migrateOption.tableConsumer = (sourceTable,targetTable)->{
 //define how the source table migrate to target table
 };
 ```
+
+## diffTableStructureOption
+
+Compare database table structure and generate corresponding sql.
+
+```java
+DiffTableStructureOption diffTableStructureOption = new DiffTableStructureOption();
+diffTableStructureOption.source = sourceDAO;
+diffTableStructureOption.target = targetDAO;
+diffTableStructureOption.executeSQL = true;
+DAOUtils.diffTableStructure(diffTableStructureOption);
+```

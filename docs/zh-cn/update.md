@@ -1,5 +1,18 @@
 # 更新日志
 
+## 4.1.9（2021-12-27）
+
+* 【新增】懒加载功能(lazyLoad)
+* 【新增】rawSelect和rawUpdate方法，直接传入SQL语句
+* 【新增】delete(Class clazz)方法，可根据唯一约束和id删除实体类
+* 【新增】DAOUtil添加对比数据库字段信息并生成SQL语句的功能
+* 【新增】英文使用文档
+* 【优化】支持新增自增列
+* 【优化】添加使用or查询条件时不能使用joinTable的异常提示
+* 【优化】优化insertBatch和insertArrayBatch方法
+* 【优化】去掉拦截器功能(Interceptor)
+* 【修复】解决mysql迁移表结构报错问题
+
 ## 4.1.8（2021-08-04）
 
 * 【新增】Oracle分页操作支持

@@ -33,6 +33,8 @@ DAO dao = QuickDAO.newInstance()
         .ignoreClass(Person.class)
         //ignore package name
         .ignorePackageName("cn.schoolwow.quickdao.entity.ignore")
+        //initial dao before first time to access database
+        .lazyLoad(true)
         //build dao object
         .build();
 ```
